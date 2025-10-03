@@ -1,8 +1,8 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test ",
-    SubTitle = ".by Vichian",
+    Title = "Dragon Adventure | ",
+    SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
     Acrylic = true,
@@ -74,8 +74,6 @@ do
 
     local function AutoHarvest()
         local trees = {}
-        
-        -- เก็บข้อมูลต้นไม้ที่มีชื่อ "LargeResourceNode"
         for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
             if v.Name == "LargeResourceNode" then
                 table.insert(trees, v)
@@ -88,25 +86,21 @@ do
             if part then
                 local treePosition = part.Position
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                wait(1)  -- รอให้ตัวละครวาร์ปไปที่ต้นไม้
+                wait(1)
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 
                 if billboardPart then
-                    -- โจมตี 20 ครั้ง
                     for _ = 1, 20 do
                         attackTree(billboardPart)
-                        wait(1)  -- รอ 1 วินาทีระหว่างการโจมตี
+                        wait(1)
                     end
                 else
                     print("BillboardPart not found, moving to next tree.")
                 end
             end
-
-            -- วาร์ปไปต้นถัดไปทันที
             print("Finished attacking, moving to next tree.")
         end
-        
         print("All trees have been processed.")
     end
 
@@ -131,5 +125,3 @@ do
 
 
 end
-
-
