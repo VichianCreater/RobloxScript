@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.6.0",
+    Title = "Dragon Adventure | 1.6.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -84,7 +84,7 @@ do
             end
 
             for _, v in pairs(workspace.Interactions.Nodes.Food:GetDescendants()) do
-                if v.Name == "LargeResourceNode" then
+                if v.Name == "LargeFoodNode" then
                     table.insert(trees, v)
                 end
             end
