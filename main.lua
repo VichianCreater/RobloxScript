@@ -92,20 +92,19 @@ do
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 
-                if not billboardPart then
-                    -- ถ้าไม่มี BillboardPart ก็จะวาร์ปไปต้นถัดไปทันที
-                    print("No BillboardPart found, moving to next tree.")
-                    continue  -- ไปต้นถัดไปทันที
+                if billboardPart then
+                    -- โจมตี 20 ครั้ง
+                    for _ = 1, 20 do
+                        attackTree(billboardPart)
+                        wait(1)  -- รอ 1 วินาทีระหว่างการโจมตี
+                    end
+                else
+                    print("BillboardPart not found, moving to next tree.")
                 end
-
-                -- ถ้ามี BillboardPart จะเริ่มโจมตีตลอดไป
-                while billboardPart and billboardPart.Parent do
-                    attackTree(billboardPart)  -- โจมตีต่อเนื่อง
-                    wait(1)  -- รอ 1 วินาทีระหว่างการโจมตี
-                end
-
-                print("BillboardPart no longer exists, moving to next tree.")
             end
+
+            -- วาร์ปไปต้นถัดไปทันที
+            print("Finished attacking, moving to next tree.")
         end
         
         print("All trees have been processed.")
@@ -132,4 +131,5 @@ do
 
 
 end
+
 
