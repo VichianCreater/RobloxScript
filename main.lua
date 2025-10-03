@@ -18,12 +18,6 @@ local Tabs = {
 local Options = Fluent.Options
 
 do
-
-    Tabs.Main:AddParagraph({
-        Title = "Paragraph",
-        Content = "This is a paragraph.\nSecond line!"
-    })
-
     
     local EggCollectToggle = Tabs.Main:AddToggle("EggCollect", {Title = "AUTO - Collect(EGG)", Default = false })
     local isCollectingEgg = false
@@ -70,4 +64,5 @@ do
     Options.ChestToggle:SetValue(false)
 
 end
+
 
