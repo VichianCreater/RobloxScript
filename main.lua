@@ -60,7 +60,6 @@ do
         local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
         local dragonNumbers = {}
 
-        -- ค้นหาหมายเลขที่เป็นตัวเลขใน Dragons
         for _, child in pairs(dragonsFolder:GetChildren()) do
             if tonumber(child.Name) then 
                 table.insert(dragonNumbers, child.Name) 
