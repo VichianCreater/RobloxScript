@@ -18,7 +18,6 @@ local Tabs = {
 local Options = Fluent.Options
 
 do
-    
     local EggCollectToggle = Tabs.Main:AddToggle("EggCollect", {Title = "AUTO - Collect(EGG)", Default = false })
     local isCollectingEgg = false
 
@@ -55,15 +54,55 @@ do
 
     Options.EggCollect:SetValue(false)
 
-    local ChestCollectToggle = Tabs.Main:AddToggle("ChestToggle", {Title = "AUTO - Collect(CHEST)", Default = false })
+    local function collectChest()
+        for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
+            if v.Name == "LargeResourceNode" then
+                local part = v:FindFirstChildWhichIsA("BasePart")
+                
+                if part then
+                    local treePosition = part.Position  -- ตำแหน่งของต้นไม้ที่สามารถเข้าถึงได้
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
+                    wait(1)
+                    local billboardPart = v:FindFirstChild("BillboardPart")
+                    if billboardPart then
 
-    ChestCollectToggle:OnChanged(function()
-        print("Toggle changed:", Options.ChestToggle.Value)
+                        local args = {
+                            "Breath", 
+                            "Destructibles",
+                            billboardPart 
+                        }
+                        local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild("12"):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+                        
+                        if playSoundRemote then
+                            playSoundRemote:FireServer(unpack(args))
+                            print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+                        else
+                            print("PlaySoundRemote not found.")
+                        end
+                    else
+                        print("BillboardPart not found in LargeResourceNode.")
+                    end
+                end
+            end
+        end
+    end
+
+    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
+    local isCollectingHarvest = false
+
+    HarvestCollectToggle:OnChanged(function()
+        if Options.HarvestToggle.Value then
+            isCollectingHarvest = true
+            while isCollectingHarvest do
+                collectEggs()
+                wait(0.5)
+            end
+        else
+            isCollectingHarvest = false
+        end
+        print("Toggle changed:", Options.HarvestToggle.Value)
     end)
 
-    Options.ChestToggle:SetValue(false)
+    Options.HarvestToggle:SetValue(false)
 
 end
-
-
-Window:SelectTab(1)
