@@ -92,6 +92,7 @@ do
                 if billboardPart then
                     for _ = 1, 20 do
                         attackTree(billboardPart)
+                        wait(0.1)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
