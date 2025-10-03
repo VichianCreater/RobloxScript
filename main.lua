@@ -91,7 +91,7 @@ do
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 if billboardPart then
-                    for _ = 1, 10 do
+                    for _ = 1, 20 do
                         attackTree(billboardPart)
                         wait(1)
                     end
