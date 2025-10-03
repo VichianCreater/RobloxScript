@@ -54,20 +54,35 @@ do
 
     Options.EggCollect:SetValue(false)
 
-    local function attackTree(billboardPart)
+    local function attackTarget(billboardPart)
         local args = {
-            "Breath",
-            "Destructibles",
-            billboardPart
+            "Breath",  -- หรือ "Attack" ตามประเภทที่ต้องการ
+            "Destructibles",  -- ประเภทการโจมตี เช่น "Destructibles"
+            billboardPart  -- ส่ง BillboardPart ที่เป็น Hitbox ของต้นไม้
         }
+
         local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild("12"):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
         
         if playSoundRemote then
-            -- ส่งคำสั่งโจมตีผ่าน RemoteEvent
             playSoundRemote:FireServer(unpack(args))
-            print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+            print("Attack sent to position: " .. tostring(billboardPart.Position))
         else
             print("PlaySoundRemote not found.")
+        end
+    end
+
+    local function continuousAttack()
+        while true do
+            for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
+                if v.Name == "LargeResourceNode" then
+                    local billboardPart = v:FindFirstChild("BillboardPart")
+                    
+                    if billboardPart then
+                        attackTarget(billboardPart)
+                        print("Attacking tree at position: " .. tostring(billboardPart.Position))
+                    end
+                end
+            end
         end
     end
 
@@ -87,21 +102,9 @@ do
                 local treePosition = part.Position
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
                 wait(1)
-
-                local billboardPart = tree:FindFirstChild("BillboardPart")
-                if billboardPart then
-                    for _ = 1, 10 do
-                        attackTree(billboardPart)
-                        wait(1)
-                    end
-                else
-                    print("BillboardPart not found in LargeResourceNode.")
-                end
             end
-            print("Waiting for 10 seconds before attacking the next tree.")
             wait(10) 
         end
-        print("All trees have been attacked.")
     end
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
@@ -112,6 +115,7 @@ do
             isCollectingHarvest = true
             while isCollectingHarvest do
                 AutoHarvest()
+                continuousAttack()
                 wait(0.5)
             end
         else
