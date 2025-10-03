@@ -54,7 +54,7 @@ do
 
     Options.EggCollect:SetValue(false)
 
-    local function collectChest()
+    local function AutoHarvest()
         for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
             if v.Name == "LargeResourceNode" then
                 local part = v:FindFirstChildWhichIsA("BasePart")
@@ -95,7 +95,7 @@ do
         if Options.HarvestToggle.Value then
             isCollectingHarvest = true
             while isCollectingHarvest do
-                collectEggs()
+                AutoHarvest()
                 wait(0.5)
             end
         else
