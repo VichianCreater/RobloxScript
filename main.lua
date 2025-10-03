@@ -92,13 +92,12 @@ do
                 if billboardPart then
                     for _ = 1, 20 do
                         attackTree(billboardPart)
-                        wait(0.1)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
                 end
             end
-
+            wait(5)
             print("Waiting for 10 seconds before attacking the next tree.")
         end
         print("All trees have been attacked.")
