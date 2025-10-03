@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.6.5",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -56,20 +56,38 @@ do
 
     --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+    local function getDragonNumber()
+        local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
+        local dragonNumbers = {}
+
+        -- ค้นหาหมายเลขที่เป็นตัวเลขใน Dragons
+        for _, child in pairs(dragonsFolder:GetChildren()) do
+            if tonumber(child.Name) then 
+                table.insert(dragonNumbers, child.Name) 
+            end
+        end
+        return dragonNumbers[1]
+    end
+
     local function attackTree(billboardPart)
+        local dragonNumber = getDragonNumber()
         local args = {
             "Breath",
             "Destructibles",
             billboardPart
         }
 
-        local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild("12"):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
-        
-        if playSoundRemote then
-            playSoundRemote:FireServer(unpack(args))
-            print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+        if dragonNumber then
+            local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+
+            if playSoundRemote then
+                playSoundRemote:FireServer(unpack(args))
+                print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+            else
+                print("PlaySoundRemote not found.")
+            end
         else
-            print("PlaySoundRemote not found.")
+            print("No valid dragon number found.")
         end
     end
 
