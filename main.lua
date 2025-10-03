@@ -76,6 +76,7 @@ do
                         if playSoundRemote then
                             playSoundRemote:FireServer(unpack(args))
                             print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+                            break
                         else
                             print("PlaySoundRemote not found.")
                         end
