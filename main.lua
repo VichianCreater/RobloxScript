@@ -90,9 +90,9 @@ do
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 if billboardPart then
-                    for _ = 1, 10 do
+                    for _ = 1, 20 do
                         attackTree(billboardPart)
-                        wait(1)
+                        wait(0.1)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
@@ -100,7 +100,7 @@ do
             end
 
             print("Waiting for 10 seconds before attacking the next tree.")
-            wait(10)
+            wait(0.5)
         end
         print("All trees have been attacked.")
     end
