@@ -66,3 +66,4 @@ do
 end
 
 
+Window:SelectTab(1)
