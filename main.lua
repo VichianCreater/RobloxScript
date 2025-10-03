@@ -54,6 +54,7 @@ do
 
     Options.EggCollect:SetValue(false)
 
+
     local function attackTree(billboardPart)
         local args = {
             "Breath",
@@ -90,9 +91,9 @@ do
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 if billboardPart then
-                    for _ = 1, 20 do
+                    for _ = 1, 10 do
                         attackTree(billboardPart)
-                        wait(0.5)
+                        wait(1)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
