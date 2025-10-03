@@ -54,6 +54,23 @@ do
 
     Options.EggCollect:SetValue(false)
 
+    local function attackTree(billboardPart)
+        local args = {
+            "Breath",
+            "Destructibles",
+            billboardPart
+        }
+        local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild("12"):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+        
+        if playSoundRemote then
+            -- ส่งคำสั่งโจมตีผ่าน RemoteEvent
+            playSoundRemote:FireServer(unpack(args))
+            print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
+        else
+            print("PlaySoundRemote not found.")
+        end
+    end
+
     local function AutoHarvest()
         local trees = {}
         
@@ -73,32 +90,19 @@ do
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
                 if billboardPart then
-                    local args = {
-                        "Breath",
-                        "Destructibles",
-                        billboardPart
-                    }
-
-                    local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild("12"):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
-                    
-                    if playSoundRemote then
-                        -- ส่งคำสั่งโจมตีผ่าน RemoteEvent
-                        playSoundRemote:FireServer(unpack(args))
-                        print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
-                    else
-                        print("PlaySoundRemote not found.")
+                    for _ = 1, 10 do
+                        attackTree(billboardPart)
+                        wait(1)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
                 end
             end
-            
             print("Waiting for 10 seconds before attacking the next tree.")
-            wait(10)
+            wait(10) 
         end
         print("All trees have been attacked.")
     end
-
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
