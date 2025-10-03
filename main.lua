@@ -75,6 +75,7 @@ do
     local function AutoHarvest()
         local trees = {}
         
+        -- เก็บข้อมูลต้นไม้ที่มีชื่อ "LargeResourceNode"
         for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
             if v.Name == "LargeResourceNode" then
                 table.insert(trees, v)
@@ -87,23 +88,27 @@ do
             if part then
                 local treePosition = part.Position
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                wait(1)
+                wait(1)  -- รอให้ตัวละครวาร์ปไปที่ต้นไม้
 
                 local billboardPart = tree:FindFirstChild("BillboardPart")
-                if billboardPart then
-                    for _ = 1, 20 do
-                        attackTree(billboardPart)
-                        wait(1)
-                    end
-                else
-                    print("BillboardPart not found in LargeResourceNode.")
+                
+                if not billboardPart then
+                    -- ถ้าไม่มี BillboardPart ก็จะวาร์ปไปต้นถัดไปทันที
+                    print("No BillboardPart found, moving to next tree.")
+                    continue  -- ไปต้นถัดไปทันที
                 end
-            end
 
-            print("Waiting for 10 seconds before attacking the next tree.")
-            wait(10)
+                -- ถ้ามี BillboardPart จะเริ่มโจมตีตลอดไป
+                while billboardPart and billboardPart.Parent do
+                    attackTree(billboardPart)  -- โจมตีต่อเนื่อง
+                    wait(1)  -- รอ 1 วินาทีระหว่างการโจมตี
+                end
+
+                print("BillboardPart no longer exists, moving to next tree.")
+            end
         end
-        print("All trees have been attacked.")
+        
+        print("All trees have been processed.")
     end
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
@@ -127,3 +132,4 @@ do
 
 
 end
+
