@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | ",
+    Title = "Dragon Adventure | V1.1",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -93,7 +93,7 @@ do
                 if billboardPart then
                     for _ = 1, 20 do
                         attackTree(billboardPart)
-                        wait(1)
+                        task.wait(0)
                     end
                 else
                     print("BillboardPart not found, moving to next tree.")
