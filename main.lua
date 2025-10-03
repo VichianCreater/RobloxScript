@@ -92,13 +92,15 @@ do
                 if billboardPart then
                     for _ = 1, 20 do
                         attackTree(billboardPart)
+                        wait(0.5)
                     end
                 else
                     print("BillboardPart not found in LargeResourceNode.")
                 end
             end
-            wait(5)
+
             print("Waiting for 10 seconds before attacking the next tree.")
+            wait(10)
         end
         print("All trees have been attacked.")
     end
@@ -110,7 +112,9 @@ do
         if Options.HarvestToggle.Value then
             isCollectingHarvest = true
             while isCollectingHarvest do
-                AutoHarvest()
+                AutoHarvest()      -- เรียกฟังก์ชันการวาร์ป
+                continuousAttack() -- เรียกฟังก์ชันการโจมตี
+                wait(0.5)          -- รอ 0.5 วินาทีระหว่างการทำงาน
             end
         else
             isCollectingHarvest = false
