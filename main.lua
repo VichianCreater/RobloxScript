@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.3",
+    Title = "Dragon Adventure | 1.4",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -73,9 +73,9 @@ do
     end
 
     local function AutoHarvest()
-        while true do  -- ลูปจะทำงานตลอดเวลา
+        while Options.HarvestToggle.Value do
             local trees = {}
-            -- ค้นหาต้นไม้ทั้งหมดใน workspace
+            
             for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
                 if v.Name == "LargeResourceNode" then
                     table.insert(trees, v)
@@ -105,10 +105,10 @@ do
             end
 
             print("All trees have been processed. Restarting...")
-            wait(1) 
+            wait(1)
         end
+        print("Harvesting stopped.")
     end
-
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
@@ -116,18 +116,16 @@ do
     HarvestCollectToggle:OnChanged(function()
         if Options.HarvestToggle.Value then
             isCollectingHarvest = true
-            while isCollectingHarvest do
-                AutoHarvest()      -- เรียกฟังก์ชันการวาร์ป
-                continuousAttack() -- เรียกฟังก์ชันการโจมตี
-                wait(0.5)          -- รอ 0.5 วินาทีระหว่างการทำงาน
-            end
+            AutoHarvest()
         else
             isCollectingHarvest = false
+            print("Harvesting stopped.")
         end
         print("Toggle changed:", Options.HarvestToggle.Value)
     end)
 
     Options.HarvestToggle:SetValue(false)
+
 
 
 end
