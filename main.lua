@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.5",
+    Title = "Dragon Adventure | ",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -75,40 +75,54 @@ do
 
     local function AutoHarvest()
         while Options.HarvestToggle.Value do
-            local trees = {}
-            
+            -- ค้นหาต้นไม้ใน Resources
             for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
                 if v.Name == "LargeResourceNode" then
-                    table.insert(trees, v)
+                    local part = v:FindFirstChildWhichIsA("BasePart")
+                    
+                    if part then
+                        local treePosition = part.Position
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
+                        wait(1)
+
+                        local billboardPart = v:FindFirstChild("BillboardPart")
+                        
+                        if billboardPart then
+                            for _ = 1, 30 do
+                                attackTree(billboardPart)
+                                task.wait(0.25)
+                            end
+                        else
+                            print("BillboardPart not found in Resources, moving to next tree.")
+                        end
+                    end
+                    print("Finished attacking tree in Resources.")
                 end
             end
 
+            -- ค้นหาต้นไม้ใน Food
             for _, v in pairs(workspace.Interactions.Nodes.Food:GetDescendants()) do
                 if v.Name == "LargeResourceNode" then
-                    table.insert(trees, v)
-                end
-            end
-
-            for _, tree in ipairs(trees) do
-                local part = tree:FindFirstChildWhichIsA("BasePart")
-                
-                if part then
-                    local treePosition = part.Position
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                    wait(1)
-
-                    local billboardPart = tree:FindFirstChild("BillboardPart")
+                    local part = v:FindFirstChildWhichIsA("BasePart")
                     
-                    if billboardPart then
-                        for _ = 1, 30 do
-                            attackTree(billboardPart)
-                            task.wait(0.25)
+                    if part then
+                        local treePosition = part.Position
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
+                        wait(1)
+
+                        local billboardPart = v:FindFirstChild("BillboardPart")
+                        
+                        if billboardPart then
+                            for _ = 1, 30 do
+                                attackTree(billboardPart)
+                                task.wait(0.25)
+                            end
+                        else
+                            print("BillboardPart not found in Food, moving to next tree.")
                         end
-                    else
-                        print("BillboardPart not found, moving to next tree.")
                     end
+                    print("Finished attacking tree in Food.")
                 end
-                print("Finished attacking, moving to next tree.")
             end
 
             print("All trees have been processed. Restarting...")
@@ -116,6 +130,7 @@ do
         end
         print("Harvesting stopped.")
     end
+
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
