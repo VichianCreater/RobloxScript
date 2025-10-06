@@ -195,12 +195,9 @@ do
                 end
 
                 if healthValue then
-                    print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
                     if healthValue.Value == 0 then
                         humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
                     end
-                else
-                    print("ไม่พบ Health ของ mob " .. mob.Name)
                 end
 
                 -- ยิง
@@ -217,9 +214,6 @@ do
                         remote:FireServer(unpack(args))
                     end
                 end
-
-                print(healthValue)
-                print(healthValue.Value)
 
                 break
             end
@@ -259,4 +253,3 @@ InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
-
