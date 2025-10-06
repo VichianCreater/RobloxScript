@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5",
+    Title = "Dragon Adventure | 1.8.6",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -155,6 +155,9 @@ do
     local isAutoAttackingMob = false
     local firstStart = false
 
+    local lastPosition = nil
+    local attackCount = 0
+
     local function autoAttackMob()
         local mobFolder = workspace:FindFirstChild("MobFolder")
         local player = game.Players.LocalPlayer
@@ -167,40 +170,39 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             local target = mob:FindFirstChild(mob.Name)
             if target and target:IsA("BasePart") then
-                if firstStart == false then
-                    firstStart = true
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                local targetPos = target.Position
+
+                -- ถ้าเคยวาร์ปตำแหน่งนี้แล้ว ให้ข้าม
+                if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
+                    continue
                 end
 
+                -- หา Health
                 local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                 if not healthValue then
-                    healthValue = mob:FindFirstChildWhichIsA("NumberValue") or target:FindFirstChildWhichIsA("NumberValue")
-                    if not healthValue then
-                        healthValue = nil
-                        for _, desc in ipairs(mob:GetDescendants()) do
-                            if desc.Name == "Health" and desc:IsA("NumberValue") then
-                                healthValue = desc
-                                break
-                            end
-                        end
-                        if not healthValue then
-                            for _, desc in ipairs(target:GetDescendants()) do
-                                if desc.Name == "Health" and desc:IsA("NumberValue") then
-                                    healthValue = desc
-                                    break
-                                end
-                            end
+                    for _, desc in ipairs(mob:GetDescendants()) do
+                        if desc.Name == "Health" and desc:IsA("NumberValue") then
+                            healthValue = desc
+                            break
                         end
                     end
                 end
 
-                if healthValue then
-                    if healthValue.Value == 0 then
-                        break
+                -- ถ้ามอนตายแล้ว และเป็นมอนที่เราวาร์ปไปล่าสุด → รีเซ็ต lastPosition และเริ่มใหม่
+                if healthValue and healthValue.Value == 0 then
+                    if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
+                        print("มอนตัวที่สองตาย รีเซ็ตตำแหน่ง")
+                        lastPosition = nil
+                        attackCount = 0
                     end
+                    continue
                 end
-                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-                -- ยิง
+
+                -- วาร์ป + ยิง
+                humanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 0, 0))
+                lastPosition = targetPos
+                attackCount += 1
+
                 local args = {
                     "Breath",
                     "Mobs",
@@ -215,10 +217,11 @@ do
                     end
                 end
 
-                break
+                break -- เจอมอนที่ยังไม่ตาย + ไม่ซ้ำ → วาร์ปแล้วออก
             end
         end
     end
+
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
