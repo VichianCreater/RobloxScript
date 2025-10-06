@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -153,6 +153,7 @@ do
     -----------------------------------------------------------------------------------------------------------------
     local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
     local isAutoAttackingMob = false
+    local firstStart = false
 
     local function autoAttackMob()
         local mobFolder = workspace:FindFirstChild("MobFolder")
@@ -177,15 +178,19 @@ do
                 end
 
                 if healthValue then
-                    -- ถ้าเลือดหมด ให้ข้าม mob ตัวนี้ไปตัวถัดไป
-                    if healthValue.Value <= 0 then
-                        break
+                    if healthValue.Value = 0 then
+                        humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                    else
+                        
                     end
                 else
-                    
+
+                end
+                if firstStart == false then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
                 end
 
-                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                firstStart = true
 
                 local args = {
                     "Breath",
@@ -219,6 +224,7 @@ do
             end)
         else
             isAutoAttackingMob = false
+            firstStart = false
             -- print("Auto Attack Mob หยุดทำงาน")
         end
         -- print("Toggle changed:", Options.AttactMob.Value)
