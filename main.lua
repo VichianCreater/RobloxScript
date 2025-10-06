@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.6",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -164,10 +164,10 @@ do
         if not mobFolder or not dragonNumber then return end
 
         for _, mob in ipairs(mobFolder:GetChildren()) do
-            ::continue_mob::
-
             for _, child in ipairs(mob:GetChildren()) do
                 if child:IsA("BasePart") then
+                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 5, 0))
+
                     -- หาค่า Health แบบลึก
                     local healthValue = mob:FindFirstChild("Health") or child:FindFirstChild("Health")
                     if not healthValue then
@@ -190,14 +190,16 @@ do
                         end
                     end
 
-                    -- ถ้าเลือดหมด → ไป mob ตัวถัดไป
-                    if healthValue and healthValue.Value == 0 then
-                        goto continue_mob
+                    if healthValue then
+                        -- print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
+                        if healthValue.Value == 0 then
+                            break
+                        end
+                    else
+                        -- print("ไม่พบ Health ของ mob " .. mob.Name)
                     end
 
-                    -- วาร์ป + ยิง
-                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 5, 0))
-
+                    -- ยิง
                     local args = {
                         "Breath",
                         "Mobs",
@@ -212,13 +214,11 @@ do
                         end
                     end
 
-                    -- ยิงแค่ตัวแรกจาก mob นี้
-                    break
+                    break -- ตีแค่ 1 ตัวจาก mob นี้ แล้วไป mob ถัดไป
                 end
             end
         end
     end
-
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
