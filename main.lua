@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.4",
+    Title = "Dragon Adventure | 1.7.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -181,13 +181,13 @@ do
                             local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
                             if remote then
                                 remote:FireServer(unpack(args))
-                                -- print("โจมตี Mob: " .. child.Name .. " | HP: " .. tostring(healthValue.Value))
+                                print("โจมตี Mob: " .. child.Name .. " | HP: " .. tostring(healthValue.Value))
                             end
                         end
 
                         return
                     else
-                        -- print("Mob " .. mob.Name .. " ตายแล้ว หรือไม่มี HP")
+                        print("Mob " .. mob.Name .. " ตายแล้ว หรือไม่มี HP")
                     end
                 end
             end
