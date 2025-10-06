@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.0 [Debuger]",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -162,20 +162,12 @@ do
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
         local dragonNumber = getDragonNumber()
 
-        if not mobFolder then
-            warn("❌ ไม่พบ MobFolder")
-            return
-        end
-        if not dragonNumber then
-            warn("❌ ไม่พบ dragonNumber")
-            return
-        end
+        if not mobFolder or not dragonNumber then return end
 
         for _, mob in ipairs(mobFolder:GetChildren()) do
             local target = mob:FindFirstChild(mob.Name)
-            print("🔍 เจอ mob:", mob.Name, "| target:", target and target.Name or "nil")
-
             if target and target:IsA("BasePart") then
+
                 local healthValue = mob:FindFirstChild("Health")
                 if not healthValue then
                     for _, desc in ipairs(mob:GetDescendants()) do
@@ -186,25 +178,18 @@ do
                     end
                 end
 
-                if healthValue then
-                    print("❤️ HP ของ", mob.Name, "=", healthValue.Value)
-                    if healthValue.Value == 0 then
-                        print("⚠️", mob.Name, "ตายแล้ว → ข้าม")
-                        continue
-                    end
-                else
-                    warn("❗ ไม่พบ Health ของ mob:", mob.Name)
+                print(healthValue)
+                print(healthValue.Value)
+                
+                if healthValue and healthValue.Value == 0 then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                    continue 
                 end
 
-                if not firstStart then
-                    print("🚀 วาร์ปครั้งแรกไปที่:", target.Position)
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-                    firstStart = true
-                else
-                    print("🗡️ กำลังโจมตี:", mob.Name)
+                if firstStart == false then
                     humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
                 end
-
+                -- ยิง
                 local args = {
                     "Breath",
                     "Mobs",
@@ -216,21 +201,13 @@ do
                     local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
                     if remote then
                         remote:FireServer(unpack(args))
-                        print("✅ โจมตีสำเร็จ:", target.Name)
-                    else
-                        warn("❌ ไม่พบ PlaySoundRemote")
                     end
-                else
-                    warn("❌ ไม่พบ dragon:", dragonNumber)
                 end
 
-                break -- ออกจาก loop ทันทีหลังตีตัวแรก
-            else
-                warn("❌ target ไม่ใช่ BasePart หรือไม่พบ target")
+                break
             end
         end
     end
-
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
