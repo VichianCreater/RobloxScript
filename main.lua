@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.2",
+    Title = "Dragon Adventure | 1.7.3",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -179,7 +179,6 @@ do
                         local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
                         if remote then
                             remote:FireServer(unpack(args))
-                            print("โจมตี Mob: " .. child.Name)
                         end
                     end
 
@@ -195,6 +194,7 @@ do
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
+                    wait(0.1)
                 end
             end)
         else
