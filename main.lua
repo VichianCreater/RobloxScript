@@ -180,13 +180,13 @@ do
                 end
 
                 if healthValue and healthValue.Value == 0 then
-                    print("ข้าม mob ที่ตายแล้ว: " .. mob.Name)
-                    continue -- (Lua ไม่มี continue จริง ๆ แต่จำลองได้ด้วย if-else)
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                    continue 
                 end
 
-                -- วาร์ปไป
-                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-
+                if firstStart == false then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                end
                 -- ยิง
                 local args = {
                     "Breath",
@@ -206,7 +206,7 @@ do
             end
         end
     end
-    
+
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
             isAutoAttackingMob = true
@@ -242,4 +242,3 @@ InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
-
