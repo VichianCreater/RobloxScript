@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.0",
+    Title = "Dragon Adventure | 1.9.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -273,3 +273,4 @@ do
 end
 
 Window:SelectTab(1)
+
