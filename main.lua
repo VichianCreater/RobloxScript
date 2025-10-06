@@ -368,7 +368,7 @@ do
     end
 
     AutoFishingToggle:OnChanged(function()
-        if Options.AutoFishing.Value then
+        if Options.AutoFishing.Value == true then
             isAutoFishing = true
             task.spawn(function()
                 while isAutoFishing do
