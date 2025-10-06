@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
-local ALLOWED_PLACE_ID = 1235188606
-if game.PlaceId ~= ALLOWED_PLACE_ID then
+local ALLOWED_GAME_ID = 1235188606
+if game.GameId ~= ALLOWED_GAME_ID then
     Fluent:Notify({
         Title = "Alert",
         Content = "The script not support this game",
