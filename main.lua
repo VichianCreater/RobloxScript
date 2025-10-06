@@ -12,7 +12,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    Attact = Window:AddTab({ Title = "Attact", Icon = "crown" }),
+    Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -152,7 +152,22 @@ do
     Options.HarvestToggle:SetValue(false)
 
     -----------------------------------------------------------------------------------------------------------------
-    local AttackMobToggle = Tabs.Attact:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
+
+    local AttackSpeedSlider = Tabs.Attack:AddSlider("AttackSpeed", {
+        Title = "AttackSpeed",
+        Description = "0 is faster",
+        Default = 0,
+        Min = 0,
+        Max = 1,
+        Rounding = 2,
+        Callback = function(ASPD)
+            Aspd = ASPD
+        end
+    })
+
+    AttackSpeedSlider:SetValue(0)
+
+    local AttackMobToggle = Tabs.Attack:AddToggle("AttackMob", {Title = "AUTO - AttackMob", Default = false })
     local isAutoAttackingMob = false
     local firstStart = false
 
@@ -223,7 +238,7 @@ do
     local Aspd = 0
 
     AttackMobToggle:OnChanged(function()
-        if Options.AttactMob.Value then
+        if Options.AttackMob.Value then
             isAutoAttackingMob = true
             task.spawn(function()
                 while isAutoAttackingMob do
@@ -237,21 +252,7 @@ do
         end
     end)
 
-    Options.AttactMob:SetValue(false)
-
-    local AttactSpeedSlider = Tabs.Attact:AddSlider("AttactSpeed", {
-        Title = "AttactSpeed",
-        Description = "0 is faster",
-        Default = 0,
-        Min = 0,
-        Max = 1,
-        Rounding = 2,
-        Callback = function(ASPD)
-            Aspd = ASPD
-        end
-    })
-
-    AttactSpeedSlider:SetValue(0)
+    Options.AttackMob:SetValue(false)
 
 end
 
