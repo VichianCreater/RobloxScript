@@ -184,7 +184,7 @@ do
 
                 if health and health.Value > 0 then
                     -- วาร์ปไป
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
 
                     -- ยิงทุก heartbeat จนกว่าจะตาย
                     if attackingConnection then attackingConnection:Disconnect() end
@@ -248,3 +248,4 @@ InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
 Window:SelectTab(1)
+
