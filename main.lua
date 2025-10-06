@@ -153,6 +153,8 @@ do
 
     -----------------------------------------------------------------------------------------------------------------
 
+    local Aspd = 1
+
     local AttackSpeedSlider = Tabs.Attack:AddSlider("AttackSpeed", {
         Title = "AttackSpeed",
         Description = "0 is faster",
@@ -234,8 +236,6 @@ do
             end
         end
     end
-
-    local Aspd = 0
 
     AttackMobToggle:OnChanged(function()
         if Options.AttackMob.Value then
