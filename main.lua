@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.7",
+    Title = "Dragon Adventure | 1.8.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -153,75 +153,72 @@ do
     -----------------------------------------------------------------------------------------------------------------
     local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
     local isAutoAttackingMob = false
-    local dragonNumber = nil
-
-    local function getValidMob()
-        local mobFolder = workspace:FindFirstChild("MobFolder")
-        if not mobFolder then return nil end
-
-        for _, mob in ipairs(mobFolder:GetChildren()) do
-            local healthValue = mob:FindFirstChild("Health")
-            if not healthValue then
-                for _, desc in ipairs(mob:GetDescendants()) do
-                    if desc.Name == "Health" and desc:IsA("NumberValue") then
-                        healthValue = desc
-                        break
-                    end
-                end
-            end
-
-            if healthValue and healthValue.Value > 0 then
-                local target = mob:FindFirstChild(mob.Name)
-                if target and target:IsA("BasePart") then
-                    return mob, target
-                end
-            end
-        end
-
-        return nil, nil
-    end
+    local firstStart = false
 
     local function autoAttackMob()
+        local mobFolder = workspace:FindFirstChild("MobFolder")
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local dragonNumber = getDragonNumber()
 
-        if not dragonNumber then
-            dragonNumber = getDragonNumber()
-            if not dragonNumber then return end
-        end
+        if not mobFolder or not dragonNumber then return end
 
-        local mob, target = getValidMob()
-        if mob and target then
-            humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+        for _, mob in ipairs(mobFolder:GetChildren()) do
+            local target = mob:FindFirstChild(mob.Name)
+            if target and target:IsA("BasePart") then
 
-            local args = {
-                "Breath",
-                "Mobs",
-                target
-            }
-
-            local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-            if dragon then
-                local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                if remote then
-                    remote:FireServer(unpack(args))
+                local healthValue = mob:FindFirstChild("Health")
+                if not healthValue then
+                    for _, desc in ipairs(mob:GetDescendants()) do
+                        if desc.Name == "Health" and desc:IsA("NumberValue") then
+                            healthValue = desc
+                            break
+                        end
+                    end
                 end
+
+                if healthValue and healthValue.Value == 0 then
+                    print('Yes')
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                    continue 
+                end
+
+                if firstStart == false then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                end
+                -- ยิง
+                local args = {
+                    "Breath",
+                    "Mobs",
+                    target
+                }
+
+                local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                if dragon then
+                    local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                    if remote then
+                        remote:FireServer(unpack(args))
+                    end
+                end
+
+                break
             end
         end
     end
-
+    autoAttackMob()
     AttackMobToggle:OnChanged(function()
-        if AttackMobToggle.Value then
+        if Options.AttactMob.Value then
             isAutoAttackingMob = true
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait(0.1) -- ลดเวลาลงได้อีกถ้าเครื่องไหว
+                    task.wait()
                 end
             end)
         else
             isAutoAttackingMob = false
+            firstStart = false
         end
     end)
 
