@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.9.0",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -155,13 +155,13 @@ do
 
     local AttackSpeedSlider = Tabs.Attack:AddSlider("AttackSpeed", {
         Title = "AttackSpeed",
-        Description = "0 is faster",
+        Description = "1 is faster",
         Default = 0,
         Min = 0,
         Max = 1,
         Rounding = 2,
         Callback = function(ASPD)
-            Aspd = ASPD
+            Aspd = 1 - ASPD
         end
     })
 
