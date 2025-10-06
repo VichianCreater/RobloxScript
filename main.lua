@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5",
+    Title = "Dragon Adventure | 1.9.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -12,6 +12,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    Attact = Window:AddTab({ Title = "Attact", Icon = "crown" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -151,7 +152,7 @@ do
     Options.HarvestToggle:SetValue(false)
 
     -----------------------------------------------------------------------------------------------------------------
-    local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
+    local AttackMobToggle = Tabs.Attact:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
     local isAutoAttackingMob = false
     local firstStart = false
 
@@ -219,6 +220,7 @@ do
         end
     end
 
+    local Aspd = 0
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
@@ -226,7 +228,7 @@ do
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait()
+                    task.wait(Aspd)
                 end
             end)
         else
@@ -236,6 +238,20 @@ do
     end)
 
     Options.AttactMob:SetValue(false)
+
+    local AttactSpeedSlider = Tabs.Attact:AddSlider("AttactSpeed", {
+        Title = "AttactSpeed",
+        Description = "0 is faster",
+        Default = 0,
+        Min = 0,
+        Max = 1,
+        Rounding = 2,
+        Callback = function(ASPD)
+            Aspd = ASPD
+        end
+    })
+
+    AttactSpeedSlider:SetValue(0)
 
 end
 
