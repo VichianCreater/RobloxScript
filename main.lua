@@ -167,6 +167,8 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             local target = mob:FindFirstChild(mob.Name) -- ตัว BasePart ที่จะวาร์ปไปตี
             if target and target:IsA("BasePart") then
+
+                -- เช็คเลือดก่อน ว่าตายหรือยัง
                 local healthValue = mob:FindFirstChild("Health")
                 if not healthValue then
                     for _, desc in ipairs(mob:GetDescendants()) do
@@ -177,21 +179,15 @@ do
                     end
                 end
 
-                if healthValue then
-                    if healthValue.Value == 0 then
-                        humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
-                    else
-                        
-                    end
-                else
-
-                end
-                if firstStart == false then
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
+                if healthValue and healthValue.Value == 0 then
+                    print("ข้าม mob ที่ตายแล้ว: " .. mob.Name)
+                    continue -- (Lua ไม่มี continue จริง ๆ แต่จำลองได้ด้วย if-else)
                 end
 
-                firstStart = true
+                -- วาร์ปไป
+                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
 
+                -- ยิง
                 local args = {
                     "Breath",
                     "Mobs",
@@ -199,7 +195,6 @@ do
                 }
 
                 local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                print("Dragon number:", dragonNumber)
                 if dragon then
                     local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
                     if remote then
@@ -207,12 +202,11 @@ do
                     end
                 end
 
-                break -- ตีแค่ 1 ตัว แล้วออก
+                break -- ตีแค่ 1 ตัว แล้วออกจากฟังก์ชัน
             end
         end
     end
-
-
+    
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
             isAutoAttackingMob = true
