@@ -166,7 +166,7 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             for _, child in ipairs(mob:GetChildren()) do
                 if child:IsA("BasePart") then
-                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 5, 0))
+                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 0, 0))
 
                     local args = {
                         "Breath",
@@ -207,3 +207,4 @@ do
     Options.AttactMob:SetValue(false)
 
 end
+
