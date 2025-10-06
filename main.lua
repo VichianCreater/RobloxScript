@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.1",
+    Title = "Dragon Adventure | 1.8.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -190,14 +190,13 @@ do
                         end
                     end
 
-                    -- ถ้าเลือดหมด → ข้ามตัวนี้
                     if healthValue then
-                        print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
+                        -- print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
                         if healthValue.Value == 0 then
-                            break -- ข้าม child loop → ไป mob ตัวถัดไป
+                            break
                         end
                     else
-                        print("ไม่พบ Health ของ mob " .. mob.Name)
+                        -- print("ไม่พบ Health ของ mob " .. mob.Name)
                     end
 
                     -- ยิง
@@ -232,9 +231,9 @@ do
             end)
         else
             isAutoAttackingMob = false
-            print("Auto Attack Mob หยุดทำงาน")
+            -- print("Auto Attack Mob หยุดทำงาน")
         end
-        print("Toggle changed:", Options.AttactMob.Value)
+        -- print("Toggle changed:", Options.AttactMob.Value)
     end)
 
     Options.AttactMob:SetValue(false)
