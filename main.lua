@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.0",
+    Title = "Dragon Adventure | 1.8.1",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -166,29 +166,38 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             for _, child in ipairs(mob:GetChildren()) do
                 if child:IsA("BasePart") then
-                    -- ค้นหา Health แบบลึก (ใน descendants ของ mob)
-                    local healthValue = nil
-                    for _, desc in ipairs(mob:GetDescendants()) do
-                        if desc.Name == "Health" and desc:IsA("NumberValue") then
-                            healthValue = desc
-                            break
+                    humanoidRootPart.CFrame = CFrame.new(child.Position)
+
+                    -- หาค่า Health แบบลึก
+                    local healthValue = mob:FindFirstChild("Health") or child:FindFirstChild("Health")
+                    if not healthValue then
+                        healthValue = mob:FindFirstChildWhichIsA("NumberValue") or child:FindFirstChildWhichIsA("NumberValue")
+                        if not healthValue then
+                            for _, desc in ipairs(mob:GetDescendants()) do
+                                if desc.Name == "Health" and desc:IsA("NumberValue") then
+                                    healthValue = desc
+                                    break
+                                end
+                            end
+                            if not healthValue then
+                                for _, desc in ipairs(child:GetDescendants()) do
+                                    if desc.Name == "Health" and desc:IsA("NumberValue") then
+                                        healthValue = desc
+                                        break
+                                    end
+                                end
+                            end
                         end
                     end
 
-                    -- ถ้าเจอ Health และเลือดหมด → ข้ามไปตัวต่อไป
-                    if healthValue and healthValue.Value <= 0 then
-                        print("Mob " .. mob.Name .. " ตายแล้ว ข้ามไปตัวถัดไป")
-                        break
-                    end
-
-                    -- วาร์ปไปที่ mob ตัวนี้
-                    humanoidRootPart.CFrame = CFrame.new(child.Position)
-
-                    -- แสดง HP (ถ้ามี)
+                    -- ถ้าเลือดหมด → ข้ามตัวนี้
                     if healthValue then
-                        print("HP ของ " .. mob.Name .. ": " .. healthValue.Value)
+                        print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
+                        if healthValue.Value == 0 then
+                            break -- ข้าม child loop → ไป mob ตัวถัดไป
+                        end
                     else
-                        print("ไม่พบ Health ของ mob: " .. mob.Name)
+                        print("ไม่พบ Health ของ mob " .. mob.Name)
                     end
 
                     -- ยิง
@@ -206,7 +215,7 @@ do
                         end
                     end
 
-                    return -- โจมตีแค่ตัวเดียวต่อรอบ แล้วออก
+                    break -- ตีแค่ 1 ตัวจาก mob นี้ แล้วไป mob ถัดไป
                 end
             end
         end
