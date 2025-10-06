@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5 [Test]",
+    Title = "Dragon Adventure | 1.8.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -179,15 +179,12 @@ do
                 if healthValue then
                     -- ถ้าเลือดหมด ให้ข้าม mob ตัวนี้ไปตัวถัดไป
                     if healthValue.Value <= 0 then
-                        print("Mob " .. mob.Name .. " ตายแล้ว ข้ามไป")
-                        continue
+                        break
                     end
-                    print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
                 else
-                    print("ไม่พบ Health ของ mob " .. mob.Name)
+                    
                 end
 
-                -- วาร์ปไปที่ target
                 humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
 
                 local args = {
