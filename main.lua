@@ -154,18 +154,18 @@ do
     -----------------------------------------------------------------------------------------------------------------
 
     local AttackSpeedSlider = Tabs.Attack:AddSlider("AttackSpeed", {
-        Title = "AttackSpeed - Delay",
+        Title = "AttackSpeed",
         Description = "0 is faster",
-        Default = 0.5,
-        Min = 1,
-        Max = 0,
+        Default = 1,
+        Min = 0,
+        Max = 2,
         Rounding = 2,
         Callback = function(ASPD)
             Aspd = ASPD
         end
     })
 
-    AttackSpeedSlider:SetValue(0.5)
+    AttackSpeedSlider:SetValue(1)
 
     local AttackMobToggle = Tabs.Attack:AddToggle("AttackMob", {Title = "AUTO - AttackMob", Default = false })
     local isAutoAttackingMob = false
