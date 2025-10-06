@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.0",
+    Title = "Dragon Adventure | 1.8.2",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -178,9 +178,6 @@ do
                     end
                 end
 
-                print(healthValue)
-                print(healthValue.Value)
-                
                 if healthValue and healthValue.Value == 0 then
                     humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
                     continue 
@@ -203,6 +200,9 @@ do
                         remote:FireServer(unpack(args))
                     end
                 end
+
+                print(healthValue)
+                print(healthValue.Value)
 
                 break
             end
