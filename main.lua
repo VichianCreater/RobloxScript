@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -195,9 +195,12 @@ do
                 end
 
                 if healthValue then
+                    print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
                     if healthValue.Value == 0 then
                         humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
                     end
+                else
+                    print("ไม่พบ Health ของ mob " .. mob.Name)
                 end
 
                 -- ยิง
