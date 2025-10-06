@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.6",
+    Title = "Dragon Adventure | 1.8.7",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -153,81 +153,52 @@ do
     -----------------------------------------------------------------------------------------------------------------
     local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
     local isAutoAttackingMob = false
-    local firstStart = false
+    local dragonNumber = nil
 
-    local currentTarget = nil
-    local healthChangedConnection = nil
-
-    local function setTarget(mob)
-        -- ยกเลิกการฟังเดิม
-        if healthChangedConnection then
-            healthChangedConnection:Disconnect()
-            healthChangedConnection = nil
-        end
-
-        currentTarget = mob
-        if not mob then return end
-
-        local healthValue = mob:FindFirstChild("Health")
-        if not healthValue then
-            for _, desc in ipairs(mob:GetDescendants()) do
-                if desc.Name == "Health" and desc:IsA("NumberValue") then
-                    healthValue = desc
-                    break
-                end
-            end
-        end
-
-        if healthValue then
-            healthChangedConnection = healthValue.Changed:Connect(function(newVal)
-                if newVal == 0 then
-                    -- ตัวนี้ตาย → หา target ใหม่เลย
-                    currentTarget = nil
-                end
-            end)
-        end
-    end
-
-    local function autoAttackMob()
+    local function getValidMob()
         local mobFolder = workspace:FindFirstChild("MobFolder")
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local dragonNumber = getDragonNumber()
+        if not mobFolder then return nil end
 
-        if not mobFolder or not dragonNumber then return end
-
-        -- ถ้าไม่มี target หรือ target ตายแล้ว ให้หาใหม่
-        if not currentTarget or (currentTarget and currentTarget:FindFirstChild("Health") and currentTarget.Health.Value == 0) then
-            currentTarget = nil
-            for _, mob in ipairs(mobFolder:GetChildren()) do
-                local target = mob:FindFirstChild(mob.Name)
-                if target and target:IsA("BasePart") then
-                    local healthValue = mob:FindFirstChild("Health")
-                    if not healthValue then
-                        for _, desc in ipairs(mob:GetDescendants()) do
-                            if desc.Name == "Health" and desc:IsA("NumberValue") then
-                                healthValue = desc
-                                break
-                            end
-                        end
-                    end
-
-                    if healthValue and healthValue.Value > 0 then
-                        setTarget(mob)
+        for _, mob in ipairs(mobFolder:GetChildren()) do
+            local healthValue = mob:FindFirstChild("Health")
+            if not healthValue then
+                for _, desc in ipairs(mob:GetDescendants()) do
+                    if desc.Name == "Health" and desc:IsA("NumberValue") then
+                        healthValue = desc
                         break
                     end
                 end
             end
+
+            if healthValue and healthValue.Value > 0 then
+                local target = mob:FindFirstChild(mob.Name)
+                if target and target:IsA("BasePart") then
+                    return mob, target
+                end
+            end
         end
 
-        if currentTarget then
-            humanoidRootPart.CFrame = CFrame.new(currentTarget[mob.Name].Position + Vector3.new(0, 0, 0))
+        return nil, nil
+    end
+
+    local function autoAttackMob()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+        if not dragonNumber then
+            dragonNumber = getDragonNumber()
+            if not dragonNumber then return end
+        end
+
+        local mob, target = getValidMob()
+        if mob and target then
+            humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
 
             local args = {
                 "Breath",
                 "Mobs",
-                currentTarget[mob.Name]
+                target
             }
 
             local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
@@ -240,22 +211,18 @@ do
         end
     end
 
-
     AttackMobToggle:OnChanged(function()
-        if Options.AttactMob.Value then
+        if AttackMobToggle.Value then
             isAutoAttackingMob = true
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait()
+                    task.wait(0.1) -- ลดเวลาลงได้อีกถ้าเครื่องไหว
                 end
             end)
         else
             isAutoAttackingMob = false
-            firstStart = false
-            -- print("Auto Attack Mob หยุดทำงาน")
         end
-        -- print("Toggle changed:", Options.AttactMob.Value)
     end)
 
     Options.AttactMob:SetValue(false)
