@@ -153,21 +153,9 @@ do
     -----------------------------------------------------------------------------------------------------------------
     local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
     local isAutoAttackingMob = false
-    local attackingConnection = nil
+    local firstStart = false
 
-    local function getHealthValue(mob)
-        local health = mob:FindFirstChild("Health")
-        if not health then
-            for _, desc in ipairs(mob:GetDescendants()) do
-                if desc.Name == "Health" and desc:IsA("NumberValue") then
-                    return desc
-                end
-            end
-        end
-        return health
-    end
-
-    local function startAutoAttack()
+    local function autoAttackMob()
         local mobFolder = workspace:FindFirstChild("MobFolder")
         local player = game.Players.LocalPlayer
         local character = player.Character or player.CharacterAdded:Wait()
@@ -176,43 +164,45 @@ do
 
         if not mobFolder or not dragonNumber then return end
 
-        -- หาตัวที่ยังไม่ตาย
         for _, mob in ipairs(mobFolder:GetChildren()) do
-            local target = mob:FindFirstChild(mob.Name)
+            local target = mob:FindFirstChild(mob.Name) -- ตัว BasePart ที่จะวาร์ปไปตี
             if target and target:IsA("BasePart") then
-                local health = getHealthValue(mob)
 
-                if health and health.Value > 0 then
-                    -- วาร์ปไป
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-
-                    -- ยิงทุก heartbeat จนกว่าจะตาย
-                    if attackingConnection then attackingConnection:Disconnect() end
-                    attackingConnection = game:GetService("RunService").Heartbeat:Connect(function()
-                        if not isAutoAttackingMob then attackingConnection:Disconnect() return end
-                        if health.Value <= 0 then
-                            attackingConnection:Disconnect()
-                            task.wait(0.1)
-                            startAutoAttack() -- ไปตัวถัดไปทันที
-                        else
-                            local args = {
-                                "Breath",
-                                "Mobs",
-                                target
-                            }
-
-                            local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                            if dragon then
-                                local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                                if remote then
-                                    remote:FireServer(unpack(args))
-                                end
-                            end
+                -- เช็คเลือดก่อน ว่าตายหรือยัง
+                local healthValue = mob:FindFirstChild("Health")
+                if not healthValue then
+                    for _, desc in ipairs(mob:GetDescendants()) do
+                        if desc.Name == "Health" and desc:IsA("NumberValue") then
+                            healthValue = desc
+                            break
                         end
-                    end)
-
-                    break
+                    end
                 end
+
+                if healthValue and healthValue.Value == 0 then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                    continue 
+                end
+
+                if firstStart == false then
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                end
+                -- ยิง
+                local args = {
+                    "Breath",
+                    "Mobs",
+                    target
+                }
+
+                local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                if dragon then
+                    local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                    if remote then
+                        remote:FireServer(unpack(args))
+                    end
+                end
+
+                break -- ตีแค่ 1 ตัว แล้วออกจากฟังก์ชัน
             end
         end
     end
@@ -220,16 +210,21 @@ do
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
             isAutoAttackingMob = true
-            startAutoAttack()
+            task.spawn(function()
+                while isAutoAttackingMob do
+                    autoAttackMob()
+                end
+            end)
         else
             isAutoAttackingMob = false
-            if attackingConnection then
-                attackingConnection:Disconnect()
-            end
+            firstStart = false
+            -- print("Auto Attack Mob หยุดทำงาน")
         end
+        -- print("Toggle changed:", Options.AttactMob.Value)
     end)
 
     Options.AttactMob:SetValue(false)
+
 end
 
 SaveManager:SetLibrary(Fluent)
