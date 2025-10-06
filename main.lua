@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.2",
+    Title = "Dragon Adventure | 1.8.5 [New]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -167,25 +167,35 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             local target = mob:FindFirstChild(mob.Name)
             if target and target:IsA("BasePart") then
-
-                local healthValue = mob:FindFirstChild("Health")
+                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                 if not healthValue then
-                    for _, desc in ipairs(mob:GetDescendants()) do
-                        if desc.Name == "Health" and desc:IsA("NumberValue") then
-                            healthValue = desc
-                            break
+                    healthValue = mob:FindFirstChildWhichIsA("NumberValue") or target:FindFirstChildWhichIsA("NumberValue")
+                    if not healthValue then
+                        healthValue = nil
+                        for _, desc in ipairs(mob:GetDescendants()) do
+                            if desc.Name == "Health" and desc:IsA("NumberValue") then
+                                healthValue = desc
+                                break
+                            end
+                        end
+                        if not healthValue then
+                            for _, desc in ipairs(target:GetDescendants()) do
+                                if desc.Name == "Health" and desc:IsA("NumberValue") then
+                                    healthValue = desc
+                                    break
+                                end
+                            end
                         end
                     end
                 end
 
-                if healthValue and healthValue.Value == 0 then
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-                    continue 
+                if healthValue then
+                    print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
+                else
+                    print("ไม่พบ Health ของ mob " .. mob.Name)
                 end
 
-                if firstStart == false then
-                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
-                end
                 -- ยิง
                 local args = {
                     "Breath",
