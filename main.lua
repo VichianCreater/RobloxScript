@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.8",
+    Title = "Dragon Adventure | 1.7.9",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -166,52 +166,45 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             for _, child in ipairs(mob:GetChildren()) do
                 if child:IsA("BasePart") then
-                    -- หาค่า Health ของ mob
-                    local healthValue = nil
-
-                    -- ลองหา Health โดยค้นหาใน descendants (เหมือนที่ใช้ก่อนหน้า)
-                    for _, desc in ipairs(mob:GetDescendants()) do
-                        if desc.Name == "Health" and desc:IsA("NumberValue") then
-                            healthValue = desc
-                            break
-                        end
+                    local healthValue = mob:FindFirstChild("Health")
+                    
+                    -- ถ้าเจอ Health และเลือดหมด → ข้ามไปตัวต่อไป
+                    if healthValue and healthValue.Value <= 0 then
+                        print("Mob " .. mob.Name .. " ตายแล้ว ข้ามไปตัวถัดไป")
+                        break
                     end
 
+                    -- วาร์ปไปที่ mob ตัวนี้
+                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 0, 0))
+
+                    -- แสดง HP (ถ้ามี)
                     if healthValue then
-                        if healthValue.Value == 0 then
-                            -- ถ้า mob ตายแล้ว ข้ามไปตัวถัดไป
-                            print("Mob " .. mob.Name .. " ตายแล้ว ข้าม")
-                            break
-                        else
-                            -- วาร์ปไปหา Mob ที่ยังมีชีวิต
-                            humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 0, 0))
-                            print("พบ Mob: " .. mob.Name .. " | HP = " .. healthValue.Value)
-
-                            -- เตรียมยิง
-                            local args = {
-                                "Breath",
-                                "Mobs",
-                                child
-                            }
-
-                            local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                            if dragon then
-                                local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                                if remote then
-                                    remote:FireServer(unpack(args))
-                                    print("โจมตี Mob: " .. mob.Name)
-                                end
-                            end
-
-                            return -- โจมตีตัวเดียวต่อรอบ
-                        end
+                        print("HP ของ " .. mob.Name .. ": " .. healthValue.Value)
                     else
-                        print("ไม่พบ Health ของ mob " .. mob.Name)
+                        print("ไม่พบ Health ของ mob: " .. mob.Name)
                     end
+
+                    -- ยิง
+                    local args = {
+                        "Breath",
+                        "Mobs",
+                        child
+                    }
+
+                    local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                    if dragon then
+                        local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                        if remote then
+                            remote:FireServer(unpack(args))
+                        end
+                    end
+
+                    return -- โจมตีแค่ตัวเดียวต่อรอบ แล้วออก
                 end
             end
         end
     end
+
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
