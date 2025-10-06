@@ -226,7 +226,7 @@ do
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait(0.1)
+                    task.wait()
                 end
             end)
         else
