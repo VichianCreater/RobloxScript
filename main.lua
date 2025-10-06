@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.0",
+    Title = "Dragon Adventure | 1.7.1",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -149,5 +149,68 @@ do
     end)
 
     Options.HarvestToggle:SetValue(false)
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- Toggle สำหรับเปิด/ปิด Auto Attack Mob
+    local AttackMobToggle = Tabs.Main:AddToggle("AttactMob", {Title = "AUTO - AttactMob", Default = false })
+    local isAutoAttackingMob = false
+
+    -- ฟังก์ชันสำหรับโจมตี Mob อันแรกที่เจอ
+    local function autoAttackMob()
+        local mobFolder = workspace:FindFirstChild("MobFolder")
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local dragonNumber = getDragonNumber()
+
+        if not mobFolder or not dragonNumber then return end
+
+        for _, mob in ipairs(mobFolder:GetChildren()) do
+            for _, child in ipairs(mob:GetChildren()) do
+                if child:IsA("BasePart") then
+                    -- วาร์ปไปที่ Mob
+                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 5, 0))
+
+                    -- สร้าง args สำหรับ Remote
+                    local args = {
+                        "Breath",
+                        "Mobs",
+                        child
+                    }
+
+                    -- ส่งคำสั่งโจมตี
+                    local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                    if dragon then
+                        local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                        if remote then
+                            remote:FireServer(unpack(args))
+                            print("โจมตี Mob: " .. child.Name)
+                        end
+                    end
+
+                    return -- โจมตีตัวแรกแล้วหยุดในรอบนี้
+                end
+            end
+        end
+    end
+
+    -- เปิด/ปิด Auto Attack Mob แบบลูป
+    AttackMobToggle:OnChanged(function()
+        if Options.AttactMob.Value then
+            isAutoAttackingMob = true
+            task.spawn(function()
+                while isAutoAttackingMob do
+                    autoAttackMob()
+                    wait(0.5) -- หน่วงเวลาต่อการโจมตี 0.5 วินาที
+                end
+            end)
+        else
+            isAutoAttackingMob = false
+            print("Auto Attack Mob หยุดทำงาน")
+        end
+        print("Toggle changed:", Options.AttactMob.Value)
+    end)
+
+    Options.AttactMob:SetValue(false)
 
 end
