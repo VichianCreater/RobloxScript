@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.5 [New]",
+    Title = "Dragon Adventure | 1.7.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -167,7 +167,11 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             local target = mob:FindFirstChild(mob.Name)
             if target and target:IsA("BasePart") then
-                humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                if firstStart == false then
+                    firstStart = true
+                    humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                end
+
                 local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                 if not healthValue then
                     healthValue = mob:FindFirstChildWhichIsA("NumberValue") or target:FindFirstChildWhichIsA("NumberValue")
@@ -192,6 +196,9 @@ do
 
                 if healthValue then
                     print("HP ของ mob " .. mob.Name .. " = " .. tostring(healthValue.Value))
+                    if tostring(healthValue.Value) == 0 then
+                        humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0, 0))
+                    end
                 else
                     print("ไม่พบ Health ของ mob " .. mob.Name)
                 end
