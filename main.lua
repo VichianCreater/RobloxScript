@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.7.9",
+    Title = "Dragon Adventure | 1.8.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -166,8 +166,15 @@ do
         for _, mob in ipairs(mobFolder:GetChildren()) do
             for _, child in ipairs(mob:GetChildren()) do
                 if child:IsA("BasePart") then
-                    local healthValue = mob:FindFirstChild("Health")
-                    
+                    -- ค้นหา Health แบบลึก (ใน descendants ของ mob)
+                    local healthValue = nil
+                    for _, desc in ipairs(mob:GetDescendants()) do
+                        if desc.Name == "Health" and desc:IsA("NumberValue") then
+                            healthValue = desc
+                            break
+                        end
+                    end
+
                     -- ถ้าเจอ Health และเลือดหมด → ข้ามไปตัวต่อไป
                     if healthValue and healthValue.Value <= 0 then
                         print("Mob " .. mob.Name .. " ตายแล้ว ข้ามไปตัวถัดไป")
@@ -175,7 +182,7 @@ do
                     end
 
                     -- วาร์ปไปที่ mob ตัวนี้
-                    humanoidRootPart.CFrame = CFrame.new(child.Position + Vector3.new(0, 0, 0))
+                    humanoidRootPart.CFrame = CFrame.new(child.Position)
 
                     -- แสดง HP (ถ้ามี)
                     if healthValue then
@@ -204,7 +211,6 @@ do
             end
         end
     end
-
 
     AttackMobToggle:OnChanged(function()
         if Options.AttactMob.Value then
