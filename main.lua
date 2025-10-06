@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.0",
+    Title = "Dragon Adventure | 1.8.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -213,7 +213,7 @@ do
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait(0.01)
+                    task.wait()
                 end
             end)
         else
