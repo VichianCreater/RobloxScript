@@ -178,7 +178,7 @@ do
                 end
 
                 if healthValue then
-                    if healthValue.Value = 0 then
+                    if healthValue.Value == 0 then
                         humanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 5, 0))
                     else
                         
