@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.9.0",
+    Title = "Dragon Adventure | 2.0.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -23,6 +23,7 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
+    Fishing = Window:AddTab({ Title = "Fishing", Icon = "swords" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -270,7 +271,126 @@ do
 
     Options.AttackMob:SetValue(false)
 
+    --------------------------------------------------------------------------------------------
+
+    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
+    local isAutoFishing = false
+    local isStartingFishing = false
+    local isMinigame = false
+    local Options = {}
+    local Player = game:GetService("Players")
+    local LocalPlayer = Player.LocalPlayer
+    local GUI = LocalPlayer.PlayerGui
+    local GuiService = game:GetService("GuiService")
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    local FishingGui = GUI:FindFirstChild("FishingGui")
+
+    -------------- กดเริ่มตกปลา
+    function StartFishing()
+        if not isStartingFishing then
+            isMinigame = false
+            if FishingGui and FishingGui.Enabled then
+                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
+                if ContainerFrame then
+                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
+                    if ButtonsFrame then
+                        local FishButton = ButtonsFrame:FindFirstChild("FishButton") 
+                        if FishButton then
+                            task.wait(0.001)
+                            GuiService.SelectedCoreObject = FishButton
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
+                            isStartingFishing = true
+                        end
+                    end
+                end
+            end
+        end
+    end
+    -------------------- กดหมุนเบ็ด
+    function ProcessFishing()
+        if not isMinigame then
+            if FishingGui and FishingGui.Enabled then
+                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
+                if ContainerFrame then
+                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
+                    if ButtonsFrame then
+                        local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
+                        if ReelButton then
+                            local CatchLabel = ReelButton:FindFirstChild("CatchLabel") 
+                            if CatchLabel and CatchLabel.Visible then
+                                task.wait(0.001)
+                                GuiService.SelectedCoreObject = ReelButton
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
+                                isMinigame = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    ----------------------- มินิเกมส์
+
+    local tolerance = 50
+    function ProcessMinigame()
+        while isMinigame do
+            wait(0.5)
+            if FishingGui and FishingGui.Enabled then
+                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
+                if ContainerFrame then
+                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
+                    local ReelingFrame = ContainerFrame:FindFirstChild("ReelingFrame")
+                    if ReelingFrame and ButtonsFrame then
+                        local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
+                        local SpinRingFrame = ReelingFrame:FindFirstChild("SpinRingFrame") 
+                        local SpinReelLabel = ReelingFrame:FindFirstChild("SpinReelLabel")
+                        if SpinRingFrame and SpinReelLabel then
+                            local spinRingRotation = math.floor(SpinRingFrame.Rotation)
+                            local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
+                            if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
+                                print("Success")
+                                task.wait(0.001)
+                                GuiService.SelectedCoreObject = ReelButton
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
+                                if spinRingRotation.Visible == false and spinReelLabelRotation.Visible == false then
+                                    isMinigame = false
+                                    StartFishing()
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    AutoFishingToggle:OnChanged(function()
+        if Options.AutoFishing.Value then
+            isAutoFishing = true
+            task.spawn(function()
+                while isAutoFishing do
+                    if not isStartingFishing then
+                        StartFishing()
+                    elseif isStartingFishing and not isMinigame then
+                        ProcessFishing()
+                    elseif isMinigame then
+                        MinigameFishing()
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        else
+            isAutoFishing = false
+            isStartingFishing = false
+            isMinigame = false
+        end
+    end)
+
+    Options.AutoFishing:SetValue(false)
+
 end
 
 Window:SelectTab(1)
-
