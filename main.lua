@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 1.8.6",
+    Title = "Dragon Adventure | 1.8.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -177,7 +177,6 @@ do
                     continue
                 end
 
-                -- หา Health
                 local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                 if not healthValue then
                     for _, desc in ipairs(mob:GetDescendants()) do
@@ -188,7 +187,6 @@ do
                     end
                 end
 
-                -- ถ้ามอนตายแล้ว และเป็นมอนที่เราวาร์ปไปล่าสุด → รีเซ็ต lastPosition และเริ่มใหม่
                 if healthValue and healthValue.Value == 0 then
                     if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
                         print("มอนตัวที่สองตาย รีเซ็ตตำแหน่ง")
@@ -198,7 +196,6 @@ do
                     continue
                 end
 
-                -- วาร์ป + ยิง
                 humanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 0, 0))
                 lastPosition = targetPos
                 attackCount += 1
@@ -217,7 +214,7 @@ do
                     end
                 end
 
-                break -- เจอมอนที่ยังไม่ตาย + ไม่ซ้ำ → วาร์ปแล้วออก
+                break 
             end
         end
     end
@@ -229,7 +226,7 @@ do
             task.spawn(function()
                 while isAutoAttackingMob do
                     autoAttackMob()
-                    task.wait()
+                    task.wait(0.5)
                 end
             end)
         else
