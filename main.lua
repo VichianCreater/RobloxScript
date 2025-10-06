@@ -230,8 +230,6 @@ do
     end)
 
     Options.AttactMob:SetValue(false)
-
-
 end
 
 SaveManager:SetLibrary(Fluent)
