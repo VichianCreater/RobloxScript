@@ -374,7 +374,7 @@ do
 
     function ProcessMinigame()
         while isMinigame do
-            wait(0.5)  -- หน่วงเวลาในการตรวจสอบ
+            wait(0.1)  -- หน่วงเวลาในการตรวจสอบ
 
             -- ตรวจสอบว่าเวลาผ่านไปแล้วหรือยัง
             if tick() - lastProcessed > 1 then  -- กดได้ใหม่เมื่อผ่านไป 1 วินาที
