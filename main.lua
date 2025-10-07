@@ -376,7 +376,7 @@ do
                     elseif isStartingFishing and not isMinigame then
                         ProcessFishing()
                     elseif isMinigame then
-                        MinigameFishing()
+                        ProcessMinigame()
                     end
                     task.wait(0.1)
                 end
