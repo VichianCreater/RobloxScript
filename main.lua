@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.1",
+    Title = "Dragon Adventure | 2.0.2",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -283,11 +283,14 @@ do
     local GuiService = game:GetService("GuiService")
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local FishingGui = GUI:FindFirstChild("FishingGui")
+    local isFishingComplete = false  -- ตัวแปรใหม่ เพื่อเก็บสถานะการตกปลาว่าจบหรือยัง
+    local isMinigameComplete = false  -- ตัวแปรใหม่ เพื่อเก็บสถานะมินิเกมส์ว่าเสร็จหรือยัง
 
     -------------- กดเริ่มตกปลา
     function StartFishing()
         if not isStartingFishing then
             isMinigame = false
+            isFishingComplete = false  -- เริ่มตกปลาใหม่
             if FishingGui and FishingGui.Enabled then
                 local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
                 if ContainerFrame then
@@ -297,18 +300,23 @@ do
                         if FishButton then
                             task.wait(0.001)
                             GuiService.SelectedCoreObject = FishButton
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                             isStartingFishing = true
+                            
+                            -- รอให้การตกปลาสำเร็จ (จะรอเวลา 3 วินาทีเพื่อให้มินิเกมส์พร้อม)
+                            task.wait(3)  -- ปรับเวลาตามที่ต้องการ
+                            isFishingComplete = true
                         end
                     end
                 end
             end
         end
     end
+
     -------------------- กดหมุนเบ็ด
     function ProcessFishing()
-        if not isMinigame then
+        if isFishingComplete and not isMinigame then
             if FishingGui and FishingGui.Enabled then
                 local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
                 if ContainerFrame then
@@ -320,9 +328,13 @@ do
                             if CatchLabel and CatchLabel.Visible then
                                 task.wait(0.001)
                                 GuiService.SelectedCoreObject = ReelButton
-                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
-                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
+                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                                 isMinigame = true
+                                isFishingComplete = false  -- ปิดสถานะตกปลาแล้ว
+
+                                -- เริ่มมินิเกมส์
+                                ProcessMinigame()
                             end
                         end
                     end
@@ -337,10 +349,9 @@ do
 
     function ProcessMinigame()
         while isMinigame do
-            -- ใช้เวลารอระหว่างการทำงาน
-            wait(0.5)
+            wait(0.5)  -- หน่วงเวลาในการตรวจสอบ
 
-            -- ตรวจสอบเวลาที่ผ่านมาแล้ว
+            -- ตรวจสอบว่าเวลาผ่านไปแล้วหรือยัง
             if tick() - lastProcessed > 1 then  -- กดได้ใหม่เมื่อผ่านไป 1 วินาที
                 if FishingGui and FishingGui.Enabled then
                     local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
@@ -354,6 +365,8 @@ do
                             if SpinRingFrame and SpinReelLabel then
                                 local spinRingRotation = math.floor(SpinRingFrame.Rotation)
                                 local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
+
+                                -- เช็คว่าการหมุนเสร็จแล้วหรือยัง
                                 if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
                                     print("Success")
 
@@ -370,6 +383,16 @@ do
                         end
                     end
                 end
+            end
+
+            -- ตรวจสอบว่า SpinRingFrame.Value == false หรือยัง (มินิเกมส์จบแล้ว)
+            local SpinRingFrame = FishingGui:FindFirstChild("ContainerFrame")
+                and FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
+                and FishingGui.ContainerFrame.ReelingFrame:FindFirstChild("SpinRingFrame")
+
+            if SpinRingFrame and not SpinRingFrame.Value then
+                print("Minigame Finished!")
+                isMinigame = false  -- เปลี่ยนสถานะมินิเกมส์เป็นจบ
             end
         end
     end
