@@ -391,8 +391,7 @@ do
             if ReelingFrame and not ReelingFrame.Visible then
                 print("Minigame Finished!")
                 isMinigame = false  -- เปลี่ยนสถานะเป็นจบมิน
-                wait(0.5)
-                StartFishing()
+                isStartingFishing = false
             end
         end
     end
@@ -421,8 +420,7 @@ do
                         if SpinRingFrame and not SpinRingFrame.Value then
                             print("Minigame Finished!")
                             isMinigame = false  -- เปลี่ยนสถานะเป็นจบมินิเกมส์แล้ว
-                            wait(0.5)
-                            StartFishing()
+                            isStartingFishing = false
                         else
                             -- ทำงานต่อในมินิเกมส์
                             ProcessMinigame()
