@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test Script 1.0.1",
+    Title = "Dragon Adventure | Test Script 1.0.5",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -95,7 +95,7 @@ do
     HarvestCollectToggle:OnChanged(function()
         if Options.HarvestToggle.Value then
             isCollectingHarvest = true
-            AutoHarvest()
+            autoHarvest()
         else
             isCollectingHarvest = false
             print("Harvesting stopped.")
