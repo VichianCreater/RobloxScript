@@ -22,7 +22,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "waves" }),
+    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "goal" }),
     Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     Fishing = Window:AddTab({ Title = "Fishing", Icon = "waves" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
