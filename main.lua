@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.2",
+    Title = "Dragon Adventure | 2.0.2 [Test]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -403,24 +403,42 @@ do
             isAutoFishing = true
             task.spawn(function()
                 while isAutoFishing do
+                    -- เริ่มการตกปลา
                     if not isStartingFishing then
                         StartFishing()
+
+                    -- หากตกปลาเสร็จแล้วเข้าสู่การหมุนเบ็ด
                     elseif isStartingFishing and not isMinigame then
                         ProcessFishing()
+
+                    -- หากเข้าสู่มินิเกมส์แล้ว, ให้ตรวจสอบการจบเกม
                     elseif isMinigame then
-                        ProcessMinigame()
+                        -- ตรวจสอบว่ามินิเกมส์เสร็จแล้ว
+                        local SpinRingFrame = FishingGui:FindFirstChild("ContainerFrame")
+                            and FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
+                            and FishingGui.ContainerFrame.ReelingFrame:FindFirstChild("SpinRingFrame")
+                        
+                        if SpinRingFrame and not SpinRingFrame.Value then
+                            print("Minigame Finished!")
+                            isMinigame = false  -- เปลี่ยนสถานะเป็นจบมินิเกมส์แล้ว
+                        else
+                            -- ทำงานต่อในมินิเกมส์
+                            ProcessMinigame()
+                        end
                     end
                     task.wait(0.1)
                 end
             end)
         else
+            -- เมื่อปิด AutoFishing, หยุดการทำงานทั้งหมด
             isAutoFishing = false
             isStartingFishing = false
             isMinigame = false
         end
     end)
 
-    Options.AutoFishing:SetValue(false)
+    Options.AutoFishing:SetValue(false)  -- ตั้งค่าเริ่มต้นให้ AutoFishing ปิด
+
 
 end
 
