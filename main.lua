@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.3 [Fishing]",
+    Title = "Dragon Adventure | 2.0.4 [Fishing]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -421,6 +421,8 @@ do
                         if SpinRingFrame and not SpinRingFrame.Value then
                             print("Minigame Finished!")
                             isMinigame = false  -- เปลี่ยนสถานะเป็นจบมินิเกมส์แล้ว
+                            wait(0.5)
+                            StartFishing()
                         else
                             -- ทำงานต่อในมินิเกมส์
                             ProcessMinigame()
