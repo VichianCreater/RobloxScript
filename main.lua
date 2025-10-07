@@ -369,7 +369,7 @@ do
     end
     ----------------------- มินิเกมส์
 
-    local tolerance = 50
+    local tolerance = 30
     local lastProcessed = 0  -- ตัวแปรเก็บเวลาในการกดครั้งล่าสุด
 
     function ProcessMinigame()
@@ -466,3 +466,4 @@ do
 end
 
 Window:SelectTab(1)
+
