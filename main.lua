@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.2 [Fishing]",
+    Title = "Dragon Adventure | 2.0.3 [Fishing]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -391,6 +391,8 @@ do
             if ReelingFrame and not ReelingFrame.Visible then
                 print("Minigame Finished!")
                 isMinigame = false  -- เปลี่ยนสถานะเป็นจบมิน
+                wait(0.5)
+                StartFishing()
             end
         end
     end
