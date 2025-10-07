@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test Script",
+    Title = "Dragon Adventure | Test Script 1.0.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -61,7 +61,7 @@ do
     local function AutoHarvest()
         while Options.HarvestToggle.Value do
             local trees = {}
-            
+
             for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
                 if v.Name == "LargeResourceNode" then
                     table.insert(trees, v)
@@ -79,13 +79,18 @@ do
                 
                 if part then
                     local treePosition = part.Position
+
                     game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
                     wait(1)
 
                     local billboardPart = tree:FindFirstChild("BillboardPart")
                     
                     if billboardPart then
-                        for _ = 1, 30 do
+                        local Health = billboardPart:FindFirstChild("Health")
+                        if Health and Health.Value <= 0 then
+                            print("Health is zero or below, moving to next tree.")
+                            break
+                        elseif Health and Health.Value > 0 then
                             attackTree(billboardPart)
                             task.wait(0.25)
                         end
@@ -93,7 +98,7 @@ do
                         print("BillboardPart not found, moving to next tree.")
                     end
                 end
-                print("Finished attacking, moving to next tree.")
+                print("Finished processing this tree.")
             end
 
             print("All trees have been processed. Restarting...")
@@ -101,6 +106,7 @@ do
         end
         print("Harvesting stopped.")
     end
+
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
