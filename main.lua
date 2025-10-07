@@ -333,30 +333,38 @@ do
     ----------------------- มินิเกมส์
 
     local tolerance = 50
+    local lastProcessed = 0  -- ตัวแปรเก็บเวลาในการกดครั้งล่าสุด
+
     function ProcessMinigame()
         while isMinigame do
+            -- ใช้เวลารอระหว่างการทำงาน
             wait(0.5)
-            if FishingGui and FishingGui.Enabled then
-                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
-                if ContainerFrame then
-                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
-                    local ReelingFrame = ContainerFrame:FindFirstChild("ReelingFrame")
-                    if ReelingFrame and ButtonsFrame then
-                        local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
-                        local SpinRingFrame = ReelingFrame:FindFirstChild("SpinRingFrame") 
-                        local SpinReelLabel = ReelingFrame:FindFirstChild("SpinReelLabel")
-                        if SpinRingFrame and SpinReelLabel then
-                            local spinRingRotation = math.floor(SpinRingFrame.Rotation)
-                            local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
-                            if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
-                                print("Success")
-                                task.wait(0.001)
-                                GuiService.SelectedCoreObject = ReelButton
-                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return,false,game)
-                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return,false,game)
-                                if spinRingRotation.Visible == false and spinReelLabelRotation.Visible == false then
-                                    isMinigame = false
-                                    StartFishing()
+
+            -- ตรวจสอบเวลาที่ผ่านมาแล้ว
+            if tick() - lastProcessed > 1 then  -- กดได้ใหม่เมื่อผ่านไป 1 วินาที
+                if FishingGui and FishingGui.Enabled then
+                    local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
+                    if ContainerFrame then
+                        local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
+                        local ReelingFrame = ContainerFrame:FindFirstChild("ReelingFrame")
+                        if ReelingFrame and ButtonsFrame then
+                            local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
+                            local SpinRingFrame = ReelingFrame:FindFirstChild("SpinRingFrame") 
+                            local SpinReelLabel = ReelingFrame:FindFirstChild("SpinReelLabel")
+                            if SpinRingFrame and SpinReelLabel then
+                                local spinRingRotation = math.floor(SpinRingFrame.Rotation)
+                                local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
+                                if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
+                                    print("Success")
+
+                                    -- อัพเดทเวลาของการกดครั้งล่าสุด
+                                    lastProcessed = tick()
+
+                                    -- กดปุ่ม ReelButton ใหม่
+                                    task.wait(0.001)
+                                    GuiService.SelectedCoreObject = ReelButton
+                                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                                 end
                             end
                         end
@@ -365,6 +373,7 @@ do
             end
         end
     end
+
 
     AutoFishingToggle:OnChanged(function()
         if Options.AutoFishing.Value then
@@ -376,14 +385,6 @@ do
                     elseif isStartingFishing and not isMinigame then
                         ProcessFishing()
                     elseif isMinigame then
-                        ProcessMinigame()
-                        wait(1)
-                        ProcessMinigame()
-                        wait(1)
-                        ProcessMinigame()
-                        wait(1)
-                        ProcessMinigame()
-                        wait(1)
                         ProcessMinigame()
                     end
                     task.wait(0.1)
