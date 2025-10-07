@@ -277,7 +277,6 @@ do
     local isAutoFishing = false
     local isStartingFishing = false
     local isMinigame = false
-    local Options = {}
     local Player = game:GetService("Players")
     local LocalPlayer = Player.LocalPlayer
     local GUI = LocalPlayer.PlayerGui
@@ -368,7 +367,7 @@ do
     end
 
     AutoFishingToggle:OnChanged(function()
-        if Options.AutoFishing.Value == true then
+        if Options.AutoFishing.Value then
             isAutoFishing = true
             task.spawn(function()
                 while isAutoFishing do
