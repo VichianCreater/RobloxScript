@@ -22,6 +22,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "waves" }),
     Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     Fishing = Window:AddTab({ Title = "Fishing", Icon = "waves" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -298,7 +299,7 @@ do
         end
     })
 
-    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing", Default = false })
+    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
     local isAutoFishing = false
     local isStartingFishing = false
     local isMinigame = false
@@ -449,6 +450,54 @@ do
     end)
 
     Options.AutoFishing:SetValue(false)
+
+    --------------------------------------------------------------------------------------------
+    local Dropdown = Tabs.TeleportMap:AddDropdown("SelectMap", {
+        Title = "SelectMap",
+        Values = {"None", "Glassland", "Jungle", "Volcano", "Tundra", "Ocean", "Desert", "Fantasy", "Wasteland", "Prehistoric", "Shinrin"},
+        Multi = false,
+        Default = 1,
+    })
+
+    local mapArgs = nil
+
+    Dropdown:SetValue("None")
+
+    Dropdown:OnChanged(function(Value)
+        print("Dropdown changed:", Value)
+        if Value == "None" then
+            mapArgs = nil
+        elseif Value == "Glassland" then
+            mapArgs = 3475419198
+        elseif Value == "Jungle" then
+            mapArgs = 3475422608
+        elseif Value == "Volcano" then
+            mapArgs = 3487210751
+        elseif Value == "Tundra" then
+            mapArgs = 3623549100
+        elseif Value == "Ocean" then
+            mapArgs = 3737848045
+        elseif Value == "Desert" then
+            mapArgs = 3752680052
+        elseif Value == "Fantasy" then
+            mapArgs = 4174118306
+        elseif Value == "Wasteland" then
+            mapArgs = 4728805070
+        elseif Value == "Prehistoric" then
+            mapArgs = 4869039553
+        elseif Value == "Shinrin" then
+            mapArgs = 125804922932357
+        end
+    end)
+
+    Tabs.TeleportMap:AddButton({
+        Title = "Teleport To Map",
+        Description = "Click To Teleport Selected Map",
+        Callback = function()
+            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(mapArgs)
+        end
+    })
+
 end
 
 Window:SelectTab(1)
