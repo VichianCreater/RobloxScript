@@ -377,6 +377,14 @@ do
                         ProcessFishing()
                     elseif isMinigame then
                         ProcessMinigame()
+                        wait(1)
+                        ProcessMinigame()
+                        wait(1)
+                        ProcessMinigame()
+                        wait(1)
+                        ProcessMinigame()
+                        wait(1)
+                        ProcessMinigame()
                     end
                     task.wait(0.1)
                 end
