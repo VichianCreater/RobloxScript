@@ -280,17 +280,17 @@ do
                 if v.Name == "Zone" then
                     local targetPosition
                     if v:IsA("Model") then
-                        if v.PrimaryPart then
-                            targetPosition = v.PrimaryPart.Position
+                        if v.WorldPivot then
+                            targetPosition = v.WorldPivot.Position
                         else
-                            targetPosition = v:FindFirstChildOfClass("Part").Position
+                            targetPosition = v:FindFirstChildOfClass("WorldPivot").Position
                         end
-                    elseif v:IsA("Part") then
+                    elseif v:IsA("WorldPivot") then
                         targetPosition = v.Position
                     end
                     
                     if targetPosition then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 5, 0))
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 60, 0))
                     end
                     break
                 end
@@ -298,7 +298,7 @@ do
         end
     })
 
-    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
+    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing", Default = false })
     local isAutoFishing = false
     local isStartingFishing = false
     local isMinigame = false
@@ -308,14 +308,14 @@ do
     local GuiService = game:GetService("GuiService")
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local FishingGui = GUI:FindFirstChild("FishingGui")
-    local isFishingComplete = false  -- ตัวแปรใหม่ เพื่อเก็บสถานะการตกปลาว่าจบหรือยัง
-    local isMinigameComplete = false  -- ตัวแปรใหม่ เพื่อเก็บสถานะมินิเกมส์ว่าเสร็จหรือยัง
+    local isFishingComplete = false
+    local isMinigameComplete = false
 
     -------------- กดเริ่มตกปลา
     function StartFishing()
         if not isStartingFishing then
             isMinigame = false
-            isFishingComplete = false  -- เริ่มตกปลาใหม่
+            isFishingComplete = false
             if FishingGui and FishingGui.Enabled then
                 local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
                 if ContainerFrame then
@@ -328,9 +328,8 @@ do
                             VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
                             VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                             isStartingFishing = true
-                            
-                            -- รอให้การตกปลาสำเร็จ (จะรอเวลา 3 วินาทีเพื่อให้มินิเกมส์พร้อม)
-                            task.wait(3)  -- ปรับเวลาตามที่ต้องการ
+
+                            task.wait(3)
                             isFishingComplete = true
                         end
                     end
@@ -356,9 +355,8 @@ do
                                 VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
                                 VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
                                 isMinigame = true
-                                isFishingComplete = false  -- ปิดสถานะตกปลาแล้ว
+                                isFishingComplete = false
 
-                                -- เริ่มมินิเกมส์
                                 ProcessMinigame()
                             end
                         end
@@ -370,14 +368,13 @@ do
     ----------------------- มินิเกมส์
 
     local tolerance = 30
-    local lastProcessed = 0  -- ตัวแปรเก็บเวลาในการกดครั้งล่าสุด
+    local lastProcessed = 0
 
     function ProcessMinigame()
         while isMinigame do
-            wait(0.1)  -- หน่วงเวลาในการตรวจสอบ
+            wait(0.1)
 
-            -- ตรวจสอบว่าเวลาผ่านไปแล้วหรือยัง
-            if tick() - lastProcessed > 1 then  -- กดได้ใหม่เมื่อผ่านไป 1 วินาที
+            if tick() - lastProcessed > 1 then 
                 if FishingGui and FishingGui.Enabled then
                     local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
                     if ContainerFrame then
@@ -391,14 +388,11 @@ do
                                 local spinRingRotation = math.floor(SpinRingFrame.Rotation)
                                 local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
 
-                                -- เช็คว่าการหมุนเสร็จแล้วหรือยัง
                                 if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
                                     print("Success")
 
-                                    -- อัพเดทเวลาของการกดครั้งล่าสุด
                                     lastProcessed = tick()
 
-                                    -- กดปุ่ม ReelButton ใหม่
                                     task.wait(0.001)
                                     GuiService.SelectedCoreObject = ReelButton
                                     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
@@ -415,7 +409,7 @@ do
 
             if ReelingFrame and not ReelingFrame.Visible then
                 print("Minigame Finished!")
-                isMinigame = false  -- เปลี่ยนสถานะเป็นจบมิน
+                isMinigame = false
                 isStartingFishing = false
             end
         end
@@ -427,27 +421,20 @@ do
             isAutoFishing = true
             task.spawn(function()
                 while isAutoFishing do
-                    -- เริ่มการตกปลา
                     if not isStartingFishing then
                         StartFishing()
-
-                    -- หากตกปลาเสร็จแล้วเข้าสู่การหมุนเบ็ด
                     elseif isStartingFishing and not isMinigame then
                         ProcessFishing()
-
-                    -- หากเข้าสู่มินิเกมส์แล้ว, ให้ตรวจสอบการจบเกม
                     elseif isMinigame then
-                        -- ตรวจสอบว่ามินิเกมส์เสร็จแล้ว
                         local SpinRingFrame = FishingGui:FindFirstChild("ContainerFrame")
                             and FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
                             and FishingGui.ContainerFrame.ReelingFrame:FindFirstChild("SpinRingFrame")
                         
                         if SpinRingFrame and not SpinRingFrame.Value then
                             print("Minigame Finished!")
-                            isMinigame = false  -- เปลี่ยนสถานะเป็นจบมินิเกมส์แล้ว
+                            isMinigame = false
                             isStartingFishing = false
                         else
-                            -- ทำงานต่อในมินิเกมส์
                             ProcessMinigame()
                         end
                     end
@@ -455,7 +442,6 @@ do
                 end
             end)
         else
-            -- เมื่อปิด AutoFishing, หยุดการทำงานทั้งหมด
             isAutoFishing = false
             isStartingFishing = false
             isMinigame = false
@@ -466,4 +452,3 @@ do
 end
 
 Window:SelectTab(1)
-
