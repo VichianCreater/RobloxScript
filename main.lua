@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.2 [Test]",
+    Title = "Dragon Adventure | 2.0.2 [Fishing]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -385,14 +385,12 @@ do
                 end
             end
 
-            -- ตรวจสอบว่า SpinRingFrame.Value == false หรือยัง (มินิเกมส์จบแล้ว)
-            local SpinRingFrame = FishingGui:FindFirstChild("ContainerFrame")
-                and FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
-                and FishingGui.ContainerFrame.ReelingFrame:FindFirstChild("SpinRingFrame")
+            local ReelingFrame = game:GetService("Players").LocalPlayer.PlayerGui.FishingGui:FindFirstChild("ContainerFrame")
+            and game:GetService("Players").LocalPlayer.PlayerGui.FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
 
-            if SpinRingFrame and not SpinRingFrame.Value then
+            if ReelingFrame and not ReelingFrame.Visible then
                 print("Minigame Finished!")
-                isMinigame = false  -- เปลี่ยนสถานะมินิเกมส์เป็นจบ
+                isMinigame = false  -- เปลี่ยนสถานะเป็นจบมิน
             end
         end
     end
