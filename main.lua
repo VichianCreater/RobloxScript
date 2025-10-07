@@ -23,7 +23,7 @@ local Window = Fluent:CreateWindow({
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
-    Fishing = Window:AddTab({ Title = "Fishing", Icon = "swords" }),
+    Fishing = Window:AddTab({ Title = "Fishing", Icon = "fish" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -393,4 +393,3 @@ do
 end
 
 Window:SelectTab(1)
-
