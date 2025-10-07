@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.4 [Fishing]",
+    Title = "Dragon Adventure | 2.0.5 [Fishing]",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -272,6 +272,31 @@ do
     Options.AttackMob:SetValue(false)
 
     --------------------------------------------------------------------------------------------
+    Tabs.Fishing:AddButton({
+        Title = "Teleport To Fishing Zone",
+        Description = "Click To Teleport",
+        Callback = function()
+            for _, v in pairs(workspace.Interactions.Nodes.Fishing:GetDescendants()) do
+                if v.Name == "Zone" then
+                    local targetPosition
+                    if v:IsA("Model") then
+                        if v.PrimaryPart then
+                            targetPosition = v.PrimaryPart.Position
+                        else
+                            targetPosition = v:FindFirstChildOfClass("Part").Position
+                        end
+                    elseif v:IsA("Part") then
+                        targetPosition = v.Position
+                    end
+                    
+                    if targetPosition then
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 5, 0))
+                    end
+                    break
+                end
+            end
+        end
+    })
 
     local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
     local isAutoFishing = false
@@ -437,9 +462,7 @@ do
         end
     end)
 
-    Options.AutoFishing:SetValue(false)  -- ตั้งค่าเริ่มต้นให้ AutoFishing ปิด
-
-
+    Options.AutoFishing:SetValue(false)
 end
 
 Window:SelectTab(1)
