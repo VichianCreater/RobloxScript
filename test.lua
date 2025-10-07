@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test Script 1.0.0",
+    Title = "Dragon Adventure | Test Script 1.0.1",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -46,7 +46,6 @@ do
 
         if dragonNumber then
             local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
-
             if playSoundRemote then
                 playSoundRemote:FireServer(unpack(args))
                 print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
@@ -58,54 +57,36 @@ do
         end
     end
 
-    local function AutoHarvest()
+    local function autoHarvest()
         while Options.HarvestToggle.Value do
-            local trees = {}
-
-            for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
-                if v.Name == "LargeResourceNode" then
-                    table.insert(trees, v)
-                end
-            end
-
             for _, v in pairs(workspace.Interactions.Nodes.Food:GetDescendants()) do
                 if v.Name == "LargeFoodNode" then
-                    table.insert(trees, v)
-                end
-            end
-
-            for _, tree in ipairs(trees) do
-                local part = tree:FindFirstChildWhichIsA("BasePart")
-                
-                if part then
-                    local treePosition = part.Position
-
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                    wait(1)
-
-                    local billboardPart = tree:FindFirstChild("BillboardPart")
+                    local targetPosition = v.WorldPivot.Position
+                    local BillboardPart = v:FindFirstChild("BillboardPart")
                     
-                    if billboardPart then
-                        local Health = billboardPart:FindFirstChild("Health")
-                        if Health and Health.Value <= 0 then
-                            print("Health is zero or below, moving to next tree.")
-                            break
-                        elseif Health and Health.Value > 0 then
-                            attackTree(billboardPart)
-                            task.wait(0.25)
+                    if BillboardPart then
+                        local Health = BillboardPart:FindFirstChild("Health")
+                        if Health then
+                            -- ตีไปเรื่อยๆ จนกว่าจะเลือดเหลือ 0
+                            while Health.Value > 0 do
+                                attackTree(BillboardPart)  -- เรียกฟังก์ชันที่ใช้ในการโจมตี
+                                wait(1)  -- หน่วงเวลาเล็กน้อยเพื่อไม่ให้ตีเร็วเกินไป
+                            end
+                            
+                            -- หลังจาก Health = 0 แล้ว ให้วาร์ปไปยังตำแหน่งใหม่
+                            if Health.Value <= 0 then
+                                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 60, 0))
+                                print("Tree destroyed, moving to next target!")
+                                break  -- ออกจากลูปหลังจากที่วาร์ปไปต้นไม้ต้นใหม่
+                            end
                         end
-                    else
-                        print("BillboardPart not found, moving to next tree.")
                     end
                 end
-                print("Finished processing this tree.")
             end
-
-            print("All trees have been processed. Restarting...")
-            wait(1)
+            wait(0.1)  -- หน่วงเวลาระหว่างการวนลูป
         end
-        print("Harvesting stopped.")
     end
+
 
 
     local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
