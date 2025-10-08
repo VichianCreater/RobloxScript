@@ -22,7 +22,7 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "goal" }),
+    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "map-pin" }),
     Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     Fishing = Window:AddTab({ Title = "Fishing", Icon = "waves" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
@@ -142,7 +142,7 @@ do
         end
     end
 
-    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest [Update]", Default = false })
+    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
 
     HarvestCollectToggle:OnChanged(function()
@@ -288,7 +288,7 @@ do
         end
     })
 
-    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing", Default = false })
+    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
     local isAutoFishing = false
     local isStartingFishing = false
     local isMinigame = false
