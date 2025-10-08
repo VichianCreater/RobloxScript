@@ -100,28 +100,23 @@ do
 
             if playSoundRemote then
                 playSoundRemote:FireServer(unpack(args))
-                print("Attack sent to tree at position: " .. tostring(billboardPart.Position))
-            else
-                print("PlaySoundRemote not found.")
             end
-        else
-            print("No valid dragon number found.")
         end
     end
 
     local function AutoHarvest()
         while Options.HarvestToggle.Value do
             local trees = {}
-            
-            for _, v in pairs(workspace.Interactions.Nodes.Resources:GetDescendants()) do
-                if v.Name == "LargeResourceNode" then
-                    table.insert(trees, v)
-                end
-            end
 
             for _, v in pairs(workspace.Interactions.Nodes.Food:GetDescendants()) do
                 if v.Name == "LargeFoodNode" then
-                    table.insert(trees, v)
+                    local billboardPart = v:FindFirstChild("BillboardPart")
+                    if billboardPart then
+                        local Health = billboardPart:FindFirstChild("Health")
+                        if Health and Health.Value > 0 then
+                            table.insert(trees, v)
+                        end
+                    end
                 end
             end
 
@@ -140,20 +135,14 @@ do
                             attackTree(billboardPart)
                             task.wait(0.25)
                         end
-                    else
-                        print("BillboardPart not found, moving to next tree.")
                     end
                 end
-                print("Finished attacking, moving to next tree.")
             end
-
-            print("All trees have been processed. Restarting...")
-            wait(1)
+            wait(0.01)
         end
-        print("Harvesting stopped.")
     end
 
-    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
+    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest [Update]", Default = false })
     local isCollectingHarvest = false
 
     HarvestCollectToggle:OnChanged(function()
@@ -299,7 +288,7 @@ do
         end
     })
 
-    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
+    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing", Default = false })
     local isAutoFishing = false
     local isStartingFishing = false
     local isMinigame = false
