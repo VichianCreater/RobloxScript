@@ -158,6 +158,32 @@ do
 
     Options.HarvestToggle:SetValue(false)
 
+    local function ImmortalDragon()
+        local dragonNumber = getDragonNumber()
+        if not dragonNumber then
+            warn("No dragon found for the player!")
+            return
+        end
+
+        local playerDragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
+        local dragon = playerDragonsFolder:FindFirstChild(dragonNumber)
+
+        if dragon then
+            local deadStatus = dragon:FindFirstChild("Data"):FindFirstChild("Dead")
+            if deadStatus then
+                deadStatus.Value = false
+            end
+        end
+    end
+
+    Tabs.Main:AddButton({
+        Title = "Immortal Dragon",
+        Description = "Click When Your Dragon Is Dead",
+        Callback = function()
+            ImmortalDragon()
+        end
+    })
+
     -----------------------------------------------------------------------------------------------------------------
 
     local Aspd = 1
