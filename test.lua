@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test Script 1.0.0",
+    Title = "Dragon Adventure | Test Script",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -56,7 +56,7 @@ do
             print("No valid dragon number found.")
         end
     end
-
+    local firstProgress = false
     local function autoHarvest()
         while Options.HarvestToggle.Value do
             local allNodes = {}  -- สร้างตะกร้าเก็บ nodes ทั้งหมด
@@ -81,6 +81,11 @@ do
                             wait(1)  -- รอระหว่างการโจมตี
                         end
 
+                        if firstProgress then
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 60, 0))
+                            firstProgress = false
+                        end
+
                         -- หลังจาก Health เป็น 0 แล้ว, วาร์ปไปตำแหน่งถัดไป
                         if Health.Value <= 0 then
                             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 60, 0))
@@ -99,9 +104,11 @@ do
 
     HarvestCollectToggle:OnChanged(function()
         if Options.HarvestToggle.Value then
+            firstProgress = true
             isCollectingHarvest = true
             autoHarvest()
         else
+            firstProgress = false
             isCollectingHarvest = false
             print("Harvesting stopped.")
         end
