@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.0.5 [Fishing]",
+    Title = "Dragon Adventure | 2.5.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -104,36 +104,62 @@ do
         end
     end
 
+    local predefinedPositions = {
+        Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
+        Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
+        Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
+        Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
+        Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
+        Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
+        Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
+        Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
+        Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
+        Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375)
+    }
+
     local function AutoHarvest()
         while Options.HarvestToggle.Value do
-            local trees = {}
+            for _, position in ipairs(predefinedPositions) do
+                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                wait(0.01)
+                local regionSize = Vector3.new(10, 10, 10)
+                local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
-            for _, v in pairs(workspace.Interactions.Nodes.Food:GetDescendants()) do
-                if v.Name == "LargeFoodNode" then
-                    local billboardPart = v:FindFirstChild("BillboardPart")
-                    if billboardPart then
-                        local Health = billboardPart:FindFirstChild("Health")
-                        if Health and Health.Value > 0 then
-                            table.insert(trees, v)
+                local partsInRegion = workspace:FindPartsInRegion3(region, nil, math.huge)
+                local trees = {}
+
+                for _, part in pairs(partsInRegion) do
+                    if part.Parent and part.Parent.Name == "LargeFoodNode" then
+                        local billboardPart = part.Parent:FindFirstChild("BillboardPart")
+                        if billboardPart then
+                            local Health = billboardPart:FindFirstChild("Health")
+                            if Health and Health.Value > 0 then
+                                table.insert(trees, part.Parent)
+                            end
                         end
                     end
                 end
-            end
 
-            for _, tree in ipairs(trees) do
-                local part = tree:FindFirstChildWhichIsA("BasePart")
-                
-                if part then
-                    local treePosition = part.Position
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                    wait(1)
+                if #trees > 0 then
+                    for _, tree in ipairs(trees) do
+                        local part = tree:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            local treePosition = part.Position
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
+                            wait(1)
 
-                    local billboardPart = tree:FindFirstChild("BillboardPart")
-                    
-                    if billboardPart then
-                        for _ = 1, 30 do
-                            attackTree(billboardPart)
-                            task.wait(0.25)
+                            local billboardPart = tree:FindFirstChild("BillboardPart")
+                            if billboardPart then
+                                while true do
+                                    local Health = billboardPart:FindFirstChild("Health")
+                                    if Health and Health.Value > 0 then
+                                        attackTree(billboardPart)
+                                        task.wait(0.3)
+                                    else
+                                        break
+                                    end
+                                end
+                            end
                         end
                     end
                 end
