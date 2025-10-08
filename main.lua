@@ -203,7 +203,7 @@ do
     end
 
     Tabs.Main:AddButton({
-        Title = "Immortal Dragon",
+        Title = "Revive To God Mode",
         Description = "Click When Your Dragon Is Dead",
         Callback = function()
             ImmortalDragon()
