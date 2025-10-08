@@ -121,7 +121,7 @@ do
         while Options.HarvestToggle.Value do
             for _, position in ipairs(predefinedPositions) do
                 game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                wait(0.01)
+                wait(0.1)
                 local regionSize = Vector3.new(10, 10, 10)
                 local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
@@ -164,7 +164,7 @@ do
                     end
                 end
             end
-            wait(0.01)
+            wait(0.1)
         end
     end
 
@@ -495,7 +495,7 @@ do
     --------------------------------------------------------------------------------------------
     local Dropdown = Tabs.TeleportMap:AddDropdown("SelectMap", {
         Title = "SelectMap",
-        Values = {"None", "Glassland", "Jungle", "Volcano", "Tundra", "Ocean", "Desert", "Fantasy", "Wasteland", "Prehistoric", "Shinrin"},
+        Values = {"None", "First", "Glassland", "Jungle", "Volcano", "Tundra", "Ocean", "Desert", "Fantasy", "Wasteland", "Prehistoric", "Shinrin"},
         Multi = false,
         Default = 1,
     })
@@ -508,6 +508,8 @@ do
         print("Dropdown changed:", Value)
         if Value == "None" then
             mapArgs = nil
+        elseif Value == "First" then
+            mapArgs = 3475397644
         elseif Value == "Glassland" then
             mapArgs = 3475419198
         elseif Value == "Jungle" then
