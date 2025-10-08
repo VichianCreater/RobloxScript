@@ -168,7 +168,7 @@ do
         end
     end
 
-    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
+    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest[Shinrin]", Default = false })
     local isCollectingHarvest = false
 
     HarvestCollectToggle:OnChanged(function()
