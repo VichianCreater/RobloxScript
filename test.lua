@@ -1,7 +1,7 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | Test Script 1.1.0",
+    Title = "Dragon Adventure | Test Script 1.1.1",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -73,7 +73,7 @@ do
                 
                 if BillboardPart then
                     local Health = BillboardPart:FindFirstChild("Health")
-                    local billboardPos = BillboardPart.WorldPivot.Position
+                    local TargetPosition = v.WorldPivot.Position
                     if Health then
                         -- ถ้า Health > 0 ให้ตีจนกว่า Health จะเป็น 0
                         while Health.Value > 0 do
@@ -82,13 +82,13 @@ do
                         end
 
                         if firstProgress then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPos + Vector3.new(0, 60, 0))
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(TargetPosition + Vector3.new(0, 60, 0))
                             firstProgress = false
                         end
 
                         -- หลังจาก Health เป็น 0 แล้ว, วาร์ปไปตำแหน่งถัดไป
                         if Health.Value <= 0 then
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPos + Vector3.new(0, 60, 0))
+                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(TargetPosition + Vector3.new(0, 60, 0))
                             print("Tree destroyed, moving to next target!")
                             break  -- ออกจากลูปเพื่อไปวาร์ปที่อื่น
                         end
