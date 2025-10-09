@@ -8,13 +8,6 @@ if game.GameId ~= ALLOWED_GAME_ID then
         Duration = 8
     })
     return 
-else
-    Fluent:Notify({
-        Title = "Waiting",
-        Content = "The script Will Loaded in 30 Sec",
-        Duration = 8
-    })
-    wait(30)
 end
 
 local Window = Fluent:CreateWindow({
@@ -82,6 +75,7 @@ do
                 end
             end
 
+            -- เมื่ออยู่ที่ PlaceId 125804922932357 และมีสินค้าครบก็วาร์ปกลับ
             if game.PlaceId == 125804922932357 then
                 if EdamameCount.Value >= 500 and MistSudachiCount.Value >= 500 and KajiFruitCount.Value >= 500 then
                     StartHavest = false
@@ -94,6 +88,7 @@ do
         end
     end
 
+    -- ปุ่มให้ teleport ไปยัง server อื่น
     Tabs.Main:AddButton({
         Title = "HOP Server",
         Description = "Click To Teleport HOP Server",
@@ -217,45 +212,20 @@ do
         end
     end
 
-    local function ImmortalDragon()
-        local dragonNumber = getDragonNumber()
-        if not dragonNumber then
-            warn("No dragon found for the player!")
-            return
-        end
-
-        local playerDragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
-        local dragon = playerDragonsFolder:FindFirstChild(dragonNumber)
-
-        if dragon then
-            local deadStatus = dragon:FindFirstChild("Data"):FindFirstChild("Dead")
-            if deadStatus then
-                deadStatus.Value = false
-            end
-        end
-    end
-
+    -- ปุ่ม Toggle ให้เปิด/ปิด Auto Harvest
     local Havest = Tabs.Main:AddToggle("HarvestToggle", {Title = "Auto Mode", Default = true })
 
     Havest:OnChanged(function()
         if Options.HarvestToggle.Value then
-            local player = game.Players.LocalPlayer
-            local character = player.Character or player.CharacterAdded:Wait()
-            mainProgress()
-            Fluent:Notify({
-                Title = "Waiting",
-                Content = "Auto Havest in 30 Sec",
-                Duration = 8
-            })
-            wait(30)
+            mainProgress() -- เริ่ม process ขายและตรวจสอบ
+            wait(1)
             StartHavest = true
-            AutoHarvest()
+            AutoHarvest()  -- เริ่มเก็บเกี่ยว
         else
             print("Harvesting stopped.")
             StartHavest = false
         end
     end)
-
 
     Options.HarvestToggle:SetValue(false)
 end
