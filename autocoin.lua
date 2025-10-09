@@ -215,6 +215,7 @@ do
 
     Havest:OnChanged(function()
         if Options.HarvestToggle.Value then
+            wait(60)
             mainProgress() -- เริ่ม process ขายและตรวจสอบ
             wait(1)
             StartHavest = true
