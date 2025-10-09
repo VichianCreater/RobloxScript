@@ -217,6 +217,24 @@ do
         end
     end
 
+    local function ImmortalDragon()
+        local dragonNumber = getDragonNumber()
+        if not dragonNumber then
+            warn("No dragon found for the player!")
+            return
+        end
+
+        local playerDragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
+        local dragon = playerDragonsFolder:FindFirstChild(dragonNumber)
+
+        if dragon then
+            local deadStatus = dragon:FindFirstChild("Data"):FindFirstChild("Dead")
+            if deadStatus then
+                deadStatus.Value = false
+            end
+        end
+    end
+
     local Havest = Tabs.Main:AddToggle("HarvestToggle", {Title = "Auto Mode", Default = true })
 
     Havest:OnChanged(function()
@@ -224,7 +242,12 @@ do
             local player = game.Players.LocalPlayer
             local character = player.Character or player.CharacterAdded:Wait()
             mainProgress()
-            wait(1)
+            Fluent:Notify({
+                Title = "Waiting",
+                Content = "Auto Havest in 30 Sec",
+                Duration = 8
+            })
+            wait(30)
             StartHavest = true
             AutoHarvest()
         else
