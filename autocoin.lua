@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 else
     Fluent:Notify({
         Title = "Waiting",
-        Content = "The script Will Loaded in 30 min",
+        Content = "The script Will Loaded in 30 Sec",
         Duration = 8
     })
     wait(30)
