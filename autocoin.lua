@@ -9,6 +9,11 @@ if game.GameId ~= ALLOWED_GAME_ID then
     })
     return 
 else
+    Fluent:Notify({
+        Title = "Waiting",
+        Content = "The script Will Loaded in 1 min",
+        Duration = 8
+    })
     wait(60)
 end
 
@@ -77,7 +82,6 @@ do
                 end
             end
 
-            -- เมื่ออยู่ที่ PlaceId 125804922932357 และมีสินค้าครบก็วาร์ปกลับ
             if game.PlaceId == 125804922932357 then
                 if EdamameCount.Value >= 500 and MistSudachiCount.Value >= 500 and KajiFruitCount.Value >= 500 then
                     StartHavest = false
@@ -90,7 +94,6 @@ do
         end
     end
 
-    -- ปุ่มให้ teleport ไปยัง server อื่น
     Tabs.Main:AddButton({
         Title = "HOP Server",
         Description = "Click To Teleport HOP Server",
@@ -214,7 +217,6 @@ do
         end
     end
 
-    -- ปุ่ม Toggle ให้เปิด/ปิด Auto Harvest
     local Havest = Tabs.Main:AddToggle("HarvestToggle", {Title = "Auto Mode", Default = true })
 
     Havest:OnChanged(function()
