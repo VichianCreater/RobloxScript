@@ -8,6 +8,8 @@ if game.GameId ~= ALLOWED_GAME_ID then
         Duration = 8
     })
     return 
+else
+    wait(60)
 end
 
 local Window = Fluent:CreateWindow({
