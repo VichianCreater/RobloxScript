@@ -139,6 +139,8 @@ do
 
             if playSoundRemote then
                 playSoundRemote:FireServer(unpack(args))
+                wait(0.01)
+                playSoundRemote:FireServer(unpack(args))
             end
         end
     end
@@ -215,16 +217,18 @@ do
 
     Havest:OnChanged(function()
         if Options.HarvestToggle.Value then
-            wait(60)
-            mainProgress() -- เริ่ม process ขายและตรวจสอบ
+            local player = game.Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            mainProgress()
             wait(1)
             StartHavest = true
-            AutoHarvest()  -- เริ่มเก็บเกี่ยว
+            AutoHarvest()
         else
             print("Harvesting stopped.")
             StartHavest = false
         end
     end)
+
 
     Options.HarvestToggle:SetValue(false)
 end
