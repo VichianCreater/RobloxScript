@@ -217,7 +217,7 @@ do
                 end
 
                 print("มีผู้เล่นทั้งหมด " .. playerCount .. " คน")
-                if playerCount >= 5 then
+                if playerCount >= 10 then
                     local TeleportService = game:GetService("TeleportService")
                     local HttpService = game:GetService("HttpService")
 
