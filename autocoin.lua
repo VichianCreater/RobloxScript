@@ -208,7 +208,6 @@ do
                                     TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
                                 else
                                     print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
-                                    break
                                 end
                             end
                         end
@@ -244,7 +243,6 @@ do
                         TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
                     else
                         print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
-                        break
                     end
                 end
 
