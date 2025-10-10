@@ -206,6 +206,9 @@ do
                                 until Server
                                 if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
                                     TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+                                else
+                                    print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                                    break
                                 end
                             end
                         end
@@ -239,6 +242,9 @@ do
 
                     if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
                         TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+                    else
+                        print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                        break
                     end
                 end
 
