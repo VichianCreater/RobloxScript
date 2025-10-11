@@ -1,5 +1,5 @@
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-
+local OnlyFirst = false
 local ALLOWED_GAME_ID = 1235188606
 if game.GameId ~= ALLOWED_GAME_ID then
     Fluent:Notify({
@@ -8,6 +8,9 @@ if game.GameId ~= ALLOWED_GAME_ID then
         Duration = 8
     })
     return 
+else
+    wait(10)
+    OnlyFirst = true
 end
 
 local Window = Fluent:CreateWindow({
@@ -111,7 +114,7 @@ do
     --                                 local Health = billboardPart:FindFirstChild("Health")
     --                                 if Health and Health.Value > 0 then
     --                                     attackTree(billboardPart)
-    --                                     task.wait(0.3)
+    --                                     task.wait(0.1)
     --                                 else
     --                                     break
     --                                 end
@@ -133,7 +136,7 @@ do
             local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
 
             if game.PlaceId == 3475397644 then
-                if EdamameCount.Value >= 500 then
+                if EdamameCount.Value >= 1000 then
                     local args1 = {
                         {
                             ItemName = "Edamame",
@@ -144,7 +147,7 @@ do
                     wait(1)
                 end
 
-                if MistSudachiCount.Value >= 500 then
+                if MistSudachiCount.Value >= 1000 then
                     local args2 = {
                         {
                             ItemName = "MistSudachi",
@@ -155,7 +158,7 @@ do
                     wait(1)
                 end
 
-                if KajiFruitCount.Value >= 500 then
+                if KajiFruitCount.Value >= 1000 then
                     local args3 = {
                         {
                             ItemName = "KajiFruit",
@@ -166,7 +169,7 @@ do
                     wait(1)
                 end
 
-                if EdamameCount.Value < 500 and MistSudachiCount.Value < 500 and KajiFruitCount.Value < 500 then
+                if EdamameCount.Value < 1000 and MistSudachiCount.Value < 1000 and KajiFruitCount.Value < 1000 then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(125804922932357)
                 end
             end
@@ -184,30 +187,34 @@ do
                         print(friend.UserName)
                         for _, player in pairs(playerList) do
                             if player.Name == friend.UserName then
-                                local TeleportService = game:GetService("TeleportService")
-                                local HttpService = game:GetService("HttpService")
+                                if OnlyFirst then
+                                    wait(10)
+                                    local TeleportService = game:GetService("TeleportService")
+                                    local HttpService = game:GetService("HttpService")
 
-                                local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-                                local Server, Next = nil, nil
-                                local function ListServers(cursor)
-                                    local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
-                                    return HttpService:JSONDecode(Raw)
-                                end
-                                repeat
-                                    local Servers = ListServers(Next)
-                                    
-                                    if Servers and Servers.data and #Servers.data > 0 then
-                                        Server = Servers.data[math.random(1, (#Servers.data / 3))]
-                                        Next = Servers.nextPageCursor
-                                    else
-                                        print("ไม่มีข้อมูล server หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
-                                        break
+                                    local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+                                    local Server, Next = nil, nil
+                                    local function ListServers(cursor)
+                                        local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
+                                        return HttpService:JSONDecode(Raw)
                                     end
-                                until Server
-                                if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
-                                    TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
-                                else
-                                    print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                                    repeat
+                                        local Servers = ListServers(Next)
+                                        
+                                        if Servers and Servers.data and #Servers.data > 0 then
+                                            Server = Servers.data[math.random(1, (#Servers.data / 3))]
+                                            Next = Servers.nextPageCursor
+                                        else
+                                            print("ไม่มีข้อมูล server หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                                            break
+                                        end
+                                    until Server
+                                    if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
+                                        TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+                                        OnlyFirst = false
+                                    else
+                                        print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                                    end
                                 end
                             end
                         end
@@ -216,37 +223,38 @@ do
                     warn("Failed to get online players: " .. result)
                 end
 
-                print("มีผู้เล่นทั้งหมด " .. playerCount .. " คน")
-                if playerCount >= 10 then
-                    local TeleportService = game:GetService("TeleportService")
-                    local HttpService = game:GetService("HttpService")
+                -- print("มีผู้เล่นทั้งหมด " .. playerCount .. " คน")
+                -- if playerCount >= 10 then
+				-- 	wait(10)
+                --     local TeleportService = game:GetService("TeleportService")
+                --     local HttpService = game:GetService("HttpService")
 
-                    local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-                    local Server, Next = nil, nil
-                    local function ListServers(cursor)
-                        local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
-                        return HttpService:JSONDecode(Raw)
-                    end
-                    repeat
-                        local Servers = ListServers(Next)
+                --     local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+                --     local Server, Next = nil, nil
+                --     local function ListServers(cursor)
+                --         local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
+                --         return HttpService:JSONDecode(Raw)
+                --     end
+                --     repeat
+                --         local Servers = ListServers(Next)
                         
-                        if Servers and Servers.data and #Servers.data > 0 then
-                            Server = Servers.data[math.random(1, (#Servers.data / 3))]
-                            Next = Servers.nextPageCursor
-                        else
-                            print("ไม่มีข้อมูล server หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
-                            break
-                        end
-                    until Server
+                --         if Servers and Servers.data and #Servers.data > 0 then
+                --             Server = Servers.data[math.random(1, (#Servers.data / 3))]
+                --             Next = Servers.nextPageCursor
+                --         else
+                --             print("ไม่มีข้อมูล server หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                --             break
+                --         end
+                --     until Server
 
-                    if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
-                        TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
-                    else
-                        print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
-                    end
-                end
+                --     if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
+                --         TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+                --     else
+                --         print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                --     end
+                -- end
 
-                if EdamameCount.Value >= 500 and MistSudachiCount.Value >= 500 and KajiFruitCount.Value >= 500 then
+                if EdamameCount.Value >= 1000 and MistSudachiCount.Value >= 1000 and KajiFruitCount.Value >= 1000 then
                     print("Full")
                     StartHavest = false
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
@@ -292,7 +300,7 @@ do
                                                 local Health = billboardPart:FindFirstChild("Health")
                                                 if Health and Health.Value > 0 then
                                                     attackTree(billboardPart)
-                                                    task.wait(0.3)
+                                                    task.wait(0.1)
                                                 else
                                                     break
                                                 end
