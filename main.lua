@@ -89,7 +89,7 @@ do
 
     local function attackTree(billboardPart)
         local dragonNumber = getDragonNumber()
-        local args = {
+        local breathArgs = {
             "Breath",
             "Destructibles",
             billboardPart
@@ -99,8 +99,23 @@ do
             local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
 
             if playSoundRemote then
-                playSoundRemote:FireServer(unpack(args))
+                playSoundRemote:FireServer(unpack(breathArgs))
             end
+        end
+    end
+
+    local function attackTreeBite(billboardPart)
+        local dragonNumber = getDragonNumber()
+
+        local biteArgs = {
+            "Bite",
+            "Destructibles",
+            billboardPart
+        }
+        local biteRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+        
+        if biteRemote then
+            biteRemote:FireServer(unpack(biteArgs))
         end
     end
 
@@ -155,6 +170,7 @@ do
                                     if Health and Health.Value > 0 then
                                         attackTree(billboardPart)
                                         task.wait(0.3)
+                                        attackTreeBite(billboardPart)
                                     else
                                         break
                                     end
