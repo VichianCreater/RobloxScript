@@ -60,6 +60,21 @@ do
         end
     end
 
+    local function attackTreeBite(billboardPart)
+        local dragonNumber = getDragonNumber()
+
+        local biteArgs = {
+            "Bite",
+            "Destructibles",
+            billboardPart
+        }
+        local biteRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+        
+        if biteRemote then
+            biteRemote:FireServer(unpack(biteArgs))
+        end
+    end
+
     -- ฟังก์ชันเก็บเกี่ยวต้นไม้
     local predefinedPositions = {
         Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
@@ -300,7 +315,8 @@ do
                                                 local Health = billboardPart:FindFirstChild("Health")
                                                 if Health and Health.Value > 0 then
                                                     attackTree(billboardPart)
-                                                    task.wait(0.1)
+                                                    task.wait(0.3)
+                                                    attackTreeBite(billboardPart)
                                                 else
                                                     break
                                                 end
