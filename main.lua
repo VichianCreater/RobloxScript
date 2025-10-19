@@ -425,7 +425,7 @@ do
     end
     ----------------------- มินิเกมส์
 
-    local tolerance = 30
+    local tolerance = 20
     local lastProcessed = 0
 
     function ProcessMinigame()
