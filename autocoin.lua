@@ -9,7 +9,12 @@ if game.GameId ~= ALLOWED_GAME_ID then
     })
     return 
 else
-    wait(10)
+    Fluent:Notify({
+        Title = "Alert",
+        Content = "The script load in 5 sec",
+        Duration = 8
+    })
+    wait(5)
     OnlyFirst = true
 end
 
@@ -45,6 +50,7 @@ do
 
     local function attackTree(billboardPart)
         local dragonNumber = getDragonNumber()
+        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
         local args = {
             "Breath",
             "Destructibles",
@@ -62,7 +68,6 @@ do
 
     local function attackTreeBite(billboardPart)
         local dragonNumber = getDragonNumber()
-
         local biteArgs = {
             "Bite",
             "Destructibles",
@@ -145,13 +150,12 @@ do
 
     local function mainProgress()
         while Options.HarvestToggle.Value do
-            print("Main Progress Loop")
             local EdamameCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Edamame")
             local MistSudachiCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("MistSudachi")
             local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
 
             if game.PlaceId == 3475397644 then
-                if EdamameCount.Value >= 1000 then
+                if EdamameCount.Value >= 3000 then
                     local args1 = {
                         {
                             ItemName = "Edamame",
@@ -162,7 +166,7 @@ do
                     wait(1)
                 end
 
-                if MistSudachiCount.Value >= 1000 then
+                if MistSudachiCount.Value >= 3000 then
                     local args2 = {
                         {
                             ItemName = "MistSudachi",
@@ -173,7 +177,7 @@ do
                     wait(1)
                 end
 
-                if KajiFruitCount.Value >= 1000 then
+                if KajiFruitCount.Value >= 3000 then
                     local args3 = {
                         {
                             ItemName = "KajiFruit",
@@ -184,7 +188,7 @@ do
                     wait(1)
                 end
 
-                if EdamameCount.Value < 1000 and MistSudachiCount.Value < 1000 and KajiFruitCount.Value < 1000 then
+                if EdamameCount.Value < 3000 and MistSudachiCount.Value < 3000 and KajiFruitCount.Value < 3000 then
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(125804922932357)
                 end
             end
@@ -234,8 +238,6 @@ do
                             end
                         end
                     end
-                else
-                    warn("Failed to get online players: " .. result)
                 end
 
                 -- print("มีผู้เล่นทั้งหมด " .. playerCount .. " คน")
@@ -269,20 +271,16 @@ do
                 --     end
                 -- end
 
-                if EdamameCount.Value >= 1000 and MistSudachiCount.Value >= 1000 and KajiFruitCount.Value >= 1000 then
-                    print("Full")
+                if EdamameCount.Value >= 3000 and MistSudachiCount.Value >= 3000 and KajiFruitCount.Value >= 3000 then
                     StartHavest = false
                     game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
                 else
-                    print("Not Full")
                     StartHavest = true
-                    wait(1)
+                    task.wait(0)
                     while StartHavest do
-                        print("Havest Loop")
-                        
                         for _, position in ipairs(predefinedPositions) do
                             game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                            wait(0.1)
+                            task.wait(0)
                             local regionSize = Vector3.new(10, 10, 10)
                             local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
@@ -306,9 +304,8 @@ do
                                     local part = tree:FindFirstChildWhichIsA("BasePart")
                                     if part then
                                         local treePosition = part.Position
-                                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, -20, 0))
-                                        wait(1)
-
+                                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
+                                        task.wait(0)
                                         local billboardPart = tree:FindFirstChild("BillboardPart")
                                         if billboardPart then
                                             while true do
@@ -326,12 +323,12 @@ do
                                 end
                             end
                         end
-                        wait(0.05)
+                        task.wait(0)
                         mainProgress()
                     end
                 end
             end
-            wait(0.05)
+            task.wait(0)
         end
     end
 
