@@ -451,13 +451,13 @@ StopButton.Font = Enum.Font.SourceSansBold
 StopButton.Text = "Pause"
 StopButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 StopButton.TextScaled = true
-StopButton.TextSize = 14.000
+StopButton.TextSize = 20.000
 StopButton.TextWrapped = true
 
 UICorner_8.Parent = StopButton
 
 UITextSizeConstraint_9.Parent = StopButton
-UITextSizeConstraint_9.MaxTextSize = 14
+UITextSizeConstraint_9.MaxTextSize = 20
 
 UserInfo.Name = "UserInfo"
 UserInfo.Parent = Top
@@ -488,13 +488,13 @@ HopServerButton.Font = Enum.Font.SourceSansBold
 HopServerButton.Text = "HOP Server"
 HopServerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 HopServerButton.TextScaled = true
-HopServerButton.TextSize = 14.000
+HopServerButton.TextSize = 20.000
 HopServerButton.TextWrapped = true
 
 UICorner_9.Parent = HopServerButton
 
 UITextSizeConstraint_11.Parent = HopServerButton
-UITextSizeConstraint_11.MaxTextSize = 14
+UITextSizeConstraint_11.MaxTextSize = 20
 
 StatusText.Name = "StatusText"
 StatusText.Parent = Top
