@@ -142,7 +142,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
     createNotification("The script not support this game", "error", 5)
     return 
 else
-    createNotification("The script load in 5 sec", "success", 5)
+    createNotification("Script Loading in 10 sec", "success", 10)
     OnlyFirst = true
 end
 
