@@ -1,5 +1,137 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local OnlyFirst = false
+
+-------------------------------- Notify -------------------------------------------------
+local TweenService = game:GetService("TweenService")
+
+local Notify = Instance.new("ScreenGui")
+local Container = Instance.new("Frame")
+local NotificationTemplate = Instance.new("Frame")
+local MainText = Instance.new("TextLabel")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local ProgressBar = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
+local UIListLayout_2 = Instance.new("UIListLayout")
+
+--Properties:
+
+Notify.Name = "Notify"
+Notify.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+Notify.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Container.Name = "Container"
+Container.Parent = Notify
+Container.AnchorPoint = Vector2.new(0.5, 0.5)
+Container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Container.BackgroundTransparency = 1.000
+Container.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Container.BorderSizePixel = 0
+Container.Position = UDim2.new(0.5, 0, 0.330000013, 0)
+Container.Size = UDim2.new(0.323943675, 0, 0.756313145, 0)
+
+NotificationTemplate.Name = "NotificationTemplate"
+NotificationTemplate.Parent = Container
+NotificationTemplate.AnchorPoint = Vector2.new(0.5, 0.5)
+NotificationTemplate.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+NotificationTemplate.BackgroundTransparency = 0.500
+NotificationTemplate.BorderColor3 = Color3.fromRGB(0, 0, 0)
+NotificationTemplate.BorderSizePixel = 0
+NotificationTemplate.Position = UDim2.new(0.0580520816, 0, 0.0144356955, 0)
+NotificationTemplate.Size = UDim2.new(0.882352948, 0, 0.0651085153, 0)
+NotificationTemplate.Visible = false
+
+MainText.Name = "MainText"
+MainText.Parent = NotificationTemplate
+MainText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MainText.BackgroundTransparency = 1.000
+MainText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+MainText.BorderSizePixel = 0
+MainText.Size = UDim2.new(1, 0, 1, 0)
+MainText.Font = Enum.Font.FredokaOne
+MainText.Text = "Notification"
+MainText.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainText.TextScaled = true
+MainText.TextSize = 18.000
+MainText.TextWrapped = true
+
+UITextSizeConstraint.Parent = MainText
+UITextSizeConstraint.MaxTextSize = 39
+
+ProgressBar.Name = "ProgressBar"
+ProgressBar.Parent = NotificationTemplate
+ProgressBar.AnchorPoint = Vector2.new(0.5, 0.5)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ProgressBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Position = UDim2.new(0, 0, 1, 0)
+ProgressBar.Size = UDim2.new(1, 0, 0.100000001, 0)
+
+UIListLayout.Parent = NotificationTemplate
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+UIListLayout_2.Parent = Container
+UIListLayout_2.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout_2.Padding = UDim.new(0, 5)
+
+local function createNotification(message, type, time)
+	local newNotification = NotificationTemplate:Clone()
+	newNotification.Visible = true
+	newNotification.Parent = Container
+	newNotification.MainText.Text = message
+
+	if type == 'error' then
+		newNotification.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	elseif type == 'success' then
+		newNotification.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		newNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	end
+
+	local progressBar = newNotification:FindFirstChild("ProgressBar")
+	progressBar.Size = UDim2.new(1, 0, 0.1, 0)
+
+	local fadeInTweenBackground = TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 0.5
+	})
+	local fadeInTweenText = TweenService:Create(newNotification.MainText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		TextTransparency = 0
+	})
+
+	fadeInTweenBackground:Play()
+	fadeInTweenText:Play()
+	
+	if time == nil then
+		time = 1
+	end
+
+	local progressTween = TweenService:Create(progressBar, TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 0, 0.1, 0)
+	})
+	progressTween:Play()
+
+	wait(time)
+
+	local fadeOutTweenBackground = TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 1
+	})
+	local fadeOutTweenText = TweenService:Create(newNotification.MainText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		TextTransparency = 1
+	})
+	local fadeOutTweenProgressBar = TweenService:Create(progressBar, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(0, 0, 0.1, 0)
+	})
+
+	fadeOutTweenBackground:Play()
+	fadeOutTweenText:Play()
+	fadeOutTweenProgressBar:Play()
+
+	fadeOutTweenBackground.Completed:Connect(function()
+		newNotification:Destroy()
+	end)
+end
+
+-------------------------------------------------------------------------------------------
 -- Gui to Lua
 -- Version: 3.2
 
@@ -7,19 +139,10 @@ local OnlyFirst = false
 
 local ALLOWED_GAME_ID = 1235188606
 if game.GameId ~= ALLOWED_GAME_ID then
-    Fluent:Notify({
-        Title = "Alert",
-        Content = "The script not support this game",
-        Duration = 8
-    })
+    createNotification("The script not support this game", "error", 5)
     return 
 else
-    Fluent:Notify({
-        Title = "Alert",
-        Content = "The script load in 5 sec",
-        Duration = 8
-    })
-    wait(5)
+    createNotification("The script load in 5 sec", "success", 5)
     OnlyFirst = true
 end
 
