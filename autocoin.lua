@@ -845,6 +845,7 @@ StopButton.MouseButton1Click:Connect(function()
 end)
 
 HopServerButton.MouseButton1Click:Connect(function()
+    createNotification("HOP Server In Progress", "", 5)
     local TeleportService = game:GetService("TeleportService")
     local HttpService = game:GetService("HttpService")
 
@@ -869,6 +870,7 @@ CloseButton.MouseButton1Click:Connect(function()
     isPause = true
     StartHavest = false
 	AutoCoinMain:Destroy()
+    createNotification("The script is now closed", "error", 3)
 end)
 
 local isHind = false
@@ -877,12 +879,14 @@ HideButton.MouseButton1Click:Connect(function()
     AutoCoinMain.Enabled = false
     AutoCoinHide.Enabled = true
     isHind = true
+    createNotification("The script is hiding", "", 3)
 end)
 
 ShowUiButton.MouseButton1Click:Connect(function()
     AutoCoinMain.Enabled = true
     AutoCoinHide.Enabled = false
     isHind = false
+    createNotification("The script is showing", "", 3)
 end)
 
 function comma_value(n)
