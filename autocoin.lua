@@ -683,7 +683,7 @@ local function mainProgress()
         local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
 
         if game.PlaceId == 3475397644 then
-            if EdamameCount.Value >= 10000 then
+            if EdamameCount.Value >= 9000 then
                 local args1 = {
                     {
                         ItemName = "Edamame",
@@ -694,7 +694,7 @@ local function mainProgress()
                 wait(1)
             end
 
-            if MistSudachiCount.Value >= 10000 then
+            if MistSudachiCount.Value >= 9000 then
                 local args2 = {
                     {
                         ItemName = "MistSudachi",
@@ -705,7 +705,7 @@ local function mainProgress()
                 wait(1)
             end
 
-            if KajiFruitCount.Value >= 10000 then
+            if KajiFruitCount.Value >= 9000 then
                 local args3 = {
                     {
                         ItemName = "KajiFruit",
@@ -716,7 +716,7 @@ local function mainProgress()
                 wait(1)
             end
 
-            if EdamameCount.Value < 10000 and MistSudachiCount.Value < 10000 and KajiFruitCount.Value < 10000 then
+            if EdamameCount.Value < 9000 and MistSudachiCount.Value < 9000 and KajiFruitCount.Value < 9000 then
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(125804922932357)
             end
         end
@@ -734,7 +734,7 @@ local function mainProgress()
                     for _, player in pairs(playerList) do
                         if player.Name == friend.UserName then
                             if OnlyFirst then
-                                wait(10)
+                                createNotification("Found friend in this server change CH. in 5 sec", "error", 5)
                                 local TeleportService = game:GetService("TeleportService")
                                 local HttpService = game:GetService("HttpService")
 
@@ -767,7 +767,7 @@ local function mainProgress()
                 end
             end
 
-            if EdamameCount.Value >= 10000 and MistSudachiCount.Value >= 10000 and KajiFruitCount.Value >= 10000 then
+            if EdamameCount.Value >= 9000 and MistSudachiCount.Value >= 9000 and KajiFruitCount.Value >= 9000 then
                 StartHavest = false
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
             else
