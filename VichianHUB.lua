@@ -45,15 +45,15 @@ Container.AnchorPoint = Vector2.new(0.5, 0.5)
 Container.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 Container.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Container.BorderSizePixel = 0
-Container.Position = UDim2.new(0.5, 141, 0.5, -21)
-Container.Size = UDim2.new(0, 306, 0, 388)
+Container.Position = UDim2.new(0.5, 0, 0.5, 0)
+Container.Size = UDim2.new(0.162071839, 0, 0.412528723, 0)
 
 Header.Name = "Header"
 Header.Parent = Container
 Header.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Header.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Header.BorderSizePixel = 0
-Header.Size = UDim2.new(0, 306, 0, 29)
+Header.Size = UDim2.new(1, 0, 0.074742265, 0)
 
 UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 236, 96)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(152, 109, 59))}
 UIGradient.Rotation = 90
@@ -65,8 +65,8 @@ TextHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 TextHeader.BackgroundTransparency = 1.000
 TextHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
 TextHeader.BorderSizePixel = 0
-TextHeader.Position = UDim2.new(0, 30, 0, 0)
-TextHeader.Size = UDim2.new(0, 105, 0, 29)
+TextHeader.Position = UDim2.new(0.0980392173, 0, 0, 0)
+TextHeader.Size = UDim2.new(0.343137264, 0, 1.00000012, 0)
 TextHeader.Font = Enum.Font.Michroma
 TextHeader.Text = "Vichian HUB"
 TextHeader.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -84,7 +84,7 @@ LogoHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 LogoHeader.BackgroundTransparency = 1.000
 LogoHeader.BorderColor3 = Color3.fromRGB(0, 0, 0)
 LogoHeader.BorderSizePixel = 0
-LogoHeader.Size = UDim2.new(0, 30, 0, 29)
+LogoHeader.Size = UDim2.new(0.0980392173, 0, 1.00000012, 0)
 LogoHeader.Image = "rbxassetid://74835950536249"
 
 CloseButton.Name = "CloseButton"
@@ -92,8 +92,8 @@ CloseButton.Parent = Header
 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 82, 85)
 CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 CloseButton.BorderSizePixel = 0
-CloseButton.Position = UDim2.new(0, 278, 0, 4)
-CloseButton.Size = UDim2.new(0, 20, 0, 20)
+CloseButton.Position = UDim2.new(0.908496737, 0, 0.137931049, 0)
+CloseButton.Size = UDim2.new(0.0653594807, 0, 0.689655244, 0)
 CloseButton.Font = Enum.Font.Unknown
 CloseButton.Text = "X"
 CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -111,8 +111,8 @@ Body.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Body.BackgroundTransparency = 1.000
 Body.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Body.BorderSizePixel = 0
-Body.Position = UDim2.new(0, 153, 0, 210)
-Body.Size = UDim2.new(0, 290, 0, 336)
+Body.Position = UDim2.new(0.5, 0, 0.536597967, 0)
+Body.Size = UDim2.new(0.947712421, 0, 0.889175236, 0)
 
 ScrollingFrame.Parent = Body
 ScrollingFrame.Active = true
@@ -120,17 +120,18 @@ ScrollingFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ScrollingFrame.BackgroundTransparency = 1.000
 ScrollingFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ScrollingFrame.BorderSizePixel = 0
-ScrollingFrame.Position = UDim2.new(0, -7, 0, -12)
-ScrollingFrame.Size = UDim2.new(0, 305, 0, 357)
+ScrollingFrame.Position = UDim2.new(-0.0241379309, 0, -0.0173913036, 0)
+ScrollingFrame.Size = UDim2.new(1.0517242, 0, 1.01739132, 0)
 ScrollingFrame.CanvasSize = UDim2.new(0, 0, 3, 0)
 ScrollingFrame.ScrollBarThickness = 5
 
 List.Name = "List"
 List.Parent = ScrollingFrame
+List.AnchorPoint = Vector2.new(0.5, 0.5)
 List.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 List.BorderColor3 = Color3.fromRGB(0, 0, 0)
 List.BorderSizePixel = 0
-List.Position = UDim2.new(0, 0, 0, 12)
+List.Position = UDim2.new(0, 0, 0.0341880359, 0)
 List.Size = UDim2.new(0, 280, 0, 68)
 
 NameBox.Name = "NameBox"
@@ -139,7 +140,7 @@ NameBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NameBox.BackgroundTransparency = 1.000
 NameBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
 NameBox.BorderSizePixel = 0
-NameBox.Position = UDim2.new(0, 92, 0, -1)
+NameBox.Position = UDim2.new(0.328571439, 0, -0.0147058824, 0)
 NameBox.Size = UDim2.new(0.657142878, 0, 1, 0)
 
 ExeButton.Name = "ExeButton"
@@ -147,8 +148,8 @@ ExeButton.Parent = NameBox
 ExeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ExeButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ExeButton.BorderSizePixel = 0
-ExeButton.Position = UDim2.new(0, 33, 0, 35)
-ExeButton.Size = UDim2.new(0, 117, 0, 27)
+ExeButton.Position = UDim2.new(0.179347828, 0, 0.514705896, 0)
+ExeButton.Size = UDim2.new(0.635869563, 0, 0.397058815, 0)
 ExeButton.Font = Enum.Font.Michroma
 ExeButton.Text = "Execute"
 ExeButton.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -165,8 +166,8 @@ NameText.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 NameText.BackgroundTransparency = 0.500
 NameText.BorderColor3 = Color3.fromRGB(0, 0, 0)
 NameText.BorderSizePixel = 0
-NameText.Position = UDim2.new(0, 3, 0, 7)
-NameText.Size = UDim2.new(0, 177, 0, 22)
+NameText.Position = UDim2.new(0.0163043477, 0, 0.102941178, 0)
+NameText.Size = UDim2.new(0.961956501, 0, 0.323529422, 0)
 NameText.Font = Enum.Font.Michroma
 NameText.Text = "DragonAdventure"
 NameText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -182,8 +183,8 @@ GameLogo.Parent = List
 GameLogo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 GameLogo.BorderColor3 = Color3.fromRGB(0, 0, 0)
 GameLogo.BorderSizePixel = 0
-GameLogo.Position = UDim2.new(0, 12, 0, 6)
-GameLogo.Size = UDim2.new(0, 55, 0, 55)
+GameLogo.Position = UDim2.new(0.042857144, 0, 0.0882352963, 0)
+GameLogo.Size = UDim2.new(0.196428567, 0, 0.808823526, 0)
 GameLogo.Image = "rbxasset://82524249662954"
 
 UIGradient_2.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(43, 43, 43)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(197, 197, 197))}
@@ -199,11 +200,13 @@ UIPadding.PaddingTop = UDim.new(0.00999999978, 0)
 
 List_2.Name = "List"
 List_2.Parent = ScrollingFrame
+List_2.AnchorPoint = Vector2.new(0.5, 0.5)
 List_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 List_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 List_2.BorderSizePixel = 0
-List_2.Position = UDim2.new(0, 0, 0, 12)
+List_2.Position = UDim2.new(0, 0, 0.0341880359, 0)
 List_2.Size = UDim2.new(0, 280, 0, 68)
+List_2.Visible = false
 
 NameBox_2.Name = "NameBox"
 NameBox_2.Parent = List_2
@@ -211,7 +214,7 @@ NameBox_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 NameBox_2.BackgroundTransparency = 1.000
 NameBox_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 NameBox_2.BorderSizePixel = 0
-NameBox_2.Position = UDim2.new(0, 92, 0, -1)
+NameBox_2.Position = UDim2.new(0.328571439, 0, -0.0147058824, 0)
 NameBox_2.Size = UDim2.new(0.657142878, 0, 1, 0)
 
 NameText_2.Name = "NameText"
@@ -220,8 +223,8 @@ NameText_2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 NameText_2.BackgroundTransparency = 0.500
 NameText_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 NameText_2.BorderSizePixel = 0
-NameText_2.Position = UDim2.new(0, 3, 0, 7)
-NameText_2.Size = UDim2.new(0, 177, 0, 22)
+NameText_2.Position = UDim2.new(0.0163043477, 0, 0.102941178, 0)
+NameText_2.Size = UDim2.new(0.961956501, 0, 0.323529422, 0)
 NameText_2.Font = Enum.Font.Michroma
 NameText_2.Text = "DragonAdventure Auto"
 NameText_2.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -237,8 +240,8 @@ ExeButton_2.Parent = NameBox_2
 ExeButton_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ExeButton_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ExeButton_2.BorderSizePixel = 0
-ExeButton_2.Position = UDim2.new(0, 33, 0, 35)
-ExeButton_2.Size = UDim2.new(0, 117, 0, 27)
+ExeButton_2.Position = UDim2.new(0.179347828, 0, 0.514705896, 0)
+ExeButton_2.Size = UDim2.new(0.635869563, 0, 0.397058815, 0)
 ExeButton_2.Font = Enum.Font.Michroma
 ExeButton_2.Text = "Execute"
 ExeButton_2.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -254,8 +257,8 @@ GameLogo_2.Parent = List_2
 GameLogo_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 GameLogo_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 GameLogo_2.BorderSizePixel = 0
-GameLogo_2.Position = UDim2.new(0, 12, 0, 6)
-GameLogo_2.Size = UDim2.new(0, 55, 0, 55)
+GameLogo_2.Position = UDim2.new(0.042857144, 0, 0.0882352963, 0)
+GameLogo_2.Size = UDim2.new(0.196428567, 0, 0.808823526, 0)
 GameLogo_2.Image = "rbxasset://82524249662954"
 
 UIGradient_3.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(43, 43, 43)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(197, 197, 197))}
@@ -267,8 +270,10 @@ end)
 
 ExeButton.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet('https://raw.githubusercontent.com/VichianCreater/RobloxScript/main/main.lua'))()
+    VichianHUB:Destroy()
 end)
 
 ExeButton_2.MouseButton1Click:Connect(function()
 	loadstring(game:HttpGet('https://raw.githubusercontent.com/VichianCreater/RobloxScript/main/autocoin.lua'))()
+    VichianHUB:Destroy()
 end)
