@@ -16,14 +16,13 @@ local Body = Instance.new("Frame")
 local ScrollingFrame = Instance.new("ScrollingFrame")
 local List = Instance.new("Frame")
 local NameBox = Instance.new("Frame")
-local NameText = Instance.new("TextLabel")
-local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
 local ExeButton = Instance.new("TextButton")
+local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
+local NameText = Instance.new("TextLabel")
 local UITextSizeConstraint_4 = Instance.new("UITextSizeConstraint")
-local UIListLayout = Instance.new("UIListLayout")
 local GameLogo = Instance.new("ImageLabel")
 local UIGradient_2 = Instance.new("UIGradient")
-local UIListLayout_2 = Instance.new("UIListLayout")
+local UIListLayout = Instance.new("UIListLayout")
 local UIPadding = Instance.new("UIPadding")
 local List_2 = Instance.new("Frame")
 local NameBox_2 = Instance.new("Frame")
@@ -31,7 +30,6 @@ local NameText_2 = Instance.new("TextLabel")
 local UITextSizeConstraint_5 = Instance.new("UITextSizeConstraint")
 local ExeButton_2 = Instance.new("TextButton")
 local UITextSizeConstraint_6 = Instance.new("UITextSizeConstraint")
-local UIListLayout_3 = Instance.new("UIListLayout")
 local GameLogo_2 = Instance.new("ImageLabel")
 local UIGradient_3 = Instance.new("UIGradient")
 
@@ -47,7 +45,7 @@ Container.AnchorPoint = Vector2.new(0.5, 0.5)
 Container.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 Container.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Container.BorderSizePixel = 0
-Container.Position = UDim2.new(0, 602, 0, 307)
+Container.Position = UDim2.new(0.5, 141, 0.5, -21)
 Container.Size = UDim2.new(0, 306, 0, 388)
 
 Header.Name = "Header"
@@ -144,30 +142,12 @@ NameBox.BorderSizePixel = 0
 NameBox.Position = UDim2.new(0, 92, 0, -1)
 NameBox.Size = UDim2.new(0.657142878, 0, 1, 0)
 
-NameText.Name = "NameText"
-NameText.Parent = NameBox
-NameText.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-NameText.BackgroundTransparency = 0.500
-NameText.BorderColor3 = Color3.fromRGB(0, 0, 0)
-NameText.BorderSizePixel = 0
-NameText.Position = UDim2.new(0, -3, 0, 6)
-NameText.Size = UDim2.new(0, 177, 0, 22)
-NameText.Font = Enum.Font.Michroma
-NameText.Text = "DragonAdventure"
-NameText.TextColor3 = Color3.fromRGB(255, 255, 255)
-NameText.TextScaled = true
-NameText.TextSize = 14.000
-NameText.TextWrapped = true
-
-UITextSizeConstraint_3.Parent = NameText
-UITextSizeConstraint_3.MaxTextSize = 14
-
 ExeButton.Name = "ExeButton"
 ExeButton.Parent = NameBox
 ExeButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ExeButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ExeButton.BorderSizePixel = 0
-ExeButton.Position = UDim2.new(0, -19, 0, 33)
+ExeButton.Position = UDim2.new(0, 33, 0, 35)
 ExeButton.Size = UDim2.new(0, 117, 0, 27)
 ExeButton.Font = Enum.Font.Michroma
 ExeButton.Text = "Execute"
@@ -176,14 +156,26 @@ ExeButton.TextScaled = true
 ExeButton.TextSize = 14.000
 ExeButton.TextWrapped = true
 
-UITextSizeConstraint_4.Parent = ExeButton
-UITextSizeConstraint_4.MaxTextSize = 14
+UITextSizeConstraint_3.Parent = ExeButton
+UITextSizeConstraint_3.MaxTextSize = 14
 
-UIListLayout.Parent = NameBox
-UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-UIListLayout.Padding = UDim.new(0.100000001, 0)
+NameText.Name = "NameText"
+NameText.Parent = NameBox
+NameText.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+NameText.BackgroundTransparency = 0.500
+NameText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+NameText.BorderSizePixel = 0
+NameText.Position = UDim2.new(0, 3, 0, 7)
+NameText.Size = UDim2.new(0, 177, 0, 22)
+NameText.Font = Enum.Font.Michroma
+NameText.Text = "DragonAdventure"
+NameText.TextColor3 = Color3.fromRGB(255, 255, 255)
+NameText.TextScaled = true
+NameText.TextSize = 14.000
+NameText.TextWrapped = true
+
+UITextSizeConstraint_4.Parent = NameText
+UITextSizeConstraint_4.MaxTextSize = 14
 
 GameLogo.Name = "GameLogo"
 GameLogo.Parent = List
@@ -197,9 +189,9 @@ GameLogo.Image = "rbxasset://82524249662954"
 UIGradient_2.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(43, 43, 43)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(197, 197, 197))}
 UIGradient_2.Parent = List
 
-UIListLayout_2.Parent = ScrollingFrame
-UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout_2.Padding = UDim.new(0.00499999989, 0)
+UIListLayout.Parent = ScrollingFrame
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout.Padding = UDim.new(0.00499999989, 0)
 
 UIPadding.Parent = ScrollingFrame
 UIPadding.PaddingLeft = UDim.new(0.0399999991, 0)
@@ -228,7 +220,7 @@ NameText_2.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 NameText_2.BackgroundTransparency = 0.500
 NameText_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 NameText_2.BorderSizePixel = 0
-NameText_2.Position = UDim2.new(0, -3, 0, 6)
+NameText_2.Position = UDim2.new(0, 3, 0, 7)
 NameText_2.Size = UDim2.new(0, 177, 0, 22)
 NameText_2.Font = Enum.Font.Michroma
 NameText_2.Text = "DragonAdventure Auto"
@@ -245,7 +237,7 @@ ExeButton_2.Parent = NameBox_2
 ExeButton_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ExeButton_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ExeButton_2.BorderSizePixel = 0
-ExeButton_2.Position = UDim2.new(0, -19, 0, 33)
+ExeButton_2.Position = UDim2.new(0, 33, 0, 35)
 ExeButton_2.Size = UDim2.new(0, 117, 0, 27)
 ExeButton_2.Font = Enum.Font.Michroma
 ExeButton_2.Text = "Execute"
@@ -256,12 +248,6 @@ ExeButton_2.TextWrapped = true
 
 UITextSizeConstraint_6.Parent = ExeButton_2
 UITextSizeConstraint_6.MaxTextSize = 14
-
-UIListLayout_3.Parent = NameBox_2
-UIListLayout_3.HorizontalAlignment = Enum.HorizontalAlignment.Center
-UIListLayout_3.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout_3.VerticalAlignment = Enum.VerticalAlignment.Center
-UIListLayout_3.Padding = UDim.new(0.100000001, 0)
 
 GameLogo_2.Name = "GameLogo"
 GameLogo_2.Parent = List_2
