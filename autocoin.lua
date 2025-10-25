@@ -845,7 +845,6 @@ StopButton.MouseButton1Click:Connect(function()
 end)
 
 HopServerButton.MouseButton1Click:Connect(function()
-    createNotification("HOP Server In Progress", "", 5)
     local TeleportService = game:GetService("TeleportService")
     local HttpService = game:GetService("HttpService")
 
