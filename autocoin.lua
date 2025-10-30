@@ -734,7 +734,6 @@ local function mainProgress()
                     for _, player in pairs(playerList) do
                         if player.Name == friend.UserName then
                             if OnlyFirst then
-                                createNotification("Found friend in this server change CH. in 5 sec", "error", 5)
                                 local TeleportService = game:GetService("TeleportService")
                                 local HttpService = game:GetService("HttpService")
 
