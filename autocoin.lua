@@ -616,6 +616,13 @@ UICorner.Parent = ShowUiButton
 UITextSizeConstraint.Parent = ShowUiButton
 UITextSizeConstraint.MaxTextSize = 29
 
+local VirtualUser = game:GetService('VirtualUser')
+ 
+game:GetService('Players').LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
 local function getDragonNumber()
     local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
     local dragonNumbers = {}
@@ -771,11 +778,11 @@ local function mainProgress()
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
             else
                 StartHavest = true
-                task.wait(0)
+                task.wait(0.005)
                 while StartHavest do
                     for _, position in ipairs(predefinedPositions) do
                         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                        task.wait(0)
+                        task.wait(0.005)
                         local regionSize = Vector3.new(10, 10, 10)
                         local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
@@ -818,12 +825,12 @@ local function mainProgress()
                             end
                         end
                     end
-                    task.wait(0)
+                    task.wait(0.005)
                     mainProgress()
                 end
             end
         end
-        task.wait(0)
+        task.wait(0.005)
     end
 end
 
@@ -926,12 +933,3 @@ spawn(function()
 end)
 
 mainProgress()
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-
-local vu = game:GetService("VirtualUser")
-LocalPlayer.Idled:Connect(function()
-    vu:CaptureController()
-    vu:ClickButton2(Vector2.new())
-end)
