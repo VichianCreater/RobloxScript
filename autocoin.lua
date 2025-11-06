@@ -763,11 +763,12 @@ local function mainProgress()
                                 until Server
                                 if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
                                     TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
-                                    OnlyFirst = false
                                 else
                                     print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
                                 end
                             end
+                        else
+                            OnlyFirst = false
                         end
                     end
                 end
