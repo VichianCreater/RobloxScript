@@ -768,7 +768,9 @@ local function mainProgress()
                                 end
                             end
                         else
-                            OnlyFirst = false
+                            if OnlyFirst then
+                                OnlyFirst = false
+                            end
                         end
                     end
                 end
