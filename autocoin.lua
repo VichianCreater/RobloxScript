@@ -683,6 +683,37 @@ local predefinedPositions = {
     Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375)
 }
 
+local TARGET_ITEM_NAMES = {
+    "EdamameFoodModel",
+    "MistSudachiFoodModel",
+    "KajiFruitFoodModel"
+}
+
+
+local function teleportDropItemsToPlayer()
+    local character = game.Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local HumanoidRootPart = character.HumanoidRootPart
+    local targetPosition = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0) 
+    local cameraFolder = game.Workspace.Camera 
+
+
+    for _, itemName in ipairs(TARGET_ITEM_NAMES) do
+
+        local item = cameraFolder:FindFirstChild(itemName)
+        if item then
+            local primaryPart = item.PrimaryPart or item:FindFirstChildOfClass("BasePart")
+
+            if primaryPart then
+                item:SetPrimaryPartCFrame(targetPosition)
+            end
+        end
+    end
+end
+
 local function mainProgress()
     while not isPause do
         local EdamameCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Edamame")
@@ -737,10 +768,10 @@ local function mainProgress()
             local success, result = pcall(player.GetFriendsOnline, player, 10)
 
             if success then
-                for _, friend in pairs(result) do
-                    for _, player in pairs(playerList) do
-                        if player.Name == friend.UserName then
-                            if OnlyFirst then
+                if OnlyFirst then
+                    for _, friend in pairs(result) do
+                        for _, player in pairs(playerList) do
+                            if player.Name == friend.UserName then
                                 local TeleportService = game:GetService("TeleportService")
                                 local HttpService = game:GetService("HttpService")
 
@@ -767,12 +798,9 @@ local function mainProgress()
                                     print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
                                 end
                             end
-                        else
-                            if OnlyFirst then
-                                OnlyFirst = false
-                            end
                         end
                     end
+                    OnlyFirst = false
                 end
             end
 
@@ -781,11 +809,12 @@ local function mainProgress()
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
             else
                 StartHavest = true
-                task.wait(0.005)
+                task.wait(0.01)
                 while StartHavest do
+                    teleportDropItemsToPlayer()
                     for _, position in ipairs(predefinedPositions) do
                         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                        task.wait(0.005)
+                        task.wait(0.01)
                         local regionSize = Vector3.new(10, 10, 10)
                         local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
@@ -816,9 +845,13 @@ local function mainProgress()
                                         while true do
                                             local Health = billboardPart:FindFirstChild("Health")
                                             if Health and Health.Value > 0 then
+                                                teleportDropItemsToPlayer()
                                                 attackTree(billboardPart)
-                                                task.wait(0.3)
+                                                teleportDropItemsToPlayer()
+                                                task.wait(0.15)
+                                                teleportDropItemsToPlayer()
                                                 attackTreeBite(billboardPart)
+                                                teleportDropItemsToPlayer()
                                             else
                                                 break
                                             end
@@ -828,12 +861,12 @@ local function mainProgress()
                             end
                         end
                     end
-                    task.wait(0.005)
+                    task.wait(0.01)
                     mainProgress()
                 end
             end
         end
-        task.wait(0.005)
+        task.wait(0.01)
     end
 end
 
