@@ -667,6 +667,62 @@ local function attackTreeBite(billboardPart)
     end
 end
 
+function MobAura()
+    local mobFolder = workspace:FindFirstChild("MobFolder")
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local dragonNumber = getDragonNumber()
+    local attackRange = 100
+
+    if not mobFolder or not dragonNumber then 
+        print("MobFolder or dragonNumber not found.")
+        return 
+    end
+
+    -- หามอนสเตอร์ใน mobFolder
+    for _, mob in ipairs(mobFolder:GetChildren()) do
+        local target = mob:FindFirstChild(mob.Name)
+        if target and target:IsA("BasePart") then
+            local targetPos = target.Position
+            local distance = (humanoidRootPart.Position - targetPos).Magnitude
+
+            if distance <= attackRange then
+
+                local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
+                if not healthValue then
+                    for _, desc in ipairs(mob:GetDescendants()) do
+                        if desc.Name == "Health" and desc:IsA("NumberValue") then
+                            healthValue = desc
+                            break
+                        end
+                    end
+                end
+                if healthValue and healthValue.Value > 0 then
+                
+                    while healthValue and healthValue.Value > 0 do
+                        local args = {
+                            "Breath",
+                            "Mobs",
+                            target
+                        }
+
+                        local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                        if dragon then
+                            local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                            if remote then
+                                remote:FireServer(unpack(args))
+                            end
+                        end
+                        task.wait(0.3)
+                        healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
+                    end
+                end
+            end
+        end
+    end
+end
+
 local isPause = false
 local StartHavest = false 
 
@@ -848,6 +904,7 @@ local function mainProgress()
                                                 teleportDropItemsToPlayer()
                                                 attackTree(billboardPart)
                                                 teleportDropItemsToPlayer()
+                                                MobAura()
                                                 task.wait(0.15)
                                                 teleportDropItemsToPlayer()
                                                 attackTreeBite(billboardPart)
