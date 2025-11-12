@@ -779,7 +779,7 @@ local function mainProgress()
         local BaconCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Bacon")
 
         if game.PlaceId == 3475397644 then
-            if EdamameCount.Value >= 9000 then
+            if EdamameCount.Value >= 1 then
                 local args1 = {
                     {
                         ItemName = "Edamame",
@@ -790,7 +790,7 @@ local function mainProgress()
                 wait(1)
             end
 
-            if MistSudachiCount.Value >= 9000 then
+            if MistSudachiCount.Value >= 1 then
                 local args2 = {
                     {
                         ItemName = "MistSudachi",
@@ -801,7 +801,7 @@ local function mainProgress()
                 wait(1)
             end
 
-            if KajiFruitCount.Value >= 9000 then
+            if KajiFruitCount.Value >= 1 then
                 local args3 = {
                     {
                         ItemName = "KajiFruit",
@@ -884,7 +884,7 @@ local function mainProgress()
                 end
             end
 
-            if EdamameCount.Value >= 9000 and MistSudachiCount.Value >= 9000 and KajiFruitCount.Value >= 9000 then
+            if EdamameCount.Value >= 9000 or MistSudachiCount.Value >= 9000 or KajiFruitCount.Value >= 9000 then
                 StartHavest = false
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
             else
