@@ -923,6 +923,7 @@ local function mainProgress()
                                     local billboardPart = tree:FindFirstChild("BillboardPart")
                                     if billboardPart then
                                         while true do
+                                            teleportDropItemsToPlayer()
                                             local Health = billboardPart:FindFirstChild("Health")
                                             if Health and Health.Value > 0 then
                                                 teleportDropItemsToPlayer()
@@ -934,6 +935,14 @@ local function mainProgress()
                                                 attackTreeBite(billboardPart)
                                                 teleportDropItemsToPlayer()
                                             else
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
                                                 break
                                             end
                                         end
