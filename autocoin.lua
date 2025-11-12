@@ -775,6 +775,8 @@ local function mainProgress()
         local EdamameCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Edamame")
         local MistSudachiCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("MistSudachi")
         local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
+        local MeatCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Meat")
+        local BaconCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Bacon")
 
         if game.PlaceId == 3475397644 then
             if EdamameCount.Value >= 9000 then
@@ -807,6 +809,28 @@ local function mainProgress()
                     },
                 }
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args3))
+                wait(1)
+            end
+
+            if MeatCount.Value >= 1 then
+                local args4 = {
+                    {
+                        ItemName = "Meat",
+                        Amount = MeatCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args4))
+                wait(1)
+            end
+
+            if BaconCount.Value >= 1 then
+                local args5 = {
+                    {
+                        ItemName = "Bacon",
+                        Amount = BaconCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args5))
                 wait(1)
             end
 
