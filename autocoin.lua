@@ -1,617 +1,693 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local OnlyFirst = false
+
+-------------------------------- Notify -------------------------------------------------
+local TweenService = game:GetService("TweenService")
+
+local Notify = Instance.new("ScreenGui")
+local Container = Instance.new("Frame")
+local NotificationTemplate = Instance.new("Frame")
+local MainText = Instance.new("TextLabel")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local ProgressBar = Instance.new("Frame")
+local UIListLayout = Instance.new("UIListLayout")
+local UIListLayout_2 = Instance.new("UIListLayout")
+
+--Properties:
+
+Notify.Name = "Notify"
+Notify.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+Notify.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+Container.Name = "Container"
+Container.Parent = Notify
+Container.AnchorPoint = Vector2.new(0.5, 0.5)
+Container.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Container.BackgroundTransparency = 1.000
+Container.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Container.BorderSizePixel = 0
+Container.Position = UDim2.new(0.5, 0, 0.330000013, 0)
+Container.Size = UDim2.new(0.323943675, 0, 0.756313145, 0)
+
+NotificationTemplate.Name = "NotificationTemplate"
+NotificationTemplate.Parent = Container
+NotificationTemplate.AnchorPoint = Vector2.new(0.5, 0.5)
+NotificationTemplate.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+NotificationTemplate.BackgroundTransparency = 0.500
+NotificationTemplate.BorderColor3 = Color3.fromRGB(0, 0, 0)
+NotificationTemplate.BorderSizePixel = 0
+NotificationTemplate.Position = UDim2.new(0.0580520816, 0, 0.0144356955, 0)
+NotificationTemplate.Size = UDim2.new(0.882352948, 0, 0.0651085153, 0)
+NotificationTemplate.Visible = false
+
+MainText.Name = "MainText"
+MainText.Parent = NotificationTemplate
+MainText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MainText.BackgroundTransparency = 1.000
+MainText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+MainText.BorderSizePixel = 0
+MainText.Size = UDim2.new(1, 0, 1, 0)
+MainText.Font = Enum.Font.Michroma
+MainText.Text = "Notification"
+MainText.TextColor3 = Color3.fromRGB(255, 255, 255)
+MainText.TextScaled = true
+MainText.TextSize = 18.000
+MainText.TextWrapped = true
+
+UITextSizeConstraint.Parent = MainText
+UITextSizeConstraint.MaxTextSize = 39
+
+ProgressBar.Name = "ProgressBar"
+ProgressBar.Parent = NotificationTemplate
+ProgressBar.AnchorPoint = Vector2.new(0.5, 0.5)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ProgressBar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Position = UDim2.new(0, 0, 1, 0)
+ProgressBar.Size = UDim2.new(1, 0, 0.100000001, 0)
+
+UIListLayout.Parent = NotificationTemplate
+UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+UIListLayout_2.Parent = Container
+UIListLayout_2.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
+UIListLayout_2.Padding = UDim.new(0, 5)
+
+local function createNotification(message, type, time)
+	local newNotification = NotificationTemplate:Clone()
+	newNotification.Visible = true
+	newNotification.Parent = Container
+	newNotification.MainText.Text = message
+
+	if type == 'error' then
+		newNotification.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+	elseif type == 'success' then
+		newNotification.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+	else
+		newNotification.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+	end
+
+	local progressBar = newNotification:FindFirstChild("ProgressBar")
+	progressBar.Size = UDim2.new(1, 0, 0.1, 0)
+
+	local fadeInTweenBackground = TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 0.5
+	})
+	local fadeInTweenText = TweenService:Create(newNotification.MainText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		TextTransparency = 0
+	})
+
+	fadeInTweenBackground:Play()
+	fadeInTweenText:Play()
+	
+	if time == nil then
+		time = 1
+	end
+
+	local progressTween = TweenService:Create(progressBar, TweenInfo.new(time, Enum.EasingStyle.Linear, Enum.EasingDirection.Out), {
+		Size = UDim2.new(0, 0, 0.1, 0)
+	})
+	progressTween:Play()
+
+	wait(time)
+
+	local fadeOutTweenBackground = TweenService:Create(newNotification, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 1
+	})
+	local fadeOutTweenText = TweenService:Create(newNotification.MainText, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		TextTransparency = 1
+	})
+	local fadeOutTweenProgressBar = TweenService:Create(progressBar, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(0, 0, 0.1, 0)
+	})
+
+	fadeOutTweenBackground:Play()
+	fadeOutTweenText:Play()
+	fadeOutTweenProgressBar:Play()
+
+	fadeOutTweenBackground.Completed:Connect(function()
+		newNotification:Destroy()
+	end)
+end
+
+-------------------------------------------------------------------------------------------
+-- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
 
 local ALLOWED_GAME_ID = 1235188606
 if game.GameId ~= ALLOWED_GAME_ID then
-    Fluent:Notify({
-        Title = "Alert",
-        Content = "The script not support this game",
-        Duration = 8
-    })
+    createNotification("The script not support this game", "error", 5)
     return 
+else
+    createNotification("Script Loading in 10 sec", "success", 10)
+    OnlyFirst = true
 end
 
-local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 3.5.0",
-    SubTitle = "By Vichian",
-    TabWidth = 160,
-    Size = UDim2.fromOffset(480, 360),
-    Acrylic = true,
-    Theme = "Dark",
-    MinimizeKey = Enum.KeyCode.LeftControl
-})
+local AutoCoinMain = Instance.new("ScreenGui")
+local Main = Instance.new("Frame")
+local UICorner = Instance.new("UICorner")
+local FEdamame = Instance.new("Frame")
+local ImageLabel = Instance.new("ImageLabel")
+local UICorner_2 = Instance.new("UICorner")
+local FKajiFruit = Instance.new("Frame")
+local ImageLabel_2 = Instance.new("ImageLabel")
+local UICorner_3 = Instance.new("UICorner")
+local FMistSudachi = Instance.new("Frame")
+local ImageLabel_3 = Instance.new("ImageLabel")
+local UICorner_4 = Instance.new("UICorner")
+local Edamame = Instance.new("TextLabel")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local KajiFruit = Instance.new("TextLabel")
+local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
+local MistSudachi = Instance.new("TextLabel")
+local UITextSizeConstraint_3 = Instance.new("UITextSizeConstraint")
+local CEdamame = Instance.new("TextLabel")
+local UITextSizeConstraint_4 = Instance.new("UITextSizeConstraint")
+local CKajiFruit = Instance.new("TextLabel")
+local UITextSizeConstraint_5 = Instance.new("UITextSizeConstraint")
+local CMistSudachi = Instance.new("TextLabel")
+local UITextSizeConstraint_6 = Instance.new("UITextSizeConstraint")
+local HideButton = Instance.new("TextButton")
+local UICorner_5 = Instance.new("UICorner")
+local UITextSizeConstraint_7 = Instance.new("UITextSizeConstraint")
+local Top = Instance.new("Frame")
+local UICorner_6 = Instance.new("UICorner")
+local Time = Instance.new("TextLabel")
+local UICorner_7 = Instance.new("UICorner")
+local UITextSizeConstraint_8 = Instance.new("UITextSizeConstraint")
+local StopButton = Instance.new("TextButton")
+local UICorner_8 = Instance.new("UICorner")
+local UITextSizeConstraint_9 = Instance.new("UITextSizeConstraint")
+local UserInfo = Instance.new("TextLabel")
+local UITextSizeConstraint_10 = Instance.new("UITextSizeConstraint")
+local HopServerButton = Instance.new("TextButton")
+local UICorner_9 = Instance.new("UICorner")
+local UITextSizeConstraint_11 = Instance.new("UITextSizeConstraint")
+local StatusText = Instance.new("TextLabel")
+local UITextSizeConstraint_12 = Instance.new("UITextSizeConstraint")
+local Bottom = Instance.new("Frame")
+local UICorner_10 = Instance.new("UICorner")
+local money = Instance.new("TextLabel")
+local UICorner_11 = Instance.new("UICorner")
+local UITextSizeConstraint_13 = Instance.new("UITextSizeConstraint")
+local CurrentCoin = Instance.new("TextLabel")
+local UITextSizeConstraint_14 = Instance.new("UITextSizeConstraint")
+local CloseButton = Instance.new("TextButton")
+local UICorner_12 = Instance.new("UICorner")
+local UITextSizeConstraint_15 = Instance.new("UITextSizeConstraint")
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    TeleportMap = Window:AddTab({ Title = "Teleport", Icon = "map-pin" }),
-    Attack = Window:AddTab({ Title = "Attack", Icon = "swords" }),
-    Fishing = Window:AddTab({ Title = "Fishing", Icon = "waves" }),
-    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
-}
+--Properties:
 
-local Options = Fluent.Options
+AutoCoinMain.Name = "AutoCoinMain"
+AutoCoinMain.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+AutoCoinMain.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-Fluent:Notify({
-    Title = "Alert",
-    Content = "Script Loaded.",
-    Duration = 8
-})
+Main.Name = "Main"
+Main.Parent = AutoCoinMain
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Main.BackgroundTransparency = 0.500
+Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Main.BorderSizePixel = 0
+Main.Position = UDim2.new(0.499585748, 0, 0.447210789, 0)
+Main.Size = UDim2.new(0.324233562, 0, 0.323232323, 0)
 
-do
-    local function getDragonNumber()
-        local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
-        local dragonNumbers = {}
+UICorner.CornerRadius = UDim.new(0, 10)
+UICorner.Parent = Main
 
-        for _, child in pairs(dragonsFolder:GetChildren()) do
-            if tonumber(child.Name) then 
-                table.insert(dragonNumbers, child.Name) 
-            end
-        end
-        return dragonNumbers[1]
-    end
+FEdamame.Name = "FEdamame"
+FEdamame.Parent = Main
+FEdamame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+FEdamame.BackgroundTransparency = 0.500
+FEdamame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+FEdamame.BorderSizePixel = 0
+FEdamame.Position = UDim2.new(0.0579999983, 0, 0.3046875, 0)
+FEdamame.Size = UDim2.new(0.200000003, 0, 0.390625, 0)
 
-    local dragonNumber = getDragonNumber()
-    local localPlayer = game.Players.LocalPlayer
-    local dragonWalkSpeed = localPlayer.Character.Dragons[dragonNumber].Data.MovementStats.WalkSpeed
-    local WalkSpeedSlideBar = Tabs.Main:AddSlider("Walkspeed", {
-        Title = "Dragon Walk Speed",
-        Description = "Speed",
-        Default = dragonWalkSpeed.Value,
-        Min = dragonWalkSpeed.Value,
-        Max = 1000,
-        Rounding = 1,
-        Callback = function(walkspeed)
-            dragonWalkSpeed.Value = walkspeed
-        end
-    })
+ImageLabel.Parent = FEdamame
+ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImageLabel.BackgroundTransparency = 1.000
+ImageLabel.BorderSizePixel = 0
+ImageLabel.Position = UDim2.new(0.150000006, 0, 0.150000006, 0)
+ImageLabel.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
+ImageLabel.Image = "rbxthumb://type=Asset&id=131694513217317&w=150&h=150"
 
-    WalkSpeedSlideBar:SetValue(dragonWalkSpeed.Value)
+UICorner_2.Parent = FEdamame
 
-    local dragonFlySpeed = localPlayer.Character.Dragons[dragonNumber].Data.MovementStats.FlySpeed
-    local FlySpeedSlideBar = Tabs.Main:AddSlider("FlySpeed", {
-        Title = "Dragon Fly Speed",
-        Description = "Speed",
-        Default = dragonFlySpeed.Value,
-        Min = dragonFlySpeed.Value,
-        Max = 1000,
-        Rounding = 1,
-        Callback = function(FlySpeed)
-            dragonFlySpeed.Value = FlySpeed
-        end
-    })
+FKajiFruit.Name = "FKajiFruit"
+FKajiFruit.Parent = Main
+FKajiFruit.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+FKajiFruit.BackgroundTransparency = 0.500
+FKajiFruit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+FKajiFruit.BorderSizePixel = 0
+FKajiFruit.Position = UDim2.new(0.400000006, 0, 0.3046875, 0)
+FKajiFruit.Size = UDim2.new(0.200000003, 0, 0.390625, 0)
 
-    FlySpeedSlideBar:SetValue(dragonFlySpeed.Value)
-    --------------------------------------------------------------------------------------------------------------
-    local EggCollectToggle = Tabs.Main:AddToggle("EggCollect", {Title = "AUTO - Collect(EGG)", Default = false })
-    local isCollectingEgg = false
+ImageLabel_2.Parent = FKajiFruit
+ImageLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImageLabel_2.BackgroundTransparency = 1.000
+ImageLabel_2.BorderSizePixel = 0
+ImageLabel_2.Position = UDim2.new(0.150000006, 0, 0.150000006, 0)
+ImageLabel_2.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
+ImageLabel_2.Image = "rbxthumb://type=Asset&id=71995107858467&w=150&h=150"
 
-    local function collectEggs()
-        for _, v in pairs(workspace.Interactions.Nodes.Eggs.ActiveNodes:GetDescendants()) do
-            if v.Name == "Egg" then
-                local eggPosition = v.Position
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(eggPosition + Vector3.new(0, 5, 0))
-                
-                wait(1)
-                
-                for i = 1, 20 do
-                    local args = { tostring(i) }
-                    game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CollectEggRemote"):InvokeServer(unpack(args))
-                end
-                
-                break
-            end
-        end
-    end
-    
-    EggCollectToggle:OnChanged(function()
-        if Options.EggCollect.Value then
-            isCollectingEggs = true
-            while isCollectingEggs do
-                collectEggs()
-                wait(0.5)
-            end
-        else
-            isCollectingEggs = false
-        end
-        print("Toggle changed:", Options.EggCollect.Value)
-    end)
+UICorner_3.Parent = FKajiFruit
 
-    Options.EggCollect:SetValue(false)
+FMistSudachi.Name = "FMistSudachi"
+FMistSudachi.Parent = Main
+FMistSudachi.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+FMistSudachi.BackgroundTransparency = 0.500
+FMistSudachi.BorderColor3 = Color3.fromRGB(0, 0, 0)
+FMistSudachi.BorderSizePixel = 0
+FMistSudachi.Position = UDim2.new(0.741999984, 0, 0.3046875, 0)
+FMistSudachi.Size = UDim2.new(0.200000003, 0, 0.390625, 0)
 
-    --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ImageLabel_3.Parent = FMistSudachi
+ImageLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ImageLabel_3.BackgroundTransparency = 1.000
+ImageLabel_3.BorderSizePixel = 0
+ImageLabel_3.Position = UDim2.new(0.150000006, 0, 0.150000006, 0)
+ImageLabel_3.Size = UDim2.new(0.699999988, 0, 0.699999988, 0)
+ImageLabel_3.Image = "rbxthumb://type=Asset&id=110184426558554&w=150&h=150"
 
-    local function getDragonNumber()
-        local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
-        local dragonNumbers = {}
+UICorner_4.Parent = FMistSudachi
 
-        for _, child in pairs(dragonsFolder:GetChildren()) do
-            if tonumber(child.Name) then 
-                table.insert(dragonNumbers, child.Name) 
-            end
-        end
-        return dragonNumbers[1]
-    end
+Edamame.Name = "Edamame"
+Edamame.Parent = Main
+Edamame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Edamame.BackgroundTransparency = 1.000
+Edamame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Edamame.BorderSizePixel = 0
+Edamame.Position = UDim2.new(0.0579999983, 0, 0.140625, 0)
+Edamame.Size = UDim2.new(0.200000003, 0, 0.12109375, 0)
+Edamame.Font = Enum.Font.Unknown
+Edamame.Text = "Edamame"
+Edamame.TextColor3 = Color3.fromRGB(255, 255, 255)
+Edamame.TextScaled = true
+Edamame.TextSize = 20.000
+Edamame.TextStrokeTransparency = 0.400
+Edamame.TextWrapped = true
 
-    local function attackTree(billboardPart)
-        local dragonNumber = getDragonNumber()
-        local breathArgs = {
-            "Breath",
-            "Destructibles",
-            billboardPart
-        }
+UITextSizeConstraint.Parent = Edamame
+UITextSizeConstraint.MaxTextSize = 20
 
-        if dragonNumber then
-            local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+KajiFruit.Name = "KajiFruit"
+KajiFruit.Parent = Main
+KajiFruit.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+KajiFruit.BackgroundTransparency = 1.000
+KajiFruit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+KajiFruit.BorderSizePixel = 0
+KajiFruit.Position = UDim2.new(0.400000006, 0, 0.140625, 0)
+KajiFruit.Size = UDim2.new(0.200000003, 0, 0.12109375, 0)
+KajiFruit.Font = Enum.Font.Unknown
+KajiFruit.Text = "KajiFruit"
+KajiFruit.TextColor3 = Color3.fromRGB(255, 255, 255)
+KajiFruit.TextScaled = true
+KajiFruit.TextSize = 20.000
+KajiFruit.TextStrokeTransparency = 0.400
+KajiFruit.TextWrapped = true
 
-            if playSoundRemote then
-                playSoundRemote:FireServer(unpack(breathArgs))
-            end
-        end
-    end
+UITextSizeConstraint_2.Parent = KajiFruit
+UITextSizeConstraint_2.MaxTextSize = 20
 
-    local function attackTreeBite(billboardPart)
-        local dragonNumber = getDragonNumber()
+MistSudachi.Name = "MistSudachi"
+MistSudachi.Parent = Main
+MistSudachi.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+MistSudachi.BackgroundTransparency = 1.000
+MistSudachi.BorderColor3 = Color3.fromRGB(0, 0, 0)
+MistSudachi.BorderSizePixel = 0
+MistSudachi.Position = UDim2.new(0.712000012, 0, 0.140625, 0)
+MistSudachi.Size = UDim2.new(0.25999999, 0, 0.12109375, 0)
+MistSudachi.Font = Enum.Font.Unknown
+MistSudachi.Text = "MistSudachi"
+MistSudachi.TextColor3 = Color3.fromRGB(255, 255, 255)
+MistSudachi.TextScaled = true
+MistSudachi.TextSize = 20.000
+MistSudachi.TextStrokeTransparency = 0.400
+MistSudachi.TextWrapped = true
 
-        local biteArgs = {
-            "Bite",
-            "Destructibles",
-            billboardPart
-        }
-        local biteRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
-        
-        if biteRemote then
-            biteRemote:FireServer(unpack(biteArgs))
-        end
-    end
+UITextSizeConstraint_3.Parent = MistSudachi
+UITextSizeConstraint_3.MaxTextSize = 20
 
-    local savedPositions = {}
+CEdamame.Name = "CEdamame"
+CEdamame.Parent = Main
+CEdamame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CEdamame.BackgroundTransparency = 1.000
+CEdamame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CEdamame.BorderSizePixel = 0
+CEdamame.Position = UDim2.new(0.0579999983, 0, 0.73828125, 0)
+CEdamame.Size = UDim2.new(0.200000003, 0, 0.1953125, 0)
+CEdamame.Font = Enum.Font.SourceSans
+CEdamame.Text = "0"
+CEdamame.TextColor3 = Color3.fromRGB(255, 255, 255)
+CEdamame.TextScaled = true
+CEdamame.TextSize = 50.000
+CEdamame.TextWrapped = true
 
-    local function AutoHarvest()
-        while Options.HarvestToggle.Value do
-            local foodNodes = workspace.Interactions.Nodes.Food:GetChildren()
-            local foundNode = false
-            for _, foodNode in ipairs(foodNodes) do
-                if foodNode.Name == "LargeFoodNode" then
-                    local billboardPart = foodNode:FindFirstChild("BillboardPart")
-                    
-                    if billboardPart then
-                        local Health = billboardPart:FindFirstChild("Health")
-                        if Health and Health.Value > 0 then
-                            local nodePosition = nil
-                            if foodNode.PrimaryPart then
-                                nodePosition = foodNode.PrimaryPart.Position
-                            elseif foodNode:IsA("Model") then
-                                local basePart = foodNode:FindFirstChildOfClass("BasePart")
-                                if basePart then
-                                    nodePosition = basePart.Position
-                                end
-                            end
+UITextSizeConstraint_4.Parent = CEdamame
+UITextSizeConstraint_4.MaxTextSize = 50
 
-                            if nodePosition then
-                                local isPositionSaved = false
-                                for _, savedPosition in ipairs(savedPositions) do
-                                    if (savedPosition - nodePosition).Magnitude < 1 then 
-                                        isPositionSaved = true
-                                        break
-                                    end
-                                end
-                                if not isPositionSaved then
-                                    table.insert(savedPositions, nodePosition)
-                                end
-                                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(nodePosition)
-                                task.wait(0.01)
-                                while true do
-                                    if Health and Health.Value > 0 then
-                                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
-                                        task.wait(0.15)
-                                        attackTree(billboardPart)
-                                        task.wait(0.15)
-                                        attackTreeBite(billboardPart)
-                                    else
-                                        break
-                                    end
-                                end
-                                foundNode = true
-                            end
-                        end
-                    end
-                end
-            end
-            if not foundNode then
-                for _, position in ipairs(savedPositions) do
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                    task.wait(0.01)
-                end
-            end
-            task.wait(0.01)
-        end
-    end
+CKajiFruit.Name = "CKajiFruit"
+CKajiFruit.Parent = Main
+CKajiFruit.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CKajiFruit.BackgroundTransparency = 1.000
+CKajiFruit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CKajiFruit.BorderSizePixel = 0
+CKajiFruit.Position = UDim2.new(0.400000006, 0, 0.73828125, 0)
+CKajiFruit.Size = UDim2.new(0.200000003, 0, 0.1953125, 0)
+CKajiFruit.Font = Enum.Font.SourceSans
+CKajiFruit.Text = "0"
+CKajiFruit.TextColor3 = Color3.fromRGB(255, 255, 255)
+CKajiFruit.TextScaled = true
+CKajiFruit.TextSize = 50.000
+CKajiFruit.TextWrapped = true
 
-    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
-    local isCollectingHarvest = false
+UITextSizeConstraint_5.Parent = CKajiFruit
+UITextSizeConstraint_5.MaxTextSize = 50
 
-    HarvestCollectToggle:OnChanged(function()
-        if Options.HarvestToggle.Value then
-            isCollectingHarvest = true
-            AutoHarvest()
-        else
-            isCollectingHarvest = false
-            print("Harvesting stopped.")
-        end
-        print("Toggle changed:", Options.HarvestToggle.Value)
-    end)
+CMistSudachi.Name = "CMistSudachi"
+CMistSudachi.Parent = Main
+CMistSudachi.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CMistSudachi.BackgroundTransparency = 1.000
+CMistSudachi.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CMistSudachi.BorderSizePixel = 0
+CMistSudachi.Position = UDim2.new(0.741999984, 0, 0.73828125, 0)
+CMistSudachi.Size = UDim2.new(0.200000003, 0, 0.1953125, 0)
+CMistSudachi.Font = Enum.Font.SourceSans
+CMistSudachi.Text = "0"
+CMistSudachi.TextColor3 = Color3.fromRGB(255, 255, 255)
+CMistSudachi.TextScaled = true
+CMistSudachi.TextSize = 50.000
+CMistSudachi.TextWrapped = true
 
-    Options.HarvestToggle:SetValue(false)
-    ----------------------------------------------------------------------------------------
-    local function MagnetEffect()
-        local character = game.Players.LocalPlayer.Character
-        if not character or not character:FindFirstChild("HumanoidRootPart") then
-            return
-        end
+UITextSizeConstraint_6.Parent = CMistSudachi
+UITextSizeConstraint_6.MaxTextSize = 50
 
-        local HumanoidRootPart = character.HumanoidRootPart
-        local targetPosition = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0) 
-        local cameraFolder = game.Workspace.Camera 
-        for _, item in ipairs(cameraFolder:GetChildren()) do
-            if string.lower(item.Name):find("model") then
-                if item:IsA("Model") then
-                    local primaryPart = item.PrimaryPart
-                    if primaryPart then
-                        item:SetPrimaryPartCFrame(targetPosition)
-                    end
-                elseif item:IsA("BasePart") then
-                    item.CFrame = targetPosition
-                end
-            end
-        end
-    end
+HideButton.Name = "HideButton"
+HideButton.Parent = AutoCoinMain
+HideButton.AnchorPoint = Vector2.new(0.5, 0.5)
+HideButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+HideButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HideButton.Position = UDim2.new(0.416242927, 0, 0.747569919, 0)
+HideButton.Size = UDim2.new(0.157547921, 0, 0.0404040404, 0)
+HideButton.Font = Enum.Font.SourceSansBold
+HideButton.Text = "Hide"
+HideButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+HideButton.TextScaled = true
+HideButton.TextSize = 20.000
+HideButton.TextWrapped = true
 
+UICorner_5.CornerRadius = UDim.new(0, 5)
+UICorner_5.Parent = HideButton
 
-    local MagnetCollectToggle = Tabs.Main:AddToggle("MagnetToggle", {Title = "Magnet Effect", Default = false })
-    local isMagnetEffect = false
+UITextSizeConstraint_7.Parent = HideButton
+UITextSizeConstraint_7.MaxTextSize = 20
 
-    MagnetCollectToggle:OnChanged(function()
-        if Options.MagnetToggle.Value then
-            isMagnetEffect = true
-            while isMagnetEffect do
-                task.wait(0.001)
-                MagnetEffect()
-            end
-        else
-            isMagnetEffect = false
-            print("Harvesting stopped.")
-        end
-        print("Toggle changed:", Options.MagnetToggle.Value)
-    end)
+Top.Name = "Top"
+Top.Parent = AutoCoinMain
+Top.AnchorPoint = Vector2.new(0.5, 0.5)
+Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Top.BackgroundTransparency = 0.500
+Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Top.BorderSizePixel = 0
+Top.Position = UDim2.new(0.499585748, 0, 0.219709665, 0)
+Top.Size = UDim2.new(0.324233562, 0, 0.112373739, 0)
 
-    Options.MagnetToggle:SetValue(false)
-----------------------------------------------------------------------------------------------------
+UICorner_6.CornerRadius = UDim.new(0, 10)
+UICorner_6.Parent = Top
 
---     local function autoWarpToCurrencyNodes()
---         local player = game.Players.LocalPlayer
---         local character = player.Character or player.CharacterAdded:Wait()
---         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+Time.Name = "Time"
+Time.Parent = Top
+Time.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Time.BackgroundTransparency = 0.500
+Time.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Time.BorderSizePixel = 0
+Time.Position = UDim2.new(0.0269014686, 0, 0.146067411, 0)
+Time.Size = UDim2.new(0.321214616, 0, 0.707865179, 0)
+Time.Font = Enum.Font.SourceSans
+Time.Text = "00:00:00"
+Time.TextColor3 = Color3.fromRGB(255, 255, 255)
+Time.TextScaled = true
+Time.TextSize = 40.000
+Time.TextStrokeTransparency = 0.500
+Time.TextWrapped = true
 
---         local function findCurrencyNode(nodeName)
---             local currencyNodesFolder = workspace.Interactions.Nodes.CurrencyNodes.Spawned
---             local foundNodes = {}
---             for _, node in ipairs(currencyNodesFolder:GetChildren()) do
---                 if node.Name == nodeName then
---                     table.insert(foundNodes, node)
---                 end
---             end
-            
---             return foundNodes
---         end
---         while true do
---             local experienceNodes = findCurrencyNode("Experience")
---             local megaExperienceNodes = findCurrencyNode("MegaExperience")
---             local allNodes = {}
---             for _, node in ipairs(experienceNodes) do
---                 table.insert(allNodes, node)
---             end
---             for _, node in ipairs(megaExperienceNodes) do
---                 table.insert(allNodes, node)
---             end
---             if #allNodes > 0 then
---                 for _, node in ipairs(allNodes) do
---                     local nodePosition = node.Position
---                     humanoidRootPart.CFrame = CFrame.new(nodePosition)
---                     task.wait(0.001)
---                 end
---             else
---                 task.wait(0.001)
---             end
---         end
---     end
+UICorner_7.Parent = Time
 
---     local ExpCollgToggle = Tabs.Main:AddToggle("ExpToggle", {Title = "Auto Exp", Default = false })
---     local IsExpWarp = false
+UITextSizeConstraint_8.Parent = Time
+UITextSizeConstraint_8.MaxTextSize = 40
 
---     ExpCollgToggle:OnChanged(function()
---         if Options.ExpToggle.Value then
---             IsExpWarp = true
---             while IsExpWarp do
---                 task.wait(0.001)
---                 autoWarpToCurrencyNodes()
---             end
---         else
---             IsExpWarp = false
---             print("Harvesting stopped.")
---         end
---         print("Toggle changed:", Options.ExpToggle.Value)
---     end)
+StopButton.Name = "StopButton"
+StopButton.Parent = Top
+StopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 4)
+StopButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+StopButton.BorderSizePixel = 0
+StopButton.Position = UDim2.new(0.643999994, 0, 0.449438035, 0)
+StopButton.Size = UDim2.new(0.328000009, 0, 0.404494375, 0)
+StopButton.Font = Enum.Font.SourceSansBold
+StopButton.Text = "Pause"
+StopButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+StopButton.TextScaled = true
+StopButton.TextSize = 20.000
+StopButton.TextWrapped = true
 
---     Options.ExpToggle:SetValue(false)
+UICorner_8.Parent = StopButton
 
--- ----------------------------------------------------------------------------------------------------
+UITextSizeConstraint_9.Parent = StopButton
+UITextSizeConstraint_9.MaxTextSize = 20
 
--- ----------------------------------------------------------------------------------------------------
+UserInfo.Name = "UserInfo"
+UserInfo.Parent = Top
+UserInfo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+UserInfo.BackgroundTransparency = 1.000
+UserInfo.BorderColor3 = Color3.fromRGB(0, 0, 0)
+UserInfo.BorderSizePixel = 0
+UserInfo.Position = UDim2.new(0.369030505, 0, 0.146067411, 0)
+UserInfo.Size = UDim2.new(0.257, 0, 0.303370446, 0)
+UserInfo.Font = Enum.Font.SourceSansBold
+UserInfo.Text = "User : "
+UserInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
+UserInfo.TextScaled = true
+UserInfo.TextSize = 20.000
+UserInfo.TextWrapped = true
+UserInfo.TextXAlignment = Enum.TextXAlignment.Left
 
---     local function autoWarpToCurrencyNodes()
---         local player = game.Players.LocalPlayer
---         local character = player.Character or player.CharacterAdded:Wait()
---         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+UITextSizeConstraint_10.Parent = UserInfo
+UITextSizeConstraint_10.MaxTextSize = 20
 
---         local function findCurrencyNode(nodeName)
---             local currencyNodesFolder = workspace.Interactions.Nodes.CurrencyNodes.Spawned
---             local foundNodes = {}
---             for _, node in ipairs(currencyNodesFolder:GetChildren()) do
---                 if node.Name == nodeName then
---                     table.insert(foundNodes, node)
---                 end
---             end
-            
---             return foundNodes
---         end
---         while true do
---             local CoinNodes = findCurrencyNode("Coins")
---             local megaCoinNodes = findCurrencyNode("MegaCoins")
---             local allNodes = {}
---             for _, node in ipairs(CoinNodes) do
---                 table.insert(allNodes, node)
---             end
---             for _, node in ipairs(megaCoinNodes) do
---                 table.insert(allNodes, node)
---             end
---             if #allNodes > 0 then
---                 for _, node in ipairs(allNodes) do
---                     local nodePosition = node.Position
---                     humanoidRootPart.CFrame = CFrame.new(nodePosition)
---                     task.wait(0.001)
---                 end
---             else
---                 task.wait(0.001)
---             end
---         end
---     end
+HopServerButton.Parent = Top
+HopServerButton.BackgroundColor3 = Color3.fromRGB(0, 145, 255)
+HopServerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButton.BorderSizePixel = 0
+HopServerButton.Position = UDim2.new(0.369567841, 0, 0.438202083, 0)
+HopServerButton.Size = UDim2.new(0.256013274, 0, 0.393258423, 0)
+HopServerButton.Font = Enum.Font.SourceSansBold
+HopServerButton.Text = "HOP Server"
+HopServerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButton.TextScaled = true
+HopServerButton.TextSize = 20.000
+HopServerButton.TextWrapped = true
 
---     local CoinCollgToggle = Tabs.Main:AddToggle("CoinToggle", {Title = "Auto Coin", Default = false })
---     local IsCoinWarp = false
+UICorner_9.Parent = HopServerButton
 
---     CoinCollgToggle:OnChanged(function()
---         if Options.CoinToggle.Value then
---             IsCoinWarp = true
---             while IsCoinWarp do
---                 task.wait(0.001)
---                 autoWarpToCurrencyNodes()
---             end
---         else
---             IsCoinWarp = false
---             print("Harvesting stopped.")
---         end
---         print("Toggle changed:", Options.CoinToggle.Value)
---     end)
+UITextSizeConstraint_11.Parent = HopServerButton
+UITextSizeConstraint_11.MaxTextSize = 20
 
---     Options.CoinToggle:SetValue(false)
+StatusText.Name = "StatusText"
+StatusText.Parent = Top
+StatusText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+StatusText.BackgroundTransparency = 1.000
+StatusText.BorderColor3 = Color3.fromRGB(0, 0, 0)
+StatusText.BorderSizePixel = 0
+StatusText.Position = UDim2.new(0.649819374, 0, 0.146067411, 0)
+StatusText.Size = UDim2.new(0.260517031, 0, 0.303370446, 0)
+StatusText.Font = Enum.Font.SourceSansBold
+StatusText.Text = "Status : Start"
+StatusText.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatusText.TextScaled = true
+StatusText.TextSize = 20.000
+StatusText.TextWrapped = true
+StatusText.TextXAlignment = Enum.TextXAlignment.Left
 
-----------------------------------------------------------------------------------------------------
+UITextSizeConstraint_12.Parent = StatusText
+UITextSizeConstraint_12.MaxTextSize = 20
 
--- ----------------------------------------------------------------------------------------------------
+Bottom.Name = "Bottom"
+Bottom.Parent = AutoCoinMain
+Bottom.AnchorPoint = Vector2.new(0.5, 0.5)
+Bottom.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Bottom.BackgroundTransparency = 0.500
+Bottom.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Bottom.BorderSizePixel = 0
+Bottom.Position = UDim2.new(0.499585748, 0, 0.667110801, 0)
+Bottom.Size = UDim2.new(0.324233562, 0, 0.0997474715, 0)
 
-    local function MobAura()
-        local mobFolder = workspace:FindFirstChild("MobFolder")
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local dragonNumber = getDragonNumber()
-        local attackRange = 100
+UICorner_10.Parent = Bottom
 
-        if not mobFolder or not dragonNumber then 
-            print("MobFolder or dragonNumber not found.")
-            return 
-        end
+money.Name = "money"
+money.Parent = Bottom
+money.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+money.BackgroundTransparency = 0.500
+money.BorderColor3 = Color3.fromRGB(0, 0, 0)
+money.BorderSizePixel = 0
+money.Position = UDim2.new(0.0280000009, 0, 0.490368813, 0)
+money.Size = UDim2.new(0.944000006, 0, 0.430379748, 0)
+money.Font = Enum.Font.Roboto
+money.Text = "0,000,000"
+money.TextColor3 = Color3.fromRGB(255, 255, 255)
+money.TextScaled = true
+money.TextSize = 14.000
+money.TextWrapped = true
 
-        -- หามอนสเตอร์ใน mobFolder
-        for _, mob in ipairs(mobFolder:GetChildren()) do
-            local target = mob:FindFirstChild(mob.Name)
-            if target and target:IsA("BasePart") then
-                local targetPos = target.Position
-                local distance = (humanoidRootPart.Position - targetPos).Magnitude
+UICorner_11.Parent = money
 
-                if distance <= attackRange then
+UITextSizeConstraint_13.Parent = money
+UITextSizeConstraint_13.MaxTextSize = 34
 
-                    local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
-                    if not healthValue then
-                        for _, desc in ipairs(mob:GetDescendants()) do
-                            if desc.Name == "Health" and desc:IsA("NumberValue") then
-                                healthValue = desc
-                                break
-                            end
-                        end
-                    end
-                    if healthValue and healthValue.Value > 0 then
-                    
-                        while healthValue and healthValue.Value > 0 do
-                            local args = {
-                                "Breath",
-                                "Mobs",
-                                target
-                            }
+CurrentCoin.Name = "CurrentCoin"
+CurrentCoin.Parent = Bottom
+CurrentCoin.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+CurrentCoin.BackgroundTransparency = 1.000
+CurrentCoin.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CurrentCoin.BorderSizePixel = 0
+CurrentCoin.Position = UDim2.new(0.300000012, 0, 0.0759493634, 0)
+CurrentCoin.Size = UDim2.new(0.400000006, 0, 0.303797454, 0)
+CurrentCoin.Font = Enum.Font.Unknown
+CurrentCoin.Text = "Current Coin"
+CurrentCoin.TextColor3 = Color3.fromRGB(255, 255, 255)
+CurrentCoin.TextScaled = true
+CurrentCoin.TextSize = 14.000
+CurrentCoin.TextWrapped = true
 
-                            local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                            if dragon then
-                                local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                                if remote then
-                                    remote:FireServer(unpack(args))
-                                end
-                            end
-                            task.wait(0.3)
-                            healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
-                        end
-                    end
-                end
-            end
-        end
-    end
+UITextSizeConstraint_14.Parent = CurrentCoin
+UITextSizeConstraint_14.MaxTextSize = 23
 
+CloseButton.Name = "CloseButton"
+CloseButton.Parent = AutoCoinMain
+CloseButton.AnchorPoint = Vector2.new(0.5, 0.5)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CloseButton.Position = UDim2.new(0.582928598, 0, 0.747569919, 0)
+CloseButton.Size = UDim2.new(0.157547921, 0, 0.0404040404, 0)
+CloseButton.Font = Enum.Font.SourceSansBold
+CloseButton.Text = "Close"
+CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseButton.TextScaled = true
+CloseButton.TextSize = 20.000
+CloseButton.TextWrapped = true
 
-    local AuraToggle = Tabs.Main:AddToggle("AuraToggle", {Title = "Attack Aura", Default = false })
-    local IsAuraMob = false
+UICorner_12.CornerRadius = UDim.new(0, 5)
+UICorner_12.Parent = CloseButton
 
-    AuraToggle:OnChanged(function()
-        if Options.AuraToggle.Value then
-            IsAuraMob = true
-            while IsAuraMob do
-                task.wait(0.1)
-                MobAura()
-            end
-        else
-            IsAuraMob = false
-        end
-    end)
+UITextSizeConstraint_15.Parent = CloseButton
+UITextSizeConstraint_15.MaxTextSize = 20
 
-    Options.AuraToggle:SetValue(false)
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
-    ----------------------------------------------------------------------------------------------------
-    local function checkTreasureNodes()
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local treasureNodes = workspace.Interactions.Nodes.Treasure:GetChildren()
-        for _, node in ipairs(treasureNodes) do
-            if node:FindFirstChild("BronzeChest") then
-                local bronzeChest = node.BronzeChest
-                if bronzeChest then
-                    local cheatHealt = bronzeChest.HumanoidRootPart.Health
-                    if cheatHealt and cheatHealt.Value > 0 then
-                        local nodePosition = bronzeChest.WorldPivot.Position
-                        humanoidRootPart.CFrame = CFrame.new(nodePosition + Vector3.new(0, 5, 0))
-                    end
-                end
-            elseif node:FindFirstChild("SilverChest") then
-                local silverChest = node.SilverChest
-                if silverChest then
-                    local cheatHealt = silverChest.HumanoidRootPart.Health
-                    if cheatHealt and cheatHealt.Value > 0 then
-                        local nodePosition = silverChest.WorldPivot.Position
-                        humanoidRootPart.CFrame = CFrame.new(nodePosition + Vector3.new(0, 5, 0))
-                    end
-                end
-            end
-        end
-    end
+local AutoCoinHide = Instance.new("ScreenGui")
+local ShowUiButton = Instance.new("TextButton")
+local UICorner = Instance.new("UICorner")
+local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
 
-    local TreasureCollectToggle = Tabs.Main:AddToggle("TreasureToggle", {Title = "AUTO - Treasure", Default = false })
-    local isCollectingTreasure = false
+AutoCoinHide.Name = "AutoCoinHide"
+AutoCoinHide.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+AutoCoinHide.Enabled = false
+AutoCoinHide.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-    TreasureCollectToggle:OnChanged(function()
-        if Options.TreasureToggle.Value then
-            isCollectingTreasure = true
-            while isCollectingTreasure do
-                checkTreasureNodes()
-                task.wait(0.01)
-            end
-        else
-            isCollectingTreasure = false
-            print("Treasureing stopped.")
-        end
-        print("Toggle changed:", Options.TreasureToggle.Value)
-    end)
+ShowUiButton.Name = "ShowUiButton"
+ShowUiButton.Parent = AutoCoinHide
+ShowUiButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+ShowUiButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+ShowUiButton.BorderSizePixel = 0
+ShowUiButton.Position = UDim2.new(0.012427506, 0, 0.912878811, 0)
+ShowUiButton.Size = UDim2.new(0.1, 0, 0.05, 0)
+ShowUiButton.Font = Enum.Font.SourceSansBold
+ShowUiButton.Text = "Show Ui"
+ShowUiButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+ShowUiButton.TextScaled = true
+ShowUiButton.TextSize = 29.000
+ShowUiButton.TextWrapped = true
 
-    Options.TreasureToggle:SetValue(false)
-    ----------------------------------------------------------------------------------------
+UICorner.Parent = ShowUiButton
 
-    Tabs.Main:AddButton({
-        Title = "Anti AFK",
-        Description = "Click To Anti afk kick",
-        Callback = function()
-            local VirtualUser = game:GetService('VirtualUser')
+UITextSizeConstraint.Parent = ShowUiButton
+UITextSizeConstraint.MaxTextSize = 29
+
+local VirtualUser = game:GetService('VirtualUser')
  
-            game:GetService('Players').LocalPlayer.Idled:Connect(function()
-                VirtualUser:CaptureController()
-                VirtualUser:ClickButton2(Vector2.new())
-            end)
-        end
-    })
+game:GetService('Players').LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
 
-----------------------------------------------------------------------------------------------------
-    local function ImmortalDragon()
-        local dragonNumber = getDragonNumber()
-        if not dragonNumber then
-            warn("No dragon found for the player!")
-            return
-        end
+local function getDragonNumber()
+    local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
+    local dragonNumbers = {}
 
-        local playerDragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
-        local dragon = playerDragonsFolder:FindFirstChild(dragonNumber)
-
-        if dragon then
-            local deadStatus = dragon:FindFirstChild("Data"):FindFirstChild("Dead")
-            if deadStatus then
-                deadStatus.Value = false
-            end
+    for _, child in pairs(dragonsFolder:GetChildren()) do
+        if tonumber(child.Name) then 
+            table.insert(dragonNumbers, child.Name) 
         end
     end
+    return dragonNumbers[1]
+end
 
-    Tabs.Main:AddButton({
-        Title = "Revive To God Mode",
-        Description = "Click When Your Dragon Is Dead",
-        Callback = function()
-            ImmortalDragon()
+local function attackTree(billboardPart)
+    local dragonNumber = getDragonNumber()
+    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
+    local args = {
+        "Breath",
+        "Destructibles",
+        billboardPart
+    }
+
+    if dragonNumber then
+        local playSoundRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+
+        if playSoundRemote then
+            playSoundRemote:FireServer(unpack(args))
         end
-    })
+    end
+end
 
-    -----------------------------------------------------------------------------------------------------------------
+local function attackTreeBite(billboardPart)
+    local dragonNumber = getDragonNumber()
+    local biteArgs = {
+        "Bite",
+        "Destructibles",
+        billboardPart
+    }
+    local biteRemote = game:GetService("Players").LocalPlayer.Character:WaitForChild("Dragons"):WaitForChild(dragonNumber):WaitForChild("Remotes"):WaitForChild("PlaySoundRemote")
+    
+    if biteRemote then
+        biteRemote:FireServer(unpack(biteArgs))
+    end
+end
 
-    local Aspd = 1
+function MobAura()
+    local mobFolder = workspace:FindFirstChild("MobFolder")
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+    local dragonNumber = getDragonNumber()
+    local attackRange = 100
 
-    local AttackSpeedSlider = Tabs.Attack:AddSlider("AttackSpeed", {
-        Title = "AttackSpeed",
-        Description = "0 is faster",
-        Default = 1,
-        Min = 0,
-        Max = 2,
-        Rounding = 2,
-        Callback = function(ASPD)
-            Aspd = ASPD
-        end
-    })
+    if not mobFolder or not dragonNumber then 
+        print("MobFolder or dragonNumber not found.")
+        return 
+    end
 
-    AttackSpeedSlider:SetValue(1)
+    -- หามอนสเตอร์ใน mobFolder
+    for _, mob in ipairs(mobFolder:GetChildren()) do
+        local target = mob:FindFirstChild(mob.Name)
+        if target and target:IsA("BasePart") then
+            local targetPos = target.Position
+            local distance = (humanoidRootPart.Position - targetPos).Magnitude
 
-    local AttackMobToggle = Tabs.Attack:AddToggle("AttackMob", {Title = "AUTO - AttackMob", Default = false })
-    local isAutoAttackingMob = false
-    local firstStart = false
-
-    local lastPosition = nil
-    local attackCount = 0
-
-    local function autoAttackMob()
-        local mobFolder = workspace:FindFirstChild("MobFolder")
-        local player = game.Players.LocalPlayer
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
-        local dragonNumber = getDragonNumber()
-
-        if not mobFolder or not dragonNumber then return end
-
-        for _, mob in ipairs(mobFolder:GetChildren()) do
-            local target = mob:FindFirstChild(mob.Name)
-            if target and target:IsA("BasePart") then
-                local targetPos = target.Position
-                if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
-                    continue
-                end
+            if distance <= attackRange then
 
                 local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                 if not healthValue then
@@ -622,331 +698,364 @@ do
                         end
                     end
                 end
-                if not healthValue or healthValue.Value == 0 then
-                    if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
-                        lastPosition = nil
-                        attackCount = 0
-                    end
-                    continue
-                end
+                if healthValue and healthValue.Value > 0 then
+                
+                    while healthValue and healthValue.Value > 0 do
+                        local args = {
+                            "Breath",
+                            "Mobs",
+                            target
+                        }
 
-                humanoidRootPart.CFrame = CFrame.new(targetPos + Vector3.new(0, 0, 0))
-                lastPosition = targetPos
-                attackCount += 1
-
-                while healthValue and healthValue.Value > 0 do
-                    local args = {
-                        "Breath",
-                        "Mobs",
-                        target
-                    }
-                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0.5, 0))
-                    local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                    if dragon then
-                        local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                        if remote then
-                            remote:FireServer(unpack(args))
-                        end
-                    end
-                    task.wait(0.3)
-                    healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
-                end
-                if healthValue and healthValue.Value == 0 then
-                    lastPosition = nil
-                    attackCount = 0
-                end
-
-                break
-            end
-        end
-    end
-
-
-    AttackMobToggle:OnChanged(function()
-        if Options.AttackMob.Value then
-            isAutoAttackingMob = true
-            task.spawn(function()
-                while isAutoAttackingMob do
-                    autoAttackMob()
-                    task.wait(Aspd)
-                end
-            end)
-        else
-            isAutoAttackingMob = false
-            firstStart = false
-        end
-    end)
-
-    Options.AttackMob:SetValue(false)
-
-    --------------------------------------------------------------------------------------------
-    Tabs.Fishing:AddButton({
-        Title = "Teleport To Fishing Zone",
-        Description = "Click To Teleport",
-        Callback = function()
-            for _, v in pairs(workspace.Interactions.Nodes.Fishing:GetDescendants()) do
-                if v.Name == "Zone" then
-                    local targetPosition
-                    if v:IsA("Model") then
-                        if v.WorldPivot then
-                            targetPosition = v.WorldPivot.Position
-                        else
-                            targetPosition = v:FindFirstChildOfClass("WorldPivot").Position
-                        end
-                    elseif v:IsA("WorldPivot") then
-                        targetPosition = v.Position
-                    end
-                    
-                    if targetPosition then
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(targetPosition + Vector3.new(0, 60, 0))
-                    end
-                    break
-                end
-            end
-        end
-    })
-
-    local AutoFishingToggle = Tabs.Fishing:AddToggle("AutoFishing", {Title = "AUTO - Fishing[Test]", Default = false })
-    local isAutoFishing = false
-    local isStartingFishing = false
-    local isMinigame = false
-    local Player = game:GetService("Players")
-    local LocalPlayer = Player.LocalPlayer
-    local GUI = LocalPlayer.PlayerGui
-    local GuiService = game:GetService("GuiService")
-    local VirtualInputManager = game:GetService("VirtualInputManager")
-    local FishingGui = GUI:FindFirstChild("FishingGui")
-    local isFishingComplete = false
-    local isMinigameComplete = false
-
-    -------------- กดเริ่มตกปลา
-    function StartFishing()
-        if not isStartingFishing then
-            isMinigame = false
-            isFishingComplete = false
-            if FishingGui and FishingGui.Enabled then
-                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
-                if ContainerFrame then
-                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
-                    if ButtonsFrame then
-                        local FishButton = ButtonsFrame:FindFirstChild("FishButton") 
-                        if FishButton then
-                            task.wait(0.001)
-                            GuiService.SelectedCoreObject = FishButton
-                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-                            isStartingFishing = true
-
-                            task.wait(3)
-                            isFishingComplete = true
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    -------------------- กดหมุนเบ็ด
-    function ProcessFishing()
-        if isFishingComplete and not isMinigame then
-            if FishingGui and FishingGui.Enabled then
-                local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
-                if ContainerFrame then
-                    local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
-                    if ButtonsFrame then
-                        local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
-                        if ReelButton then
-                            local CatchLabel = ReelButton:FindFirstChild("CatchLabel") 
-                            if CatchLabel and CatchLabel.Visible then
-                                task.wait(0.001)
-                                GuiService.SelectedCoreObject = ReelButton
-                                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
-                                isMinigame = true
-                                isFishingComplete = false
-
-                                ProcessMinigame()
+                        local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                        if dragon then
+                            local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                            if remote then
+                                remote:FireServer(unpack(args))
                             end
                         end
+                        task.wait(0.3)
+                        healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
                     end
                 end
             end
         end
     end
-    ----------------------- มินิเกมส์
+end
 
-    local tolerance = 20
-    local lastProcessed = 0
+local isPause = false
+local StartHavest = false 
 
-    function ProcessMinigame()
-        while isMinigame do
-            wait(0.1)
+local predefinedPositions = {
+    Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
+    Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
+    Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
+    Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
+    Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
+    Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
+    Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
+    Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
+    Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
+    Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375)
+}
 
-            if tick() - lastProcessed > 1 then 
-                if FishingGui and FishingGui.Enabled then
-                    local ContainerFrame = FishingGui:FindFirstChild("ContainerFrame")
-                    if ContainerFrame then
-                        local ButtonsFrame = ContainerFrame:FindFirstChild("ButtonsFrame")
-                        local ReelingFrame = ContainerFrame:FindFirstChild("ReelingFrame")
-                        if ReelingFrame and ButtonsFrame then
-                            local ReelButton = ButtonsFrame:FindFirstChild("ReelButton") 
-                            local SpinRingFrame = ReelingFrame:FindFirstChild("SpinRingFrame") 
-                            local SpinReelLabel = ReelingFrame:FindFirstChild("SpinReelLabel")
-                            if SpinRingFrame and SpinReelLabel then
-                                local spinRingRotation = math.floor(SpinRingFrame.Rotation)
-                                local spinReelLabelRotation = math.floor(SpinReelLabel.Rotation)
+local TARGET_ITEM_NAMES = {
+    "EdamameFoodModel",
+    "MistSudachiFoodModel",
+    "KajiFruitFoodModel"
+}
 
-                                if math.abs(spinRingRotation - spinReelLabelRotation) <= tolerance then
-                                    print("Success")
 
-                                    lastProcessed = tick()
+local function teleportDropItemsToPlayer()
+    local character = game.Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
 
-                                    task.wait(0.001)
-                                    GuiService.SelectedCoreObject = ReelButton
-                                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
-                                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+    local HumanoidRootPart = character.HumanoidRootPart
+    local targetPosition = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0) 
+    local cameraFolder = game.Workspace.Camera 
+
+
+    for _, itemName in ipairs(TARGET_ITEM_NAMES) do
+
+        local item = cameraFolder:FindFirstChild(itemName)
+        if item then
+            local primaryPart = item.PrimaryPart or item:FindFirstChildOfClass("BasePart")
+
+            if primaryPart then
+                item:SetPrimaryPartCFrame(targetPosition)
+            end
+        end
+    end
+end
+
+local function mainProgress()
+    while not isPause do
+        local EdamameCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Edamame")
+        local MistSudachiCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("MistSudachi")
+        local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
+        local MeatCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Meat")
+        local BaconCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Bacon")
+
+        if game.PlaceId == 3475397644 then
+            if EdamameCount.Value >= 1 then
+                local args1 = {
+                    {
+                        ItemName = "Edamame",
+                        Amount = EdamameCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args1))
+                wait(1)
+            end
+
+            if MistSudachiCount.Value >= 1 then
+                local args2 = {
+                    {
+                        ItemName = "MistSudachi",
+                        Amount = MistSudachiCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args2))
+                wait(1)
+            end
+
+            if KajiFruitCount.Value >= 1 then
+                local args3 = {
+                    {
+                        ItemName = "KajiFruit",
+                        Amount = KajiFruitCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args3))
+                wait(1)
+            end
+
+            if MeatCount.Value >= 1 then
+                local args4 = {
+                    {
+                        ItemName = "Meat",
+                        Amount = MeatCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args4))
+                wait(1)
+            end
+
+            if BaconCount.Value >= 1 then
+                local args5 = {
+                    {
+                        ItemName = "Bacon",
+                        Amount = BaconCount.Value
+                    },
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("SellItemRemote"):FireServer(unpack(args5))
+                wait(1)
+            end
+
+            if EdamameCount.Value < 9000 and MistSudachiCount.Value < 9000 and KajiFruitCount.Value < 9000 then
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(125804922932357)
+            end
+        end
+
+        if game.PlaceId == 125804922932357 then
+            local Players = game:GetService("Players")
+
+            local playerList = Players:GetPlayers()
+            local playerCount = #playerList
+            local player = Players.LocalPlayer
+            local success, result = pcall(player.GetFriendsOnline, player, 10)
+
+            if success then
+                if OnlyFirst then
+                    for _, friend in pairs(result) do
+                        for _, player in pairs(playerList) do
+                            if player.Name == friend.UserName then
+                                local TeleportService = game:GetService("TeleportService")
+                                local HttpService = game:GetService("HttpService")
+
+                                local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+                                local Server, Next = nil, nil
+                                local function ListServers(cursor)
+                                    local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
+                                    return HttpService:JSONDecode(Raw)
+                                end
+                                repeat
+                                    local Servers = ListServers(Next)
+                                    
+                                    if Servers and Servers.data and #Servers.data > 0 then
+                                        Server = Servers.data[math.random(1, (#Servers.data / 3))]
+                                        Next = Servers.nextPageCursor
+                                    else
+                                        print("ไม่มีข้อมูล server หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
+                                        break
+                                    end
+                                until Server
+                                if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
+                                    TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+                                else
+                                    print("ไม่มีข้อมูล playing หรือเกิดข้อผิดพลาดในการดึงข้อมูล")
                                 end
                             end
                         end
                     end
+                    OnlyFirst = false
                 end
             end
 
-            local ReelingFrame = game:GetService("Players").LocalPlayer.PlayerGui.FishingGui:FindFirstChild("ContainerFrame")
-            and game:GetService("Players").LocalPlayer.PlayerGui.FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
+            if EdamameCount.Value >= 9000 or MistSudachiCount.Value >= 9000 or KajiFruitCount.Value >= 9000 then
+                StartHavest = false
+                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
+            else
+                StartHavest = true
+                task.wait(0.01)
+                while StartHavest do
+                    teleportDropItemsToPlayer()
+                    for _, position in ipairs(predefinedPositions) do
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                        task.wait(0.01)
+                        local regionSize = Vector3.new(10, 10, 10)
+                        local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
-            if ReelingFrame and not ReelingFrame.Visible then
-                print("Minigame Finished!")
-                isMinigame = false
-                isStartingFishing = false
+                        local partsInRegion = workspace:FindPartsInRegion3(region, nil, math.huge)
+                        local trees = {}
+
+                        for _, part in pairs(partsInRegion) do
+                            if part.Parent and part.Parent.Name == "LargeFoodNode" then
+                                local billboardPart = part.Parent:FindFirstChild("BillboardPart")
+                                if billboardPart then
+                                    local Health = billboardPart:FindFirstChild("Health")
+                                    if Health and Health.Value > 0 then
+                                        table.insert(trees, part.Parent)
+                                    end
+                                end
+                            end
+                        end
+
+                        if #trees > 0 then
+                            for _, tree in ipairs(trees) do
+                                local part = tree:FindFirstChildWhichIsA("BasePart")
+                                if part then
+                                    local treePosition = part.Position
+                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
+                                    task.wait(0)
+                                    local billboardPart = tree:FindFirstChild("BillboardPart")
+                                    if billboardPart then
+                                        while true do
+                                            teleportDropItemsToPlayer()
+                                            local Health = billboardPart:FindFirstChild("Health")
+                                            if Health and Health.Value > 0 then
+                                                teleportDropItemsToPlayer()
+                                                attackTree(billboardPart)
+                                                teleportDropItemsToPlayer()
+                                                MobAura()
+                                                task.wait(0.15)
+                                                teleportDropItemsToPlayer()
+                                                attackTreeBite(billboardPart)
+                                                teleportDropItemsToPlayer()
+                                            else
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                wait(0.25)
+                                                teleportDropItemsToPlayer()
+                                                break
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    task.wait(0.01)
+                    mainProgress()
+                end
+            end
+        end
+        task.wait(0.01)
+    end
+end
+
+StopButton.MouseButton1Click:Connect(function()
+    if StopButton.Text == "Pause" then
+        StopButton.Text = "Start"
+        StopButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        StatusText.Text = "Status : Pause"
+        isPause = true
+        StartHavest = false
+    elseif StopButton.Text == "Start" then
+        StopButton.Text = "Pause"
+        StopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        StatusText.Text = "Status : Start"
+        isPause = false
+        mainProgress()
+    end
+end)
+
+HopServerButton.MouseButton1Click:Connect(function()
+    local TeleportService = game:GetService("TeleportService")
+    local HttpService = game:GetService("HttpService")
+
+    local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+    local Server, Next = nil, nil
+    local function ListServers(cursor)
+        local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
+        return HttpService:JSONDecode(Raw)
+    end
+    repeat
+        local Servers = ListServers(Next)
+        Server = Servers.data[math.random(1, (#Servers.data / 3))]
+        Next = Servers.nextPageCursor
+    until Server
+
+    if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    isPause = true
+    StartHavest = false
+	AutoCoinMain:Destroy()
+    createNotification("The script is now closed", "error", 3)
+end)
+
+local isHind = false
+
+HideButton.MouseButton1Click:Connect(function()
+    AutoCoinMain.Enabled = false
+    AutoCoinHide.Enabled = true
+    isHind = true
+    createNotification("The script is hiding", "", 3)
+end)
+
+ShowUiButton.MouseButton1Click:Connect(function()
+    AutoCoinMain.Enabled = true
+    AutoCoinHide.Enabled = false
+    isHind = false
+    createNotification("The script is showing", "", 3)
+end)
+
+function comma_value(n)
+	local left,num,right = string.match(n,'^([^%d]*%d)(%d*)(.-)$')
+	return left..(num:reverse():gsub('(%d%d%d)','%1,'):reverse())..right
+end
+
+spawn(function()
+    local i = 0
+    while true do
+        wait(1)
+        if isPause == false then
+            i += 1
+            local h = math.floor(i / 3600)
+            local m = math.floor((i % 3600) / 60)
+            local s = i % 60
+            Time.Text = string.format("%02d:%02d:%02d", h, m, s)
+
+            UserInfo.Text = "User : "..game:GetService("Players").LocalPlayer.DisplayName
+            -------------------------------------------------------------
+
+            local EdamameCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("Edamame")
+            local MistSudachiCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("MistSudachi")
+            local KajiFruitCount = game:GetService("Players").LocalPlayer.Data.Resources:FindFirstChild("KajiFruit")
+            
+            CEdamame.Text = EdamameCount.Value
+            CMistSudachi.Text = MistSudachiCount.Value
+            CKajiFruit.Text = KajiFruitCount.Value
+            -------------------------------------------------------------
+
+            local currency = game:GetService("Players").LocalPlayer:WaitForChild("Data"):WaitForChild("Currency"):FindFirstChild("Coins")
+            if currency then
+                money.Text = comma_value(currency.Value)
+            else
+                money.Text = 'ERROR'
             end
         end
     end
+end)
 
-
-    AutoFishingToggle:OnChanged(function()
-        if Options.AutoFishing.Value then
-            isAutoFishing = true
-            task.spawn(function()
-                while isAutoFishing do
-                    if not isStartingFishing then
-                        StartFishing()
-                    elseif isStartingFishing and not isMinigame then
-                        ProcessFishing()
-                    elseif isMinigame then
-                        local SpinRingFrame = FishingGui:FindFirstChild("ContainerFrame")
-                            and FishingGui.ContainerFrame:FindFirstChild("ReelingFrame")
-                            and FishingGui.ContainerFrame.ReelingFrame:FindFirstChild("SpinRingFrame")
-                        
-                        if SpinRingFrame and not SpinRingFrame.Value then
-                            print("Minigame Finished!")
-                            isMinigame = false
-                            isStartingFishing = false
-                        else
-                            ProcessMinigame()
-                        end
-                    end
-                    task.wait(0.1)
-                end
-            end)
-        else
-            isAutoFishing = false
-            isStartingFishing = false
-            isMinigame = false
-        end
-    end)
-
-    Options.AutoFishing:SetValue(false)
-
-    --------------------------------------------------------------------------------------------
-    local Dropdown = Tabs.TeleportMap:AddDropdown("SelectMap", {
-        Title = "SelectMap",
-        Values = {"None", "First", "Glassland", "Jungle", "Volcano", "Tundra", "Ocean", "Desert", "Fantasy", "Wasteland", "Prehistoric", "Shinrin"},
-        Multi = false,
-        Default = 1,
-    })
-
-    local mapArgs = nil
-
-    Dropdown:SetValue("None")
-
-    Dropdown:OnChanged(function(Value)
-        print("Dropdown changed:", Value)
-        if Value == "None" then
-            mapArgs = nil
-        elseif Value == "First" then
-            mapArgs = 3475397644
-        elseif Value == "Glassland" then
-            mapArgs = 3475419198
-        elseif Value == "Jungle" then
-            mapArgs = 3475422608
-        elseif Value == "Volcano" then
-            mapArgs = 3487210751
-        elseif Value == "Tundra" then
-            mapArgs = 3623549100
-        elseif Value == "Ocean" then
-            mapArgs = 3737848045
-        elseif Value == "Desert" then
-            mapArgs = 3752680052
-        elseif Value == "Fantasy" then
-            mapArgs = 4174118306
-        elseif Value == "Wasteland" then
-            mapArgs = 4728805070
-        elseif Value == "Prehistoric" then
-            mapArgs = 4869039553
-        elseif Value == "Shinrin" then
-            mapArgs = 125804922932357
-        end
-    end)
-
-    Tabs.TeleportMap:AddButton({
-        Title = "Teleport To Map",
-        Description = "Click To Teleport Selected Map",
-        Callback = function()
-            game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(mapArgs)
-        end
-    })
-
-    Tabs.TeleportMap:AddButton({
-        Title = "HOP Server",
-        Description = "Click To Teleport HOP Server",
-        Callback = function()
-            local TeleportService = game:GetService("TeleportService")
-            local HttpService = game:GetService("HttpService")
-
-            local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-            local Server, Next = nil, nil
-            local function ListServers(cursor)
-                local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
-                return HttpService:JSONDecode(Raw)
-            end
-            repeat
-                local Servers = ListServers(Next)
-                Server = Servers.data[math.random(1, (#Servers.data / 3))]
-                Next = Servers.nextPageCursor
-            until Server
-
-            if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
-            end
-        end
-    })
-
-    ---------------------------------------------------------------------------------------------------------
-    local ClearFogToggle = Tabs.Settings:AddToggle("ClearFog", {Title = "Clear Fog", Default = false })
-    ClearFogToggle:OnChanged(function()
-        local fog = game:GetService("Lighting").Atmosphere
-        if Options.ClearFog.Value then
-            fog.Density = 0
-        else
-            fog.Density = 0.2
-        end
-    end)
-
-    Options.ClearFog:SetValue(false)
-
-    ---------------------------------------------------------------------------------------------------------
-
-end
-
-Window:SelectTab(1)
+mainProgress()
