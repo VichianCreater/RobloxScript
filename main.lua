@@ -11,7 +11,7 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Dragon Adventure | 2.5.0",
+    Title = "Dragon Adventure | 3.5.0",
     SubTitle = "By Vichian",
     TabWidth = 160,
     Size = UDim2.fromOffset(480, 360),
@@ -37,6 +37,50 @@ Fluent:Notify({
 })
 
 do
+    local function getDragonNumber()
+        local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
+        local dragonNumbers = {}
+
+        for _, child in pairs(dragonsFolder:GetChildren()) do
+            if tonumber(child.Name) then 
+                table.insert(dragonNumbers, child.Name) 
+            end
+        end
+        return dragonNumbers[1]
+    end
+
+    local dragonNumber = getDragonNumber()
+    local localPlayer = game.Players.LocalPlayer
+    local dragonWalkSpeed = localPlayer.Character.Dragons[dragonNumber].Data.MovementStats.WalkSpeed
+    local WalkSpeedSlideBar = Tabs.Main:AddSlider("Walkspeed", {
+        Title = "Dragon Walk Speed",
+        Description = "Speed",
+        Default = dragonWalkSpeed.Value,
+        Min = dragonWalkSpeed.Value,
+        Max = 1000,
+        Rounding = 1,
+        Callback = function(walkspeed)
+            dragonWalkSpeed.Value = walkspeed
+        end
+    })
+
+    WalkSpeedSlideBar:SetValue(dragonWalkSpeed.Value)
+
+    local dragonFlySpeed = localPlayer.Character.Dragons[dragonNumber].Data.MovementStats.FlySpeed
+    local FlySpeedSlideBar = Tabs.Main:AddSlider("FlySpeed", {
+        Title = "Dragon Fly Speed",
+        Description = "Speed",
+        Default = dragonFlySpeed.Value,
+        Min = dragonFlySpeed.Value,
+        Max = 1000,
+        Rounding = 1,
+        Callback = function(FlySpeed)
+            dragonFlySpeed.Value = FlySpeed
+        end
+    })
+
+    FlySpeedSlideBar:SetValue(dragonFlySpeed.Value)
+    --------------------------------------------------------------------------------------------------------------
     local EggCollectToggle = Tabs.Main:AddToggle("EggCollect", {Title = "AUTO - Collect(EGG)", Default = false })
     local isCollectingEgg = false
 
@@ -119,72 +163,70 @@ do
         end
     end
 
-    local predefinedPositions = {
-        Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
-        Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
-        Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
-        Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
-        Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
-        Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
-        Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
-        Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
-        Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
-        Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375)
-    }
+    local savedPositions = {}
 
     local function AutoHarvest()
         while Options.HarvestToggle.Value do
-            for _, position in ipairs(predefinedPositions) do
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
-                wait(0.1)
-                local regionSize = Vector3.new(10, 10, 10)
-                local region = Region3.new(position - regionSize/2, position + regionSize/2)
-
-                local partsInRegion = workspace:FindPartsInRegion3(region, nil, math.huge)
-                local trees = {}
-
-                for _, part in pairs(partsInRegion) do
-                    if part.Parent and part.Parent.Name == "LargeFoodNode" then
-                        local billboardPart = part.Parent:FindFirstChild("BillboardPart")
-                        if billboardPart then
-                            local Health = billboardPart:FindFirstChild("Health")
-                            if Health and Health.Value > 0 then
-                                table.insert(trees, part.Parent)
+            local foodNodes = workspace.Interactions.Nodes.Food:GetChildren()
+            local foundNode = false
+            for _, foodNode in ipairs(foodNodes) do
+                if foodNode.Name == "LargeFoodNode" then
+                    local billboardPart = foodNode:FindFirstChild("BillboardPart")
+                    
+                    if billboardPart then
+                        local Health = billboardPart:FindFirstChild("Health")
+                        if Health and Health.Value > 0 then
+                            local nodePosition = nil
+                            if foodNode.PrimaryPart then
+                                nodePosition = foodNode.PrimaryPart.Position
+                            elseif foodNode:IsA("Model") then
+                                local basePart = foodNode:FindFirstChildOfClass("BasePart")
+                                if basePart then
+                                    nodePosition = basePart.Position
+                                end
                             end
-                        end
-                    end
-                end
 
-                if #trees > 0 then
-                    for _, tree in ipairs(trees) do
-                        local part = tree:FindFirstChildWhichIsA("BasePart")
-                        if part then
-                            local treePosition = part.Position
-                            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition)
-                            wait(1)
-
-                            local billboardPart = tree:FindFirstChild("BillboardPart")
-                            if billboardPart then
+                            if nodePosition then
+                                local isPositionSaved = false
+                                for _, savedPosition in ipairs(savedPositions) do
+                                    if (savedPosition - nodePosition).Magnitude < 1 then 
+                                        isPositionSaved = true
+                                        break
+                                    end
+                                end
+                                if not isPositionSaved then
+                                    table.insert(savedPositions, nodePosition)
+                                end
+                                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(nodePosition)
+                                task.wait(0.01)
                                 while true do
-                                    local Health = billboardPart:FindFirstChild("Health")
                                     if Health and Health.Value > 0 then
+                                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
+                                        task.wait(0.15)
                                         attackTree(billboardPart)
-                                        task.wait(0.3)
+                                        task.wait(0.15)
                                         attackTreeBite(billboardPart)
                                     else
                                         break
                                     end
                                 end
+                                foundNode = true
                             end
                         end
                     end
                 end
             end
-            wait(0.1)
+            if not foundNode then
+                for _, position in ipairs(savedPositions) do
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                    task.wait(0.01)
+                end
+            end
+            task.wait(0.01)
         end
     end
 
-    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest[Shinrin]", Default = false })
+    local HarvestCollectToggle = Tabs.Main:AddToggle("HarvestToggle", {Title = "AUTO - Harvest", Default = false })
     local isCollectingHarvest = false
 
     HarvestCollectToggle:OnChanged(function()
@@ -199,7 +241,310 @@ do
     end)
 
     Options.HarvestToggle:SetValue(false)
+    ----------------------------------------------------------------------------------------
+    local function MagnetEffect()
+        local character = game.Players.LocalPlayer.Character
+        if not character or not character:FindFirstChild("HumanoidRootPart") then
+            return
+        end
 
+        local HumanoidRootPart = character.HumanoidRootPart
+        local targetPosition = HumanoidRootPart.CFrame * CFrame.new(0, 3, 0) 
+        local cameraFolder = game.Workspace.Camera 
+        for _, item in ipairs(cameraFolder:GetChildren()) do
+            if string.lower(item.Name):find("model") then
+                if item:IsA("Model") then
+                    local primaryPart = item.PrimaryPart
+                    if primaryPart then
+                        item:SetPrimaryPartCFrame(targetPosition)
+                    end
+                elseif item:IsA("BasePart") then
+                    item.CFrame = targetPosition
+                end
+            end
+        end
+    end
+
+
+    local MagnetCollectToggle = Tabs.Main:AddToggle("MagnetToggle", {Title = "Magnet Effect", Default = false })
+    local isMagnetEffect = false
+
+    MagnetCollectToggle:OnChanged(function()
+        if Options.MagnetToggle.Value then
+            isMagnetEffect = true
+            while isMagnetEffect do
+                task.wait(0.001)
+                MagnetEffect()
+            end
+        else
+            isMagnetEffect = false
+            print("Harvesting stopped.")
+        end
+        print("Toggle changed:", Options.MagnetToggle.Value)
+    end)
+
+    Options.MagnetToggle:SetValue(false)
+----------------------------------------------------------------------------------------------------
+
+--     local function autoWarpToCurrencyNodes()
+--         local player = game.Players.LocalPlayer
+--         local character = player.Character or player.CharacterAdded:Wait()
+--         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+--         local function findCurrencyNode(nodeName)
+--             local currencyNodesFolder = workspace.Interactions.Nodes.CurrencyNodes.Spawned
+--             local foundNodes = {}
+--             for _, node in ipairs(currencyNodesFolder:GetChildren()) do
+--                 if node.Name == nodeName then
+--                     table.insert(foundNodes, node)
+--                 end
+--             end
+            
+--             return foundNodes
+--         end
+--         while true do
+--             local experienceNodes = findCurrencyNode("Experience")
+--             local megaExperienceNodes = findCurrencyNode("MegaExperience")
+--             local allNodes = {}
+--             for _, node in ipairs(experienceNodes) do
+--                 table.insert(allNodes, node)
+--             end
+--             for _, node in ipairs(megaExperienceNodes) do
+--                 table.insert(allNodes, node)
+--             end
+--             if #allNodes > 0 then
+--                 for _, node in ipairs(allNodes) do
+--                     local nodePosition = node.Position
+--                     humanoidRootPart.CFrame = CFrame.new(nodePosition)
+--                     task.wait(0.001)
+--                 end
+--             else
+--                 task.wait(0.001)
+--             end
+--         end
+--     end
+
+--     local ExpCollgToggle = Tabs.Main:AddToggle("ExpToggle", {Title = "Auto Exp", Default = false })
+--     local IsExpWarp = false
+
+--     ExpCollgToggle:OnChanged(function()
+--         if Options.ExpToggle.Value then
+--             IsExpWarp = true
+--             while IsExpWarp do
+--                 task.wait(0.001)
+--                 autoWarpToCurrencyNodes()
+--             end
+--         else
+--             IsExpWarp = false
+--             print("Harvesting stopped.")
+--         end
+--         print("Toggle changed:", Options.ExpToggle.Value)
+--     end)
+
+--     Options.ExpToggle:SetValue(false)
+
+-- ----------------------------------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------------------------------
+
+--     local function autoWarpToCurrencyNodes()
+--         local player = game.Players.LocalPlayer
+--         local character = player.Character or player.CharacterAdded:Wait()
+--         local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+--         local function findCurrencyNode(nodeName)
+--             local currencyNodesFolder = workspace.Interactions.Nodes.CurrencyNodes.Spawned
+--             local foundNodes = {}
+--             for _, node in ipairs(currencyNodesFolder:GetChildren()) do
+--                 if node.Name == nodeName then
+--                     table.insert(foundNodes, node)
+--                 end
+--             end
+            
+--             return foundNodes
+--         end
+--         while true do
+--             local CoinNodes = findCurrencyNode("Coins")
+--             local megaCoinNodes = findCurrencyNode("MegaCoins")
+--             local allNodes = {}
+--             for _, node in ipairs(CoinNodes) do
+--                 table.insert(allNodes, node)
+--             end
+--             for _, node in ipairs(megaCoinNodes) do
+--                 table.insert(allNodes, node)
+--             end
+--             if #allNodes > 0 then
+--                 for _, node in ipairs(allNodes) do
+--                     local nodePosition = node.Position
+--                     humanoidRootPart.CFrame = CFrame.new(nodePosition)
+--                     task.wait(0.001)
+--                 end
+--             else
+--                 task.wait(0.001)
+--             end
+--         end
+--     end
+
+--     local CoinCollgToggle = Tabs.Main:AddToggle("CoinToggle", {Title = "Auto Coin", Default = false })
+--     local IsCoinWarp = false
+
+--     CoinCollgToggle:OnChanged(function()
+--         if Options.CoinToggle.Value then
+--             IsCoinWarp = true
+--             while IsCoinWarp do
+--                 task.wait(0.001)
+--                 autoWarpToCurrencyNodes()
+--             end
+--         else
+--             IsCoinWarp = false
+--             print("Harvesting stopped.")
+--         end
+--         print("Toggle changed:", Options.CoinToggle.Value)
+--     end)
+
+--     Options.CoinToggle:SetValue(false)
+
+----------------------------------------------------------------------------------------------------
+
+-- ----------------------------------------------------------------------------------------------------
+
+    local function MobAura()
+        local mobFolder = workspace:FindFirstChild("MobFolder")
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local dragonNumber = getDragonNumber()
+        local attackRange = 100
+
+        if not mobFolder or not dragonNumber then 
+            print("MobFolder or dragonNumber not found.")
+            return 
+        end
+
+        -- หามอนสเตอร์ใน mobFolder
+        for _, mob in ipairs(mobFolder:GetChildren()) do
+            local target = mob:FindFirstChild(mob.Name)
+            if target and target:IsA("BasePart") then
+                local targetPos = target.Position
+                local distance = (humanoidRootPart.Position - targetPos).Magnitude
+
+                if distance <= attackRange then
+
+                    local healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
+                    if not healthValue then
+                        for _, desc in ipairs(mob:GetDescendants()) do
+                            if desc.Name == "Health" and desc:IsA("NumberValue") then
+                                healthValue = desc
+                                break
+                            end
+                        end
+                    end
+                    if healthValue and healthValue.Value > 0 then
+                    
+                        while healthValue and healthValue.Value > 0 do
+                            local args = {
+                                "Breath",
+                                "Mobs",
+                                target
+                            }
+
+                            local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                            if dragon then
+                                local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                                if remote then
+                                    remote:FireServer(unpack(args))
+                                end
+                            end
+                            task.wait(0.3)
+                            healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+
+    local AuraToggle = Tabs.Main:AddToggle("AuraToggle", {Title = "Attack Aura", Default = false })
+    local IsAuraMob = false
+
+    AuraToggle:OnChanged(function()
+        if Options.AuraToggle.Value then
+            IsAuraMob = true
+            while IsAuraMob do
+                task.wait(0.1)
+                MobAura()
+            end
+        else
+            IsAuraMob = false
+        end
+    end)
+
+    Options.AuraToggle:SetValue(false)
+
+    ----------------------------------------------------------------------------------------------------
+    local function checkTreasureNodes()
+        local player = game.Players.LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+        local treasureNodes = workspace.Interactions.Nodes.Treasure:GetChildren()
+        for _, node in ipairs(treasureNodes) do
+            if node:FindFirstChild("BronzeChest") then
+                local bronzeChest = node.BronzeChest
+                if bronzeChest then
+                    local cheatHealt = bronzeChest.HumanoidRootPart.Health
+                    if cheatHealt and cheatHealt.Value > 0 then
+                        local nodePosition = bronzeChest.WorldPivot.Position
+                        humanoidRootPart.CFrame = CFrame.new(nodePosition + Vector3.new(0, 5, 0))
+                    end
+                end
+            elseif node:FindFirstChild("SilverChest") then
+                local silverChest = node.SilverChest
+                if silverChest then
+                    local cheatHealt = silverChest.HumanoidRootPart.Health
+                    if cheatHealt and cheatHealt.Value > 0 then
+                        local nodePosition = silverChest.WorldPivot.Position
+                        humanoidRootPart.CFrame = CFrame.new(nodePosition + Vector3.new(0, 5, 0))
+                    end
+                end
+            end
+        end
+    end
+
+    local TreasureCollectToggle = Tabs.Main:AddToggle("TreasureToggle", {Title = "AUTO - Treasure", Default = false })
+    local isCollectingTreasure = false
+
+    TreasureCollectToggle:OnChanged(function()
+        if Options.TreasureToggle.Value then
+            isCollectingTreasure = true
+            while isCollectingTreasure do
+                checkTreasureNodes()
+                task.wait(0.01)
+            end
+        else
+            isCollectingTreasure = false
+            print("Treasureing stopped.")
+        end
+        print("Toggle changed:", Options.TreasureToggle.Value)
+    end)
+
+    Options.TreasureToggle:SetValue(false)
+    ----------------------------------------------------------------------------------------
+
+    Tabs.Main:AddButton({
+        Title = "Anti AFK",
+        Description = "Click To Anti afk kick",
+        Callback = function()
+            local VirtualUser = game:GetService('VirtualUser')
+ 
+            game:GetService('Players').LocalPlayer.Idled:Connect(function()
+                VirtualUser:CaptureController()
+                VirtualUser:ClickButton2(Vector2.new())
+            end)
+        end
+    })
+
+----------------------------------------------------------------------------------------------------
     local function ImmortalDragon()
         local dragonNumber = getDragonNumber()
         if not dragonNumber then
@@ -264,8 +609,6 @@ do
             local target = mob:FindFirstChild(mob.Name)
             if target and target:IsA("BasePart") then
                 local targetPos = target.Position
-
-                -- ถ้าเคยวาร์ปตำแหน่งนี้แล้ว ให้ข้าม
                 if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
                     continue
                 end
@@ -279,10 +622,8 @@ do
                         end
                     end
                 end
-
-                if healthValue and healthValue.Value == 0 then
+                if not healthValue or healthValue.Value == 0 then
                     if lastPosition and (lastPosition - targetPos).Magnitude < 1 then
-                        print("มอนตัวที่สองตาย รีเซ็ตตำแหน่ง")
                         lastPosition = nil
                         attackCount = 0
                     end
@@ -293,24 +634,33 @@ do
                 lastPosition = targetPos
                 attackCount += 1
 
-                local args = {
-                    "Breath",
-                    "Mobs",
-                    target
-                }
-
-                local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
-                if dragon then
-                    local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
-                    if remote then
-                        remote:FireServer(unpack(args))
+                while healthValue and healthValue.Value > 0 do
+                    local args = {
+                        "Breath",
+                        "Mobs",
+                        target
+                    }
+                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(target.Position + Vector3.new(0, 0.5, 0))
+                    local dragon = character:WaitForChild("Dragons"):FindFirstChild(dragonNumber)
+                    if dragon then
+                        local remote = dragon:FindFirstChild("Remotes"):FindFirstChild("PlaySoundRemote")
+                        if remote then
+                            remote:FireServer(unpack(args))
+                        end
                     end
+                    task.wait(0.3)
+                    healthValue = mob:FindFirstChild("Health") or target:FindFirstChild("Health")
+                end
+                if healthValue and healthValue.Value == 0 then
+                    lastPosition = nil
+                    attackCount = 0
                 end
 
-                break 
+                break
             end
         end
     end
+
 
     AttackMobToggle:OnChanged(function()
         if Options.AttackMob.Value then
@@ -581,6 +931,21 @@ do
             end
         end
     })
+
+    ---------------------------------------------------------------------------------------------------------
+    local ClearFogToggle = Tabs.Settings:AddToggle("ClearFog", {Title = "Clear Fog", Default = false })
+    ClearFogToggle:OnChanged(function()
+        local fog = game:GetService("Lighting").Atmosphere
+        if Options.ClearFog.Value then
+            fog.Density = 0
+        else
+            fog.Density = 0.2
+        end
+    end)
+
+    Options.ClearFog:SetValue(false)
+
+    ---------------------------------------------------------------------------------------------------------
 
 end
 
