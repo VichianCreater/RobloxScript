@@ -667,6 +667,21 @@ local function attackTreeBite(billboardPart)
     end
 end
 
+function imortalDragon()
+    local dragonNumber = getDragonNumber()
+    local player = game.Players.LocalPlayer
+    if dragonNumber and workspace.Characters:FindFirstChild(player.Name) then
+        local character = workspace.Characters[player.Name]
+        local dragon = character.Dragons[dragonNumber]
+        if dragon and dragon:FindFirstChild("HumanoidRootPart") and dragon:FindFirstChild("RealHitbox") then
+            local rootPart = dragon.HumanoidRootPart
+            local rHitBox = dragon.RealHitbox
+            rootPart.Size = Vector3.new(0.0011, 0.0011, 0.0011)
+            rHitBox.Size = Vector3.new(0.0011, 0.0011, 0.0011)
+        end
+    end
+end
+
 function MobAura()
     local mobFolder = workspace:FindFirstChild("MobFolder")
     local player = game.Players.LocalPlayer
@@ -1057,5 +1072,7 @@ spawn(function()
         end
     end
 end)
+
+imortalDragon()
 
 mainProgress()
