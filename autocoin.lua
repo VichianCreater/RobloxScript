@@ -673,7 +673,7 @@ function MobAura()
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
     local dragonNumber = getDragonNumber()
-    local attackRange = 100
+    local attackRange = 50
 
     if not mobFolder or not dragonNumber then 
         print("MobFolder or dragonNumber not found.")
