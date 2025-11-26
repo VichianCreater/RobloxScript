@@ -146,6 +146,11 @@ else
     OnlyFirst = true
 end
 
+-- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
+
 local AutoCoinMain = Instance.new("ScreenGui")
 local Main = Instance.new("Frame")
 local UICorner = Instance.new("UICorner")
@@ -170,34 +175,72 @@ local CKajiFruit = Instance.new("TextLabel")
 local UITextSizeConstraint_5 = Instance.new("UITextSizeConstraint")
 local CMistSudachi = Instance.new("TextLabel")
 local UITextSizeConstraint_6 = Instance.new("UITextSizeConstraint")
-local HideButton = Instance.new("TextButton")
+local HideButtonShadown = Instance.new("TextButton")
 local UICorner_5 = Instance.new("UICorner")
 local UITextSizeConstraint_7 = Instance.new("UITextSizeConstraint")
+local UIGradient = Instance.new("UIGradient")
+local TextLabel = Instance.new("TextLabel")
+local DropShadowHolder = Instance.new("Frame")
+local DropShadow = Instance.new("ImageLabel")
 local Top = Instance.new("Frame")
 local UICorner_6 = Instance.new("UICorner")
 local Time = Instance.new("TextLabel")
 local UICorner_7 = Instance.new("UICorner")
 local UITextSizeConstraint_8 = Instance.new("UITextSizeConstraint")
-local StopButton = Instance.new("TextButton")
+local StopButtonShadow = Instance.new("TextButton")
 local UICorner_8 = Instance.new("UICorner")
 local UITextSizeConstraint_9 = Instance.new("UITextSizeConstraint")
+local TextLabel_2 = Instance.new("TextLabel")
+local DropShadowHolder_2 = Instance.new("Frame")
+local DropShadow_2 = Instance.new("ImageLabel")
 local UserInfo = Instance.new("TextLabel")
 local UITextSizeConstraint_10 = Instance.new("UITextSizeConstraint")
-local HopServerButton = Instance.new("TextButton")
+local HopServerButtonShadow = Instance.new("TextButton")
 local UICorner_9 = Instance.new("UICorner")
 local UITextSizeConstraint_11 = Instance.new("UITextSizeConstraint")
+local DropShadowHolder_3 = Instance.new("Frame")
+local DropShadow_3 = Instance.new("ImageLabel")
 local StatusText = Instance.new("TextLabel")
 local UITextSizeConstraint_12 = Instance.new("UITextSizeConstraint")
-local Bottom = Instance.new("Frame")
+local StopButton = Instance.new("TextButton")
 local UICorner_10 = Instance.new("UICorner")
-local money = Instance.new("TextLabel")
-local UICorner_11 = Instance.new("UICorner")
 local UITextSizeConstraint_13 = Instance.new("UITextSizeConstraint")
-local CurrentCoin = Instance.new("TextLabel")
+local GreenGradient = Instance.new("UIGradient")
+local RedGradient = Instance.new("UIGradient")
+local TextLabel_3 = Instance.new("TextLabel")
+local HopServerButton = Instance.new("TextButton")
+local UICorner_11 = Instance.new("UICorner")
 local UITextSizeConstraint_14 = Instance.new("UITextSizeConstraint")
-local CloseButton = Instance.new("TextButton")
+local UIGradient_2 = Instance.new("UIGradient")
+local TextLabel_4 = Instance.new("TextLabel")
+local UIGradient_3 = Instance.new("UIGradient")
+local BGLogoShadow = Instance.new("ImageLabel")
+local DropShadowHolder_4 = Instance.new("Frame")
+local DropShadow_4 = Instance.new("ImageLabel")
+local BGLogo = Instance.new("ImageLabel")
+local Bottom = Instance.new("Frame")
 local UICorner_12 = Instance.new("UICorner")
+local UIGradient_4 = Instance.new("UIGradient")
+local money = Instance.new("TextLabel")
+local UICorner_13 = Instance.new("UICorner")
 local UITextSizeConstraint_15 = Instance.new("UITextSizeConstraint")
+local CurrentCoin = Instance.new("TextLabel")
+local UITextSizeConstraint_16 = Instance.new("UITextSizeConstraint")
+local CloseButtonShadow = Instance.new("TextButton")
+local UICorner_14 = Instance.new("UICorner")
+local UITextSizeConstraint_17 = Instance.new("UITextSizeConstraint")
+local DropShadowHolder_5 = Instance.new("Frame")
+local DropShadow_5 = Instance.new("ImageLabel")
+local CloseButton = Instance.new("TextButton")
+local UICorner_15 = Instance.new("UICorner")
+local UITextSizeConstraint_18 = Instance.new("UITextSizeConstraint")
+local UIGradient_5 = Instance.new("UIGradient")
+local TextLabel_5 = Instance.new("TextLabel")
+local HideButton = Instance.new("TextButton")
+local UICorner_16 = Instance.new("UICorner")
+local UITextSizeConstraint_19 = Instance.new("UITextSizeConstraint")
+local UIGradient_6 = Instance.new("UIGradient")
+local TextLabel_6 = Instance.new("TextLabel")
 
 --Properties:
 
@@ -212,8 +255,8 @@ Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Main.BackgroundTransparency = 0.500
 Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Main.BorderSizePixel = 0
-Main.Position = UDim2.new(0.499585748, 0, 0.447210789, 0)
-Main.Size = UDim2.new(0.324233562, 0, 0.323232323, 0)
+Main.Position = UDim2.new(0.499585688, 0, 0.382773161, 0)
+Main.Size = UDim2.new(0.262119472, 0, 0.303516388, 0)
 
 UICorner.CornerRadius = UDim.new(0, 10)
 UICorner.Parent = Main
@@ -386,35 +429,77 @@ CMistSudachi.TextWrapped = true
 UITextSizeConstraint_6.Parent = CMistSudachi
 UITextSizeConstraint_6.MaxTextSize = 50
 
-HideButton.Name = "HideButton"
-HideButton.Parent = AutoCoinMain
-HideButton.AnchorPoint = Vector2.new(0.5, 0.5)
-HideButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-HideButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-HideButton.Position = UDim2.new(0.416242927, 0, 0.747569919, 0)
-HideButton.Size = UDim2.new(0.157547921, 0, 0.0404040404, 0)
-HideButton.Font = Enum.Font.SourceSansBold
-HideButton.Text = "Hide"
-HideButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-HideButton.TextScaled = true
-HideButton.TextSize = 20.000
-HideButton.TextWrapped = true
+HideButtonShadown.Name = "HideButtonShadown"
+HideButtonShadown.Parent = AutoCoinMain
+HideButtonShadown.AnchorPoint = Vector2.new(0.5, 0.5)
+HideButtonShadown.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HideButtonShadown.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HideButtonShadown.Position = UDim2.new(0.432209045, 0, 0.664811552, 0)
+HideButtonShadown.Size = UDim2.new(0.12736614, 0, 0.0379395299, 0)
+HideButtonShadown.Font = Enum.Font.SourceSansBold
+HideButtonShadown.Text = ""
+HideButtonShadown.TextColor3 = Color3.fromRGB(0, 0, 0)
+HideButtonShadown.TextScaled = true
+HideButtonShadown.TextSize = 20.000
+HideButtonShadown.TextWrapped = true
 
 UICorner_5.CornerRadius = UDim.new(0, 5)
-UICorner_5.Parent = HideButton
+UICorner_5.Parent = HideButtonShadown
 
-UITextSizeConstraint_7.Parent = HideButton
+UITextSizeConstraint_7.Parent = HideButtonShadown
 UITextSizeConstraint_7.MaxTextSize = 20
+
+UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(55, 199, 2)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(62, 203, 33)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(156, 255, 129)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(61, 195, 34)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(42, 193, 0))}
+UIGradient.Rotation = 75
+UIGradient.Parent = HideButtonShadown
+
+TextLabel.Parent = HideButtonShadown
+TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.BackgroundTransparency = 1.000
+TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel.BorderSizePixel = 0
+TextLabel.Size = UDim2.new(0, 211, 0, 31)
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.Text = "Hide"
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextScaled = true
+TextLabel.TextSize = 14.000
+TextLabel.TextStrokeTransparency = 0.500
+TextLabel.TextWrapped = true
+
+DropShadowHolder.Name = "DropShadowHolder"
+DropShadowHolder.Parent = HideButtonShadown
+DropShadowHolder.BackgroundTransparency = 1.000
+DropShadowHolder.BorderSizePixel = 0
+DropShadowHolder.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder.ZIndex = 0
+
+DropShadow.Name = "DropShadow"
+DropShadow.Parent = DropShadowHolder
+DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropShadow.BackgroundTransparency = 1.000
+DropShadow.BorderColor3 = Color3.fromRGB(255, 255, 255)
+DropShadow.BorderSizePixel = 0
+DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow.Size = UDim2.new(1, 35, 1, 35)
+DropShadow.ZIndex = -1
+DropShadow.Image = "rbxassetid://6014261993"
+DropShadow.ImageColor3 = Color3.fromRGB(62, 186, 0)
+DropShadow.ImageTransparency = 0.500
+DropShadow.ScaleType = Enum.ScaleType.Slice
+DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 
 Top.Name = "Top"
 Top.Parent = AutoCoinMain
 Top.AnchorPoint = Vector2.new(0.5, 0.5)
-Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Top.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Top.BackgroundTransparency = 0.500
 Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Top.BorderSizePixel = 0
-Top.Position = UDim2.new(0.499585748, 0, 0.219709665, 0)
-Top.Size = UDim2.new(0.324233562, 0, 0.112373739, 0)
+Top.Position = UDim2.new(0.499585778, 0, 0.410551697, 0)
+Top.Size = UDim2.new(0.283219397, 0, 0.588325441, 0)
+Top.ZIndex = 0
 
 UICorner_6.CornerRadius = UDim.new(0, 10)
 UICorner_6.Parent = Top
@@ -425,8 +510,8 @@ Time.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Time.BackgroundTransparency = 0.500
 Time.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Time.BorderSizePixel = 0
-Time.Position = UDim2.new(0.0269014686, 0, 0.146067411, 0)
-Time.Size = UDim2.new(0.321214616, 0, 0.707865179, 0)
+Time.Position = UDim2.new(0.0372501761, 0, 0.0444073826, 0)
+Time.Size = UDim2.new(0.314356923, 0, 0.124336705, 0)
 Time.Font = Enum.Font.SourceSans
 Time.Text = "00:00:00"
 Time.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -440,24 +525,59 @@ UICorner_7.Parent = Time
 UITextSizeConstraint_8.Parent = Time
 UITextSizeConstraint_8.MaxTextSize = 40
 
-StopButton.Name = "StopButton"
-StopButton.Parent = Top
-StopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 4)
-StopButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-StopButton.BorderSizePixel = 0
-StopButton.Position = UDim2.new(0.643999994, 0, 0.449438035, 0)
-StopButton.Size = UDim2.new(0.328000009, 0, 0.404494375, 0)
-StopButton.Font = Enum.Font.SourceSansBold
-StopButton.Text = "Pause"
-StopButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-StopButton.TextScaled = true
-StopButton.TextSize = 20.000
-StopButton.TextWrapped = true
+StopButtonShadow.Name = "StopButtonShadow"
+StopButtonShadow.Parent = Top
+StopButtonShadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+StopButtonShadow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+StopButtonShadow.BorderSizePixel = 0
+StopButtonShadow.Position = UDim2.new(0.639045715, 0, 0.0936281383, 0)
+StopButtonShadow.Size = UDim2.new(0.320997566, 0, 0.0710495338, 0)
+StopButtonShadow.Font = Enum.Font.SourceSansBold
+StopButtonShadow.Text = ""
+StopButtonShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+StopButtonShadow.TextScaled = true
+StopButtonShadow.TextSize = 14.000
+StopButtonShadow.TextWrapped = true
 
-UICorner_8.Parent = StopButton
+UICorner_8.Parent = StopButtonShadow
 
-UITextSizeConstraint_9.Parent = StopButton
-UITextSizeConstraint_9.MaxTextSize = 20
+UITextSizeConstraint_9.Parent = StopButtonShadow
+UITextSizeConstraint_9.MaxTextSize = 14
+
+TextLabel_2.Parent = StopButtonShadow
+TextLabel_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_2.BackgroundTransparency = 1.000
+TextLabel_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_2.BorderSizePixel = 0
+TextLabel_2.Position = UDim2.new(-1.2839281e-06, 0, 0, 0)
+TextLabel_2.Size = UDim2.new(0, 142, 0, 35)
+TextLabel_2.Font = Enum.Font.SourceSansBold
+TextLabel_2.Text = "Pause"
+TextLabel_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_2.TextSize = 20.000
+TextLabel_2.TextStrokeTransparency = 0.500
+TextLabel_2.TextWrapped = true
+
+DropShadowHolder_2.Name = "DropShadowHolder"
+DropShadowHolder_2.Parent = StopButtonShadow
+DropShadowHolder_2.BackgroundTransparency = 1.000
+DropShadowHolder_2.BorderSizePixel = 0
+DropShadowHolder_2.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder_2.ZIndex = 0
+
+DropShadow_2.Name = "DropShadow"
+DropShadow_2.Parent = DropShadowHolder_2
+DropShadow_2.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow_2.BackgroundTransparency = 1.000
+DropShadow_2.BorderSizePixel = 0
+DropShadow_2.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow_2.Size = UDim2.new(1, 35, 1, 35)
+DropShadow_2.ZIndex = 0
+DropShadow_2.Image = "rbxassetid://6014261993"
+DropShadow_2.ImageColor3 = Color3.fromRGB(255, 38, 0)
+DropShadow_2.ImageTransparency = 0.500
+DropShadow_2.ScaleType = Enum.ScaleType.Slice
+DropShadow_2.SliceCenter = Rect.new(49, 49, 450, 450)
 
 UserInfo.Name = "UserInfo"
 UserInfo.Parent = Top
@@ -465,8 +585,8 @@ UserInfo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 UserInfo.BackgroundTransparency = 1.000
 UserInfo.BorderColor3 = Color3.fromRGB(0, 0, 0)
 UserInfo.BorderSizePixel = 0
-UserInfo.Position = UDim2.new(0.369030505, 0, 0.146067411, 0)
-UserInfo.Size = UDim2.new(0.257, 0, 0.303370446, 0)
+UserInfo.Position = UDim2.new(0.372075111, 0, 0.0444073826, 0)
+UserInfo.Size = UDim2.new(0.251073509, 0, 0.0532870926, 0)
 UserInfo.Font = Enum.Font.SourceSansBold
 UserInfo.Text = "User : "
 UserInfo.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -478,23 +598,45 @@ UserInfo.TextXAlignment = Enum.TextXAlignment.Left
 UITextSizeConstraint_10.Parent = UserInfo
 UITextSizeConstraint_10.MaxTextSize = 20
 
-HopServerButton.Parent = Top
-HopServerButton.BackgroundColor3 = Color3.fromRGB(0, 145, 255)
-HopServerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-HopServerButton.BorderSizePixel = 0
-HopServerButton.Position = UDim2.new(0.369567841, 0, 0.438202083, 0)
-HopServerButton.Size = UDim2.new(0.256013274, 0, 0.393258423, 0)
-HopServerButton.Font = Enum.Font.SourceSansBold
-HopServerButton.Text = "HOP Server"
-HopServerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-HopServerButton.TextScaled = true
-HopServerButton.TextSize = 20.000
-HopServerButton.TextWrapped = true
+HopServerButtonShadow.Name = "HopServerButtonShadow"
+HopServerButtonShadow.Parent = Top
+HopServerButtonShadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HopServerButtonShadow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButtonShadow.BorderSizePixel = 0
+HopServerButtonShadow.Position = UDim2.new(0.372600913, 0, 0.0957209319, 0)
+HopServerButtonShadow.Size = UDim2.new(0.250547618, 0, 0.0690759271, 0)
+HopServerButtonShadow.Font = Enum.Font.SourceSansBold
+HopServerButtonShadow.Text = ""
+HopServerButtonShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButtonShadow.TextScaled = true
+HopServerButtonShadow.TextSize = 14.000
+HopServerButtonShadow.TextWrapped = true
 
-UICorner_9.Parent = HopServerButton
+UICorner_9.Parent = HopServerButtonShadow
 
-UITextSizeConstraint_11.Parent = HopServerButton
-UITextSizeConstraint_11.MaxTextSize = 20
+UITextSizeConstraint_11.Parent = HopServerButtonShadow
+UITextSizeConstraint_11.MaxTextSize = 14
+
+DropShadowHolder_3.Name = "DropShadowHolder"
+DropShadowHolder_3.Parent = HopServerButtonShadow
+DropShadowHolder_3.BackgroundTransparency = 1.000
+DropShadowHolder_3.BorderSizePixel = 0
+DropShadowHolder_3.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder_3.ZIndex = 0
+
+DropShadow_3.Name = "DropShadow"
+DropShadow_3.Parent = DropShadowHolder_3
+DropShadow_3.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow_3.BackgroundTransparency = 1.000
+DropShadow_3.BorderSizePixel = 0
+DropShadow_3.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow_3.Size = UDim2.new(1, 35, 1, 35)
+DropShadow_3.ZIndex = 0
+DropShadow_3.Image = "rbxassetid://6014261993"
+DropShadow_3.ImageColor3 = Color3.fromRGB(5, 126, 255)
+DropShadow_3.ImageTransparency = 0.500
+DropShadow_3.ScaleType = Enum.ScaleType.Slice
+DropShadow_3.SliceCenter = Rect.new(49, 49, 450, 450)
 
 StatusText.Name = "StatusText"
 StatusText.Parent = Top
@@ -502,8 +644,8 @@ StatusText.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 StatusText.BackgroundTransparency = 1.000
 StatusText.BorderColor3 = Color3.fromRGB(0, 0, 0)
 StatusText.BorderSizePixel = 0
-StatusText.Position = UDim2.new(0.649819374, 0, 0.146067411, 0)
-StatusText.Size = UDim2.new(0.260517031, 0, 0.303370446, 0)
+StatusText.Position = UDim2.new(0.646869123, 0, 0.0444073826, 0)
+StatusText.Size = UDim2.new(0.254955202, 0, 0.0532870926, 0)
 StatusText.Font = Enum.Font.SourceSansBold
 StatusText.Text = "Status : Start"
 StatusText.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -515,6 +657,135 @@ StatusText.TextXAlignment = Enum.TextXAlignment.Left
 UITextSizeConstraint_12.Parent = StatusText
 UITextSizeConstraint_12.MaxTextSize = 20
 
+StopButton.Name = "StopButton"
+StopButton.Parent = Top
+StopButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+StopButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+StopButton.BorderSizePixel = 0
+StopButton.Position = UDim2.new(0.639045715, 0, 0.0936281383, 0)
+StopButton.Size = UDim2.new(0.320997566, 0, 0.0710495338, 0)
+StopButton.Font = Enum.Font.SourceSansBold
+StopButton.Text = ""
+StopButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+StopButton.TextScaled = true
+StopButton.TextSize = 14.000
+StopButton.TextWrapped = true
+
+UICorner_10.Parent = StopButton
+
+UITextSizeConstraint_13.Parent = StopButton
+UITextSizeConstraint_13.MaxTextSize = 14
+
+GreenGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(55, 199, 2)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(62, 203, 33)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(156, 255, 129)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(61, 195, 34)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(42, 193, 0))}
+GreenGradient.Rotation = 75
+GreenGradient.Name = "GreenGradient"
+GreenGradient.Parent = StopButton
+GreenGradient.Enabled = false
+
+RedGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 4)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 43, 47)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(255, 125, 127)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(255, 38, 42)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 4))}
+RedGradient.Rotation = 75
+RedGradient.Name = "RedGradient"
+RedGradient.Parent = StopButton
+RedGradient.Enabled = true
+
+TextLabel_3.Parent = StopButton
+TextLabel_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_3.BackgroundTransparency = 1.000
+TextLabel_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_3.BorderSizePixel = 0
+TextLabel_3.Position = UDim2.new(-8.09464609e-07, 0, 0, 0)
+TextLabel_3.Size = UDim2.new(1.00000083, 0, 1.0015831, 0)
+TextLabel_3.Font = Enum.Font.SourceSansBold
+TextLabel_3.Text = "Pause"
+TextLabel_3.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_3.TextSize = 20.000
+TextLabel_3.TextStrokeTransparency = 0.500
+TextLabel_3.TextWrapped = true
+
+HopServerButton.Name = "HopServerButton"
+HopServerButton.Parent = Top
+HopServerButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HopServerButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButton.BorderSizePixel = 0
+HopServerButton.Position = UDim2.new(0.372600913, 0, 0.0957209319, 0)
+HopServerButton.Size = UDim2.new(0.250547618, 0, 0.0690759271, 0)
+HopServerButton.Font = Enum.Font.SourceSansBold
+HopServerButton.Text = ""
+HopServerButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+HopServerButton.TextScaled = true
+HopServerButton.TextSize = 14.000
+HopServerButton.TextWrapped = true
+
+UICorner_11.Parent = HopServerButton
+
+UITextSizeConstraint_14.Parent = HopServerButton
+UITextSizeConstraint_14.MaxTextSize = 14
+
+UIGradient_2.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 102, 255)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(79, 135, 255)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(174, 200, 255)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(71, 142, 255)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 145, 255))}
+UIGradient_2.Rotation = 75
+UIGradient_2.Parent = HopServerButton
+
+TextLabel_4.Parent = HopServerButton
+TextLabel_4.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_4.BackgroundTransparency = 1.000
+TextLabel_4.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_4.BorderSizePixel = 0
+TextLabel_4.Position = UDim2.new(-1.03707293e-06, 0, 0, 0)
+TextLabel_4.Size = UDim2.new(0.993997097, 0, 1.03019977, 0)
+TextLabel_4.Font = Enum.Font.SourceSansBold
+TextLabel_4.Text = "Hop Server"
+TextLabel_4.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_4.TextSize = 20.000
+TextLabel_4.TextStrokeTransparency = 0.500
+TextLabel_4.TextWrapped = true
+
+UIGradient_3.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 0, 0)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(0, 0, 50)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 0, 0))}
+UIGradient_3.Rotation = -60
+UIGradient_3.Parent = Top
+
+BGLogoShadow.Name = "BGLogoShadow"
+BGLogoShadow.Parent = Top
+BGLogoShadow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BGLogoShadow.BackgroundTransparency = 1.000
+BGLogoShadow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+BGLogoShadow.BorderSizePixel = 0
+BGLogoShadow.Size = UDim2.new(0.998302996, 0, 0.998301387, 0)
+BGLogoShadow.ZIndex = 0
+BGLogoShadow.Image = "rbxassetid://74835950536249"
+BGLogoShadow.ImageTransparency = 1.000
+
+DropShadowHolder_4.Name = "DropShadowHolder"
+DropShadowHolder_4.Parent = BGLogoShadow
+DropShadowHolder_4.BackgroundTransparency = 1.000
+DropShadowHolder_4.BorderSizePixel = 0
+DropShadowHolder_4.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder_4.ZIndex = 0
+
+DropShadow_4.Name = "DropShadow"
+DropShadow_4.Parent = DropShadowHolder_4
+DropShadow_4.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow_4.BackgroundTransparency = 1.000
+DropShadow_4.BorderSizePixel = 0
+DropShadow_4.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow_4.Size = UDim2.new(1, 47, 1, 47)
+DropShadow_4.ZIndex = 0
+DropShadow_4.Image = "rbxassetid://6014261993"
+DropShadow_4.ImageColor3 = Color3.fromRGB(0, 0, 0)
+DropShadow_4.ImageTransparency = 0.500
+DropShadow_4.ScaleType = Enum.ScaleType.Slice
+DropShadow_4.SliceCenter = Rect.new(49, 49, 450, 450)
+
+BGLogo.Name = "BGLogo"
+BGLogo.Parent = Top
+BGLogo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BGLogo.BackgroundTransparency = 1.000
+BGLogo.BorderColor3 = Color3.fromRGB(0, 0, 0)
+BGLogo.BorderSizePixel = 0
+BGLogo.Size = UDim2.new(0.995603323, 0, 0.998301387, 0)
+BGLogo.ZIndex = 0
+BGLogo.Image = "rbxassetid://74835950536249"
+BGLogo.ImageTransparency = 0.800
+
 Bottom.Name = "Bottom"
 Bottom.Parent = AutoCoinMain
 Bottom.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -522,10 +793,12 @@ Bottom.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Bottom.BackgroundTransparency = 0.500
 Bottom.BorderColor3 = Color3.fromRGB(0, 0, 0)
 Bottom.BorderSizePixel = 0
-Bottom.Position = UDim2.new(0.499585748, 0, 0.667110801, 0)
-Bottom.Size = UDim2.new(0.324233562, 0, 0.0997474715, 0)
+Bottom.Position = UDim2.new(0.499585688, 0, 0.589260221, 0)
+Bottom.Size = UDim2.new(0.262119472, 0, 0.0936632305, 0)
 
-UICorner_10.Parent = Bottom
+UICorner_12.Parent = Bottom
+
+UIGradient_4.Parent = Bottom
 
 money.Name = "money"
 money.Parent = Bottom
@@ -542,10 +815,10 @@ money.TextScaled = true
 money.TextSize = 14.000
 money.TextWrapped = true
 
-UICorner_11.Parent = money
+UICorner_13.Parent = money
 
-UITextSizeConstraint_13.Parent = money
-UITextSizeConstraint_13.MaxTextSize = 34
+UITextSizeConstraint_15.Parent = money
+UITextSizeConstraint_15.MaxTextSize = 34
 
 CurrentCoin.Name = "CurrentCoin"
 CurrentCoin.Parent = Bottom
@@ -562,59 +835,230 @@ CurrentCoin.TextScaled = true
 CurrentCoin.TextSize = 14.000
 CurrentCoin.TextWrapped = true
 
-UITextSizeConstraint_14.Parent = CurrentCoin
-UITextSizeConstraint_14.MaxTextSize = 23
+UITextSizeConstraint_16.Parent = CurrentCoin
+UITextSizeConstraint_16.MaxTextSize = 23
+
+CloseButtonShadow.Name = "CloseButtonShadow"
+CloseButtonShadow.Parent = AutoCoinMain
+CloseButtonShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+CloseButtonShadow.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButtonShadow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+CloseButtonShadow.Position = UDim2.new(0.566962421, 0, 0.664811552, 0)
+CloseButtonShadow.Size = UDim2.new(0.127366081, 0, 0.0379395299, 0)
+CloseButtonShadow.Font = Enum.Font.SourceSansBold
+CloseButtonShadow.Text = "Close"
+CloseButtonShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseButtonShadow.TextScaled = true
+CloseButtonShadow.TextSize = 20.000
+CloseButtonShadow.TextWrapped = true
+
+UICorner_14.CornerRadius = UDim.new(0, 5)
+UICorner_14.Parent = CloseButtonShadow
+
+UITextSizeConstraint_17.Parent = CloseButtonShadow
+UITextSizeConstraint_17.MaxTextSize = 20
+
+DropShadowHolder_5.Name = "DropShadowHolder"
+DropShadowHolder_5.Parent = CloseButtonShadow
+DropShadowHolder_5.BackgroundTransparency = 1.000
+DropShadowHolder_5.BorderSizePixel = 0
+DropShadowHolder_5.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder_5.ZIndex = 0
+
+DropShadow_5.Name = "DropShadow"
+DropShadow_5.Parent = DropShadowHolder_5
+DropShadow_5.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow_5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+DropShadow_5.BackgroundTransparency = 1.000
+DropShadow_5.BorderColor3 = Color3.fromRGB(255, 255, 255)
+DropShadow_5.BorderSizePixel = 0
+DropShadow_5.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow_5.Size = UDim2.new(1, 35, 1, 35)
+DropShadow_5.ZIndex = -1
+DropShadow_5.Image = "rbxassetid://6014261993"
+DropShadow_5.ImageColor3 = Color3.fromRGB(255, 0, 4)
+DropShadow_5.ImageTransparency = 0.500
+DropShadow_5.ScaleType = Enum.ScaleType.Slice
+DropShadow_5.SliceCenter = Rect.new(49, 49, 450, 450)
 
 CloseButton.Name = "CloseButton"
 CloseButton.Parent = AutoCoinMain
 CloseButton.AnchorPoint = Vector2.new(0.5, 0.5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-CloseButton.Position = UDim2.new(0.582928598, 0, 0.747569919, 0)
-CloseButton.Size = UDim2.new(0.157547921, 0, 0.0404040404, 0)
+CloseButton.Position = UDim2.new(0.566962421, 0, 0.664811552, 0)
+CloseButton.Size = UDim2.new(0.127366081, 0, 0.0379395299, 0)
 CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.Text = "Close"
-CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+CloseButton.Text = ""
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 CloseButton.TextScaled = true
 CloseButton.TextSize = 20.000
+CloseButton.TextStrokeTransparency = 0.000
 CloseButton.TextWrapped = true
 
-UICorner_12.CornerRadius = UDim.new(0, 5)
-UICorner_12.Parent = CloseButton
+UICorner_15.CornerRadius = UDim.new(0, 5)
+UICorner_15.Parent = CloseButton
 
-UITextSizeConstraint_15.Parent = CloseButton
-UITextSizeConstraint_15.MaxTextSize = 20
+UITextSizeConstraint_18.Parent = CloseButton
+UITextSizeConstraint_18.MaxTextSize = 20
+
+UIGradient_5.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(255, 0, 4)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 43, 47)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(255, 125, 127)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(255, 38, 42)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(255, 0, 4))}
+UIGradient_5.Rotation = 75
+UIGradient_5.Parent = CloseButton
+
+TextLabel_5.Parent = CloseButton
+TextLabel_5.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_5.BackgroundTransparency = 1.000
+TextLabel_5.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_5.BorderSizePixel = 0
+TextLabel_5.Size = UDim2.new(0.998713672, 0, 0.977388501, 0)
+TextLabel_5.Font = Enum.Font.SourceSansBold
+TextLabel_5.Text = "Close"
+TextLabel_5.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_5.TextScaled = true
+TextLabel_5.TextSize = 14.000
+TextLabel_5.TextStrokeTransparency = 0.500
+TextLabel_5.TextWrapped = true
+
+HideButton.Name = "HideButton"
+HideButton.Parent = AutoCoinMain
+HideButton.AnchorPoint = Vector2.new(0.5, 0.5)
+HideButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+HideButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+HideButton.Position = UDim2.new(0.432209045, 0, 0.664811552, 0)
+HideButton.Size = UDim2.new(0.12736614, 0, 0.0379395299, 0)
+HideButton.Font = Enum.Font.SourceSansBold
+HideButton.Text = ""
+HideButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+HideButton.TextScaled = true
+HideButton.TextSize = 20.000
+HideButton.TextWrapped = true
+
+UICorner_16.CornerRadius = UDim.new(0, 5)
+UICorner_16.Parent = HideButton
+
+UITextSizeConstraint_19.Parent = HideButton
+UITextSizeConstraint_19.MaxTextSize = 20
+
+UIGradient_6.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(55, 199, 2)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(62, 203, 33)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(156, 255, 129)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(61, 195, 34)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(42, 193, 0))}
+UIGradient_6.Rotation = 75
+UIGradient_6.Parent = HideButton
+
+TextLabel_6.Parent = HideButton
+TextLabel_6.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_6.BackgroundTransparency = 1.000
+TextLabel_6.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel_6.BorderSizePixel = 0
+TextLabel_6.Size = UDim2.new(0.998713672, 0, 0.977388501, 0)
+TextLabel_6.Font = Enum.Font.SourceSansBold
+TextLabel_6.Text = "Hide"
+TextLabel_6.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel_6.TextScaled = true
+TextLabel_6.TextSize = 14.000
+TextLabel_6.TextStrokeTransparency = 0.500
+TextLabel_6.TextWrapped = true
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- Gui to Lua
+-- Version: 3.2
+
+-- Instances:
+
 local AutoCoinHide = Instance.new("ScreenGui")
-local ShowUiButton = Instance.new("TextButton")
+local ShowUiButtonShadow = Instance.new("TextButton")
 local UICorner = Instance.new("UICorner")
 local UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+local DropShadowHolder = Instance.new("Frame")
+local DropShadow = Instance.new("ImageLabel")
+local ShowUiButton = Instance.new("TextButton")
+local UICorner_2 = Instance.new("UICorner")
+local UITextSizeConstraint_2 = Instance.new("UITextSizeConstraint")
+local TextLabel = Instance.new("TextLabel")
+local UIGradient = Instance.new("UIGradient")
+
+--Properties:
 
 AutoCoinHide.Name = "AutoCoinHide"
 AutoCoinHide.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-AutoCoinHide.Enabled = false
 AutoCoinHide.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+AutoCoinHide.Enabled = false
+
+ShowUiButtonShadow.Name = "ShowUiButtonShadow"
+ShowUiButtonShadow.Parent = AutoCoinHide
+ShowUiButtonShadow.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+ShowUiButtonShadow.BorderColor3 = Color3.fromRGB(0, 0, 0)
+ShowUiButtonShadow.BorderSizePixel = 0
+ShowUiButtonShadow.Position = UDim2.new(0.012427506, 0, 0.912878811, 0)
+ShowUiButtonShadow.Size = UDim2.new(0.100000001, 0, 0.0500000007, 0)
+ShowUiButtonShadow.Font = Enum.Font.SourceSansBold
+ShowUiButtonShadow.Text = ""
+ShowUiButtonShadow.TextColor3 = Color3.fromRGB(0, 0, 0)
+ShowUiButtonShadow.TextScaled = true
+ShowUiButtonShadow.TextSize = 29.000
+ShowUiButtonShadow.TextWrapped = true
+
+UICorner.Parent = ShowUiButtonShadow
+
+UITextSizeConstraint.Parent = ShowUiButtonShadow
+UITextSizeConstraint.MaxTextSize = 29
+
+DropShadowHolder.Name = "DropShadowHolder"
+DropShadowHolder.Parent = ShowUiButtonShadow
+DropShadowHolder.BackgroundTransparency = 1.000
+DropShadowHolder.BorderSizePixel = 0
+DropShadowHolder.Size = UDim2.new(1, 0, 1, 0)
+DropShadowHolder.ZIndex = 0
+
+DropShadow.Name = "DropShadow"
+DropShadow.Parent = DropShadowHolder
+DropShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+DropShadow.BackgroundTransparency = 1.000
+DropShadow.BorderSizePixel = 0
+DropShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+DropShadow.Size = UDim2.new(1, 35, 1, 35)
+DropShadow.ZIndex = 0
+DropShadow.Image = "rbxassetid://6014261993"
+DropShadow.ImageColor3 = Color3.fromRGB(3, 209, 0)
+DropShadow.ImageTransparency = 0.500
+DropShadow.ScaleType = Enum.ScaleType.Slice
+DropShadow.SliceCenter = Rect.new(49, 49, 450, 450)
 
 ShowUiButton.Name = "ShowUiButton"
 ShowUiButton.Parent = AutoCoinHide
-ShowUiButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+ShowUiButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 ShowUiButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
 ShowUiButton.BorderSizePixel = 0
 ShowUiButton.Position = UDim2.new(0.012427506, 0, 0.912878811, 0)
-ShowUiButton.Size = UDim2.new(0.1, 0, 0.05, 0)
+ShowUiButton.Size = UDim2.new(0.100000001, 0, 0.0500000007, 0)
 ShowUiButton.Font = Enum.Font.SourceSansBold
-ShowUiButton.Text = "Show Ui"
+ShowUiButton.Text = ""
 ShowUiButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 ShowUiButton.TextScaled = true
 ShowUiButton.TextSize = 29.000
 ShowUiButton.TextWrapped = true
 
-UICorner.Parent = ShowUiButton
+UICorner_2.Parent = ShowUiButton
 
-UITextSizeConstraint.Parent = ShowUiButton
-UITextSizeConstraint.MaxTextSize = 29
+UITextSizeConstraint_2.Parent = ShowUiButton
+UITextSizeConstraint_2.MaxTextSize = 29
+
+TextLabel.Parent = ShowUiButton
+TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.BackgroundTransparency = 1.000
+TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+TextLabel.BorderSizePixel = 0
+TextLabel.Size = UDim2.new(0.999254227, 0, 0.993630588, 0)
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.Text = "Show UI"
+TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+TextLabel.TextSize = 22.000
+TextLabel.TextStrokeTransparency = 0.500
+TextLabel.TextWrapped = true
+
+UIGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0.00, Color3.fromRGB(55, 199, 2)), ColorSequenceKeypoint.new(0.17, Color3.fromRGB(62, 203, 33)), ColorSequenceKeypoint.new(0.51, Color3.fromRGB(156, 255, 129)), ColorSequenceKeypoint.new(0.87, Color3.fromRGB(61, 195, 34)), ColorSequenceKeypoint.new(1.00, Color3.fromRGB(42, 193, 0))}
+UIGradient.Rotation = 75
+UIGradient.Parent = ShowUiButton
 
 local VirtualUser = game:GetService('VirtualUser')
  
@@ -976,15 +1420,21 @@ local function mainProgress()
 end
 
 StopButton.MouseButton1Click:Connect(function()
-    if StopButton.Text == "Pause" then
-        StopButton.Text = "Start"
-        StopButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    if TextLabel_3.Text == "Pause" then
+        TextLabel_3.Text = "Start"
+        -- StopButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        DropShadow_2.ImageColor3 = Color3.fromRGB(38, 255, 0)
+        GreenGradient.Enabled = true
+        RedGradient.Enabled = false
         StatusText.Text = "Status : Pause"
         isPause = true
         StartHavest = false
-    elseif StopButton.Text == "Start" then
-        StopButton.Text = "Pause"
-        StopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    elseif TextLabel_3.Text == "Start" then
+        TextLabel_3.Text = "Pause"
+        -- StopButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        DropShadow_2.ImageColor3 = Color3.fromRGB(255, 38, 0)
+        GreenGradient.Enabled = false
+        RedGradient.Enabled = true
         StatusText.Text = "Status : Start"
         isPause = false
         mainProgress()
