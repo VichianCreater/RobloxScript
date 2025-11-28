@@ -1453,7 +1453,14 @@ HopServerButton.MouseButton1Click:Connect(function()
     end
     repeat
         local Servers = ListServers(Next)
-        Server = Servers.data[math.random(1, (#Servers.data / 3))]
+        if Servers.data and #Servers.data > 0 then
+            Server = Servers.data[math.random(1, math.min(#Servers.data, math.floor(#Servers.data / 3)))]
+        else
+            local success, err = pcall(function()
+                TeleportService:Teleport(game.PlaceId, game.Players.LocalPlayer)
+            end)
+            break
+        end
         Next = Servers.nextPageCursor
     until Server
 
