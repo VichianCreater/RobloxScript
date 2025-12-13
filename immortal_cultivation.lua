@@ -513,36 +513,47 @@ do
         print("Selected Herb: " .. selectedHerbName)
     end)
 
-    local Noclip = nil
-    local Clip = nil
-    local floatName = "Head" -- ต้องกำหนดชื่อส่วนที่ไม่ต้องการให้ noclip ปิด (ถ้ามี)
+    local NoclipConnection = nil
 
-    local function noclip()
-        Clip = false
-        local function Nocl()
-            if Clip == false and game.Players.LocalPlayer.Character ~= nil then
-                for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA('BasePart') and v.CanCollide and v.Name ~= floatName then
+    function noclip()
+        -- 1. ทำให้ Part ทั้งหมดใน Workspace ทะลุได้ (ทำรอบเดียวตามที่ต้องการ)
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+            if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
+                v.CanCollide = false
+            end
+        end
+
+        -- 2. ใช้ Stepped เพื่อทำให้ตัวละคร "อยู่ในสถานะไร้การชนกัน" ตลอดเวลา
+        -- วิธีนี้จะทำให้ทะลุได้ทั้ง Part และ Terrain (พื้นดินของแมพ)
+        if NoclipConnection then NoclipConnection:Disconnect() end
+        
+        NoclipConnection = game:GetService('RunService').Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA('BasePart') then
+                        -- บังคับ CanCollide เป็น false ทุกเฟรม
                         v.CanCollide = false
                     end
                 end
             end
-            task.wait(0.21)
-        end
-        Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
+        end)
     end
 
     function clip()
-        if Noclip then Noclip:Disconnect() end
-        Clip = true
+        if NoclipConnection then 
+            NoclipConnection:Disconnect() 
+            NoclipConnection = nil 
+        end
     end
 
     WarpToggle:OnChanged(function(enabled)
         isWarping = enabled
         
         if enabled then
-            -- ใช้ noclip() ที่มีอยู่แล้ว
-            game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true -- หากเกมมี AntiNoclip
+            game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
+            game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
+            game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
+            game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
             noclip()
             
             if selectedHerbName and selectedHerbName ~= "None" then
