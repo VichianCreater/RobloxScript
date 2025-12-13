@@ -14,8 +14,8 @@ if game.GameId ~= ALLOWED_GAME_ID then
 end
 
 local Window = Fluent:CreateWindow({
-    Title = "Immortal Cultivation | 1.0.0",
-    SubTitle = "By Vichian",
+    Title = "Immortal Cultivation | BETA",
+    SubTitle = "By VichianHUB",
     TabWidth = 160,
     Size = UDim2.fromOffset(580, 460),
     Acrylic = true,
@@ -39,6 +39,11 @@ Fluent:Notify({
 })
 
 do
+    Tabs.Main:AddParagraph({
+        Title = "Welcome to vichianHUB",
+        Content = "\nThis is a beta test script.\nUse at your own risk!\n\nWhat game the VichianHUB is Support\n- Dragon Adventure\n- Immortal Cultivation"
+    })
+
     local player = game.Players.LocalPlayer
     local character = player.Character or player.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid")
