@@ -234,15 +234,13 @@ do
     })
 
     local function createESP(object)
-
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Adornee = object
         billboardGui.Parent = object
-        billboardGui.Size = UDim2.new(0, 200, 0, 70) -- เพิ่มขนาดในแนวตั้ง
+        billboardGui.Size = UDim2.new(0, 200, 0, 70)
         billboardGui.StudsOffset = Vector3.new(0, 3, 0)
         billboardGui.AlwaysOnTop = true
 
-        -- 1. TextLabel สำหรับชื่อสมุนไพร (บรรทัดที่ 1)
         local nameTextLabel = Instance.new("TextLabel")
         nameTextLabel.Parent = billboardGui
         nameTextLabel.Text = object.Name
@@ -252,36 +250,6 @@ do
         nameTextLabel.TextStrokeTransparency = 0.8
         nameTextLabel.TextSize = 10
         nameTextLabel.BackgroundTransparency = 1
-
-        -- -- 2. TextLabel สำหรับ ObjectText (บรรทัดที่ 2)
-        -- local objectTextLabel = Instance.new("TextLabel")
-        -- objectTextLabel.Parent = billboardGui
-        -- objectTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        -- objectTextLabel.Position = UDim2.new(0, 0, 0.2, 0)
-        -- objectTextLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
-        -- objectTextLabel.TextStrokeTransparency = 0.8
-        -- objectTextLabel.TextSize = 8
-        -- objectTextLabel.BackgroundTransparency = 1
-
-        -- local objectText = "No Data (Attribute Missing)"
-        
-        -- local proximityPrompt = object:FindFirstChildOfClass("ProximityPrompt")
-
-        -- if proximityPrompt then
-        --     objectText = proximityPrompt.ObjectText
-
-        --     if string.find(objectText, "1") then
-        --         objectTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        --     end
-        --     if string.find(objectText, "10") then
-        --         objectTextLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        --     end
-        --     if string.find(objectText, "100") then
-        --         objectTextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-        --     end
-        -- end
-
-        -- objectTextLabel.Text = objectText
         
         table.insert(mobespObjects, billboardGui)
     end
@@ -335,9 +303,28 @@ do
             MobListDropdown:SetValues({})
         end
     end)
-    -- HerbListDropdown:SetValue("None") 
 
-    -----------------------------------------------------------------------------------------------------------------
+    local heartbeatConnection = nil
+
+    local function getNearestTargetRoot(selectedMobNames, rootPart)
+        local nearestTarget = nil
+        local shortestDistance = math.huge
+        
+        for mobName in pairs(selectedMobNames) do
+            local mobInstance = mobsFolder:FindFirstChild(mobName)
+            local mobRoot = mobInstance and mobInstance:FindFirstChild("HumanoidRootPart")
+            
+            if mobRoot and mobInstance:FindFirstChild("Humanoid") and mobInstance.Humanoid.Health > 0 then
+                local distance = (rootPart.Position - mobRoot.Position).Magnitude
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    nearestTarget = mobRoot
+                end
+            end
+        end
+        return nearestTarget, shortestDistance
+    end
+
     local function FreezMobs()
         for _, mob in ipairs(mobsFolder:GetChildren()) do
             if mob:IsA("Model") then
@@ -348,6 +335,80 @@ do
             end
         end
     end
+
+    local function startAttackMobList()
+        local selectedMobNames = MobListDropdown.Value
+        local offset = 4 -- ระยะห่างด้านหลังม็อบที่ต้องการยืน
+        local attackRange = 20 -- ระยะที่ยอมให้ CFrame ทำงาน
+        local localPlayer = game.Players.LocalPlayer
+        local character = localPlayer.Character
+        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character and character:FindFirstChild("Humanoid")
+        local punchRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Punch")
+        local args = { 0 } 
+
+        if not rootPart or not humanoid or humanoid.Health <= 0 then
+            return
+        end
+
+        local nearestTargetRoot, distance = getNearestTargetRoot(selectedMobNames, rootPart)
+        
+        if not nearestTargetRoot then
+            return
+        end
+
+        local targetPosition = nearestTargetRoot.Position
+        local targetCFrame = nearestTargetRoot.CFrame
+        
+        -- คำนวณตำแหน่งด้านหลังม็อบที่ต้องการยืน (Desired Position)
+        local desiredPositionCFrame = targetCFrame * CFrame.new(0, 0, offset) 
+
+        if distance <= attackRange then
+            -- 1. เข้าสู่โหมดโจมตี/บังคับ CFrame
+            
+            -- คำนวณ CFrame ที่หันหน้าเข้ามอนสเตอร์
+            -- CFrame.lookAt(ตำแหน่งปัจจุบัน, ตำแหน่งเป้าหมาย) 
+            local rotationCFrame = CFrame.lookAt(rootPart.Position, targetPosition)
+            
+            -- สร้าง CFrame สุดท้าย: ใช้ตำแหน่งด้านหลังที่คำนวณไว้ และใช้การหมุนที่หันเข้าหามอนสเตอร์
+            local finalCFrame = CFrame.new(desiredPositionCFrame.Position) * rotationCFrame.Rotation
+            
+            -- บังคับตำแหน่งและการหมุนทันที (ยอมให้มีการวาร์ปเล็กน้อยในระยะใกล้)
+            rootPart.CFrame = finalCFrame
+            
+            -- โจมตี
+            punchRemote:FireServer(unpack(args))
+            
+            -- หยุดการสั่งเดิน (MoveTo) เพื่อป้องกันการขัดแย้ง
+            humanoid:MoveTo(rootPart.Position) 
+
+            FreezMobs()
+        else
+            -- 2. เข้าสู่โหมดเดิน (นอกระยะโจมตี)
+            
+            -- สั่งให้เดินไปยังตำแหน่งด้านหลังม็อบ
+            humanoid:MoveTo(desiredPositionCFrame.Position)
+            
+            -- ไม่มีการสั่ง CFrame ตรงนี้ เพื่อให้ MoveTo ทำงานได้เต็มที่
+        end
+    end
+
+    local autoAttackMoblist = Tabs.ESPM:AddToggle("AttackMobESPToggle", {Title = "Attack Mob ESP", Default = false })
+
+    autoAttackMoblist:OnChanged(function()
+        if autoAttackMoblist.Value then 
+            if not heartbeatConnection then
+                heartbeatConnection = game:GetService("RunService").Heartbeat:Connect(startAttackMobList)
+            end
+        else
+            if heartbeatConnection then
+                heartbeatConnection:Disconnect()
+                heartbeatConnection = nil
+            end
+        end
+    end)
+
+    -----------------------------------------------------------------------------------------------------------------
 
     Tabs.Main:AddButton({
         Title = "Freeze All Mob",
@@ -711,7 +772,51 @@ do
 
     Options.AutoAttackToggle:SetValue(false)
 
+    Tabs.Main:AddButton({
+        Title = "HOP Server",
+        Description = "Click To Teleport HOP Server",
+        Callback = function()
+            local TeleportService = game:GetService("TeleportService")
+            local HttpService = game:GetService("HttpService")
+
+            local Servers = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+            local Server, Next = nil, nil
+            local function ListServers(cursor)
+                local Raw = game:HttpGet(Servers .. ((cursor and "&cursor=" .. cursor) or ""))
+                return HttpService:JSONDecode(Raw)
+            end
+            repeat
+                local Servers = ListServers(Next)
+                if Servers.data and #Servers.data > 0 then
+                    Server = Servers.data[math.random(1, math.min(#Servers.data, math.floor(#Servers.data / 3)))]
+                else
+                    local success, err = pcall(function()
+                        TeleportService:Teleport(game.PlaceId, game.Players.LocalPlayer)
+                    end)
+                    break
+                end
+                Next = Servers.nextPageCursor
+            until Server
+
+            if Server.playing < Server.maxPlayers and Server.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, Server.id, game.Players.LocalPlayer)
+            end
+        end
+    })
+
 end
 
 Window:SelectTab(1)
 
+
+--------------- auto breaktrou
+
+-- game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Breakthrough"):FireServer()
+
+
+-- ------------------------------------- auto craft potion
+
+-- local args = {
+-- 	"Qi Gathering"
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CraftPill"):FireServer(unpack(args))
