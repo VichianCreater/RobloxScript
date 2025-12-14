@@ -2,6 +2,7 @@
 -- 1-Year Ginseng
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local firstTimeUsingDeath = false
 
 local ALLOWED_GAME_ID = 7862121304
 if game.GameId ~= ALLOWED_GAME_ID then
@@ -11,6 +12,8 @@ if game.GameId ~= ALLOWED_GAME_ID then
         Duration = 8
     })
     return 
+else
+    firstTimeUsingDeath = true
 end
 
 local Window = Fluent:CreateWindow({
@@ -77,6 +80,8 @@ do
     local IsWalkSpeedChange = false
 
     local function WalkSpeedChange()
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:WaitForChild("Humanoid")
         humanoid.WalkSpeed = desiredWalkSpeed
     end
 
@@ -425,6 +430,9 @@ do
     })
 
     local function findNearestHerb(herbName)
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
         if not HumanoidRootPart then return nil end
 
         local nearestHerb = nil
@@ -457,21 +465,21 @@ do
         return nearestHerb
     end
 
-    -- ลบตัวแปร LIFT_HEIGHT, LIFT_DURATION, liftTweenInfo, landingTweenInfo
-
     local function warp(targetPosition)
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
         if not HumanoidRootPart then return end 
         
         local targetCFrame = CFrame.new(targetPosition)
     
-        -- ตรวจสอบให้แน่ใจว่า warpSpeed เป็นตัวเลข (เพิ่มความทนทาน)
         local duration = tonumber(warpSpeed)
         if not duration or duration <= 0 then
-            duration = 2 -- ใช้ค่าเริ่มต้นถ้ามีปัญหา
+            duration = 2
         end
 
         local tweenInfo = TweenInfo.new(
-            duration, -- ใช้ duration ที่ได้รับการตรวจสอบแล้ว
+            duration,
             Enum.EasingStyle.Linear,
             Enum.EasingDirection.InOut
         )
@@ -486,21 +494,34 @@ do
     end
 
     local function autoWarpLoop()
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
         while isWarping do
             if selectedHerbName and selectedHerbName ~= "None" then
                 local nearestHerb = findNearestHerb(selectedHerbName)
-                
                 if nearestHerb then
-                    local targetPosition = nearestHerb.Position + Vector3.new(0, 5, 0)
+                    local herbPosition = nil
                     
-                    warp(targetPosition)
-                    
-                    print("Warped to: " .. nearestHerb.Name)
-                    
-                    task.wait(0.1) 
-                else
-                    print("No herb found. Waiting for respawn...")
-                    task.wait(2) 
+                    if nearestHerb:IsA("BasePart") then
+                        herbPosition = nearestHerb.Position
+                    elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
+                        herbPosition = nearestHerb.PrimaryPart.Position
+                    elseif nearestHerb.WorldPivot then
+                        herbPosition = nearestHerb.WorldPivot.Position
+                    end
+
+                    if herbPosition then
+                        local targetPosition = herbPosition + Vector3.new(0, 5, 0)
+                        
+                        warp(targetPosition)
+                        
+                        print("Warped to: " .. nearestHerb.Name)
+                        task.wait(0.1) 
+                    else
+                        print("Herb object found but position could not be determined.")
+                        task.wait(1)
+                    end
                 end
             else
                 task.wait(1) 
@@ -515,23 +536,21 @@ do
 
     local NoclipConnection = nil
 
-    function noclip()
-        -- 1. ทำให้ Part ทั้งหมดใน Workspace ทะลุได้ (ทำรอบเดียวตามที่ต้องการ)
+    local function noclip()
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
         for _, v in pairs(game.Workspace:GetDescendants()) do
             if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
                 v.CanCollide = false
             end
         end
-
-        -- 2. ใช้ Stepped เพื่อทำให้ตัวละคร "อยู่ในสถานะไร้การชนกัน" ตลอดเวลา
-        -- วิธีนี้จะทำให้ทะลุได้ทั้ง Part และ Terrain (พื้นดินของแมพ)
         if NoclipConnection then NoclipConnection:Disconnect() end
         
         NoclipConnection = game:GetService('RunService').Stepped:Connect(function()
             if LocalPlayer.Character then
                 for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
                     if v:IsA('BasePart') then
-                        -- บังคับ CanCollide เป็น false ทุกเฟรม
                         v.CanCollide = false
                     end
                 end
@@ -539,17 +558,50 @@ do
         end)
     end
 
-    function clip()
+    local function clip()
         if NoclipConnection then 
             NoclipConnection:Disconnect() 
             NoclipConnection = nil 
         end
     end
 
+    local function DeathFirstFunction()
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
+        if firstTimeUsingDeath then
+            local character = game.Players.LocalPlayer.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            
+            if humanoid then
+                humanoid.Health = 0
+            end
+
+            while player.Character == nil or player.Character:FindFirstChild("Humanoid") == nil do
+                wait(0.1)
+            end
+
+            local newCharacter = player.Character
+            local humanoid = newCharacter:FindFirstChild("Humanoid")
+
+            if humanoid then
+                print("ตัวละครใหม่เกิดขึ้นแล้ว!")
+                wait(2)
+            end
+
+            firstTimeUsingDeath = false
+        end
+    end
+
     WarpToggle:OnChanged(function(enabled)
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+        local Humanoid = Character:WaitForChild("Humanoid")
         isWarping = enabled
         
         if enabled then
+            DeathFirstFunction()
+            wait(0.5)
             game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
             game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
             game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
@@ -564,13 +616,10 @@ do
                 WarpToggle:SetValue(false)
             end
         else
-            -- ใช้ clip() ที่มีอยู่แล้ว
             clip()
             
             print("Auto Warp Stopped.")
             if currentWarpThread then
-                -- Note: การหยุด loop ทำได้โดย isWarping = false แต่การยกเลิก thread โดยตรงทำไม่ได้ง่ายๆ
-                -- การตั้งค่าเป็น nil และการรอให้ loop จบ เป็นวิธีการที่ถูกต้องแล้ว
                 currentWarpThread = nil
             end
         end
