@@ -385,6 +385,9 @@ do
             FreezMobs()
         else
             -- 2. เข้าสู่โหมดเดิน (นอกระยะโจมตี)
+            if humanoid.FloorMaterial ~= Enum.Material.Air then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
+            end
             
             -- สั่งให้เดินไปยังตำแหน่งด้านหลังม็อบ
             humanoid:MoveTo(desiredPositionCFrame.Position)
