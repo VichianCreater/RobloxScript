@@ -427,6 +427,69 @@ do
         end
     })
     -----------------------------------------------------------------------------------------------------------------
+
+    local Players = game:GetService("Players")
+    local player = Players.LocalPlayer
+    local workspace = game:GetService("Workspace")
+
+    local function AutoPressE()
+        local character = player.Character or player.CharacterAdded:Wait()
+        local rootPart = character:WaitForChild("HumanoidRootPart")
+        local herbsFolder = workspace:WaitForChild("Herbs")
+        for _, instance in ipairs(herbsFolder:GetDescendants()) do
+            if instance:IsA("ProximityPrompt") then
+                local prompt = instance
+                local targetPart = prompt.Parent
+                if targetPart:IsA("BasePart") then
+                    local distance = (targetPart.Position - rootPart.Position).Magnitude
+                    if distance <= prompt.MaxActivationDistance then
+                        prompt:InputHoldBegin()
+                        task.wait(prompt.HoldDuration)
+                        prompt:InputHoldEnd()
+                    end
+                elseif targetPart:IsA("Model") and targetPart.PrimaryPart then
+                    local distance = (targetPart.PrimaryPart.Position - rootPart.Position).Magnitude
+                    if distance <= prompt.MaxActivationDistance then
+                        prompt:InputHoldBegin()
+                        task.wait(prompt.HoldDuration)
+                        prompt:InputHoldEnd()
+                    end
+                else
+                    local distance = (targetPart.WorldPivot.Position - rootPart.Position).Magnitude
+                    if distance <= prompt.MaxActivationDistance then
+                        prompt:InputHoldBegin()
+                        task.wait(prompt.HoldDuration)
+                        prompt:InputHoldEnd()
+                    end
+                end
+            end
+        end
+    end
+
+    local AutoPressEBut = Tabs.AutoHerb:AddToggle("AutoPressEToggle", {Title = "Auto Press E", Default = false })
+    local IsAutoPressE = false
+
+    AutoPressEBut:OnChanged(function()
+        if Options.AutoPressEToggle.Value then
+            IsAutoPressE = true
+            for _,v in ipairs(workspace:GetDescendants())do if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end workspace.DescendantAdded:Connect(function(v)if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end)
+            -- เริ่มต้นการทำงานของ AutoPressE ในฟังก์ชันแยกเธรด (ไม่บล็อก UI)
+            task.spawn(function()
+                while IsAutoPressE do
+                    AutoPressE()
+                    task.wait(0.2)  -- ตั้งระยะเวลาระหว่างการกด
+                end
+            end)
+        else
+            IsAutoPressE = false  -- เมื่อปิด toggle ให้หยุดการทำงาน
+        end
+        print("Toggle changed:", Options.AutoPressEToggle.Value)
+    end)
+
+    Options.AutoPressEToggle:SetValue(false)
+
+    -----------------------------------------------------
+    -----------------------------------------------------------------------------------------------------------------
     local Players = game:GetService("Players")
     local RunService = game:GetService("RunService")
     local LocalPlayer = Players.LocalPlayer
@@ -709,69 +772,432 @@ do
         end
     end)
 
+    Tabs.AutoHerb:AddParagraph({
+        Title = "------------------------  This below is faster version  ------------------------",
+    })
+
     -----------------------------------------------------------------------------------------------------------------
 
     local Players = game:GetService("Players")
-    local player = Players.LocalPlayer
-    local workspace = game:GetService("Workspace")
+    local TweenService = game:GetService("TweenService")
+    local RunService = game:GetService("RunService")
+    local LocalPlayer = Players.LocalPlayer
 
-    local function AutoPressE()
-        local character = player.Character or player.CharacterAdded:Wait()
-        local rootPart = character:WaitForChild("HumanoidRootPart")
-        local herbsFolder = workspace:WaitForChild("Herbs")
-        for _, instance in ipairs(herbsFolder:GetDescendants()) do
-            if instance:IsA("ProximityPrompt") then
-                local prompt = instance
-                local targetPart = prompt.Parent
-                if targetPart:IsA("BasePart") then
-                    local distance = (targetPart.Position - rootPart.Position).Magnitude
-                    if distance <= prompt.MaxActivationDistance then
-                        prompt:InputHoldBegin()
-                        task.wait(prompt.HoldDuration)
-                        prompt:InputHoldEnd()
-                    end
-                elseif targetPart:IsA("Model") and targetPart.PrimaryPart then
-                    local distance = (targetPart.PrimaryPart.Position - rootPart.Position).Magnitude
-                    if distance <= prompt.MaxActivationDistance then
-                        prompt:InputHoldBegin()
-                        task.wait(prompt.HoldDuration)
-                        prompt:InputHoldEnd()
-                    end
-                else
-                    local distance = (targetPart.WorldPivot.Position - rootPart.Position).Magnitude
-                    if distance <= prompt.MaxActivationDistance then
-                        prompt:InputHoldBegin()
-                        task.wait(prompt.HoldDuration)
-                        prompt:InputHoldEnd()
-                    end
-                end
-            end
-        end
+    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    local Humanoid = Character:WaitForChild("Humanoid")
+
+    local herbsFolder = game.Workspace:WaitForChild("Herbs")
+    local herbNames = {}
+    local selectedHerbName = nil
+    local isWarping = false
+    local currentWarpThread = nil
+
+    if not Tabs then
+        warn("Tabs is not defined. Please ensure the framework/library is loaded correctly.")
+        return
     end
 
-    local AutoPressEBut = Tabs.AutoHerb:AddToggle("AutoPressEToggle", {Title = "Auto Press E", Default = false })
-    local IsAutoPressE = false
-
-    AutoPressEBut:OnChanged(function()
-        if Options.AutoPressEToggle.Value then
-            IsAutoPressE = true
-            for _,v in ipairs(workspace:GetDescendants())do if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end workspace.DescendantAdded:Connect(function(v)if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end)
-            -- เริ่มต้นการทำงานของ AutoPressE ในฟังก์ชันแยกเธรด (ไม่บล็อก UI)
-            task.spawn(function()
-                while IsAutoPressE do
-                    AutoPressE()
-                    task.wait(0.2)  -- ตั้งระยะเวลาระหว่างการกด
-                end
-            end)
-        else
-            IsAutoPressE = false  -- เมื่อปิด toggle ให้หยุดการทำงาน
+    local function loadHerbNamesFast()
+        herbNames = {}
+        for _, herb in pairs(herbsFolder:GetChildren()) do
+            table.insert(herbNames, herb.Name)
         end
-        print("Toggle changed:", Options.AutoPressEToggle.Value)
+        local uniqueHerbNames = {}
+        for _, herbName in pairs(herbNames) do
+            if not table.find(uniqueHerbNames, herbName) then
+                table.insert(uniqueHerbNames, herbName)
+            end
+        end
+
+        table.sort(uniqueHerbNames) 
+
+        return uniqueHerbNames
+
+    end
+
+    local uniqueHerbNames = loadHerbNamesFast()
+
+    local HerbListDropdownWarpFast = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
+        Title = "Select Herb to Auto Warp [Faster]",
+        Description = "Select the type of herb for continuous warping.",
+        Values = uniqueHerbNames,
+        Multi = false, 
+        Default = uniqueHerbNames[1] or "None",
+    })
+
+    local warpSpeed = 2
+
+    local WarpSpeedSlide = Tabs.AutoHerb:AddSlider("warpspeed", {
+        Title = "Warp Time (Seconds)",
+        Description = "Time taken to slide to the herb (Lower = Faster).",
+        Default = 2,
+        Min = 1,
+        Max = 10,
+        Rounding = 1,
+
+        Callback = function(newTime)
+            warpSpeed = newTime 
+        end
+    })
+
+    local WarpFastToggle = Tabs.AutoHerb:AddToggle("AutoWarpFastToggle", {
+        Title = "Start Auto Herb Warp [Faster]", 
+        Default = false 
+    })
+
+    local function findNearestHerbFast(herbName)
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        if not HumanoidRootPart then return nil end
+
+        local nearestHerb = nil
+
+        local minDistance = math.huge
+
+        for _, herb in pairs(herbsFolder:GetChildren()) do
+
+            if herb.Name == herbName then
+
+                if herb:IsA("BasePart") then
+
+                    local distance = (HumanoidRootPart.Position - herb.Position).Magnitude
+
+                    if distance < minDistance then
+
+                        minDistance = distance
+
+                        nearestHerb = herb
+
+                    end
+
+                elseif herb:IsA("Model") and herb.PrimaryPart then
+
+                    local distance = (herb.PrimaryPart.Position - HumanoidRootPart.Position).Magnitude
+
+                    if distance < minDistance then
+
+                        minDistance = distance
+
+                        nearestHerb = herb
+
+                    end
+
+                else
+
+                    local distance = (herb.WorldPivot.Position - HumanoidRootPart.Position).Magnitude
+
+                    if distance < minDistance then
+
+                        minDistance = distance
+
+                        nearestHerb = herb
+
+                    end
+
+                end
+
+            end
+
+        end
+
+        return nearestHerb
+
+    end
+
+    local function warpFast(targetPosition)
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        if not HumanoidRootPart then return end 
+
+        local targetCFrame = CFrame.new(targetPosition)
+
+        local duration = tonumber(warpSpeed)
+
+        if not duration or duration <= 0 then
+
+            duration = 2
+
+        end
+
+        local tweenInfo = TweenInfo.new(
+
+            duration,
+
+            Enum.EasingStyle.Linear,
+
+            Enum.EasingDirection.InOut
+
+        )
+
+        Humanoid.PlatformStand = true
+
+        local warpTween = TweenService:Create(HumanoidRootPart, tweenInfo, {CFrame = targetCFrame})
+
+        warpTween:Play()
+
+        warpTween.Completed:Wait()
+
+        Humanoid.PlatformStand = false
+
+    end
+
+    local function autoWarpLoopFast()
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        while isWarping do
+
+            if selectedHerbName and selectedHerbName ~= "None" then
+
+                local nearestHerb = findNearestHerbFast(selectedHerbName)
+
+                if nearestHerb then
+
+                    local herbPosition = nil
+
+
+
+                    if nearestHerb:IsA("BasePart") then
+
+                        herbPosition = nearestHerb.Position
+
+                    elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
+
+                        herbPosition = nearestHerb.PrimaryPart.Position
+
+                    elseif nearestHerb.WorldPivot then
+
+                        herbPosition = nearestHerb.WorldPivot.Position
+
+                    end
+
+                    if herbPosition then
+
+                        local targetPosition = herbPosition + Vector3.new(0, 5, 0)
+
+
+
+                        warpFast(targetPosition)
+
+                        print("Warped to: " .. nearestHerb.Name)
+
+                        task.wait(0.1) 
+
+                    else
+
+                        print("Herb object found but position could not be determined.")
+
+                        task.wait(1)
+
+                    end
+
+                end
+
+            else
+
+                task.wait(1) 
+
+            end
+
+        end
+
+    end
+
+    HerbListDropdownWarpFast:OnChanged(function(value)
+
+        selectedHerbName = value
+
+        print("Selected Herb: " .. selectedHerbName)
+
     end)
 
-    Options.AutoPressEToggle:SetValue(false)
+    local NoclipConnection = nil
 
-    -----------------------------------------------------
+    local function noclipFast()
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        for _, v in pairs(game.Workspace:GetDescendants()) do
+
+            if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
+
+                v.CanCollide = false
+
+            end
+
+        end
+
+        if NoclipConnection then NoclipConnection:Disconnect() end
+
+        NoclipConnection = game:GetService('RunService').Stepped:Connect(function()
+
+            if LocalPlayer.Character then
+
+                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+
+                    if v:IsA('BasePart') then
+
+                        v.CanCollide = false
+
+                    end
+
+                end
+
+            end
+
+        end)
+
+    end
+
+    local function clipFast()
+
+        if NoclipConnection then 
+
+            NoclipConnection:Disconnect() 
+
+            NoclipConnection = nil 
+
+        end
+
+    end
+
+    local function DeathFirstFunctionFast()
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        if firstTimeUsingDeath then
+
+            local character = game.Players.LocalPlayer.Character
+
+            local humanoid = character:FindFirstChild("Humanoid")
+
+
+
+            if humanoid then
+
+                humanoid.Health = 0
+
+            end
+
+
+
+            while player.Character == nil or player.Character:FindFirstChild("Humanoid") == nil do
+
+                wait(0.1)
+
+            end
+
+
+
+            local newCharacter = player.Character
+
+            local humanoid = newCharacter:FindFirstChild("Humanoid")
+
+
+
+            if humanoid then
+
+                print("ตัวละครใหม่เกิดขึ้นแล้ว!")
+
+                wait(2)
+
+            end
+
+
+
+            firstTimeUsingDeath = false
+
+        end
+
+    end
+
+
+
+    WarpFastToggle:OnChanged(function(enabled)
+
+        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+
+        local Humanoid = Character:WaitForChild("Humanoid")
+
+        isWarping = enabled
+
+
+
+        if enabled then
+
+            DeathFirstFunctionFast()
+
+            wait(0.5)
+
+            game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
+
+            game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
+
+            game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
+
+            game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
+
+            noclipFast()
+
+
+
+            if selectedHerbName and selectedHerbName ~= "None" then
+
+                print("Auto Warp Started.")
+
+                currentWarpThread = task.spawn(autoWarpLoopFast)
+
+            else
+
+                warn("Please select a herb from the dropdown first.")
+
+                WarpFastToggle:SetValue(false)
+
+            end
+
+        else
+
+            clipFast()
+
+
+
+            print("Auto Warp Stopped.")
+
+            if currentWarpThread then
+
+                currentWarpThread = nil
+
+            end
+
+        end
+
+    end)
+----------------------------------------------------------------------------------------------------
 
     local AutoAttack = Tabs.Main:AddToggle("AutoAttackToggle", {Title = "Auto Attack", Default = false })
     local IsAutoAttack = false
