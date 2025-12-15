@@ -162,6 +162,9 @@ do
             if string.find(objectText, "100") then
                 objectTextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
             end
+            if string.find(objectText, "1000") then
+                objectTextLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+            end
         end
 
         objectTextLabel.Text = objectText
