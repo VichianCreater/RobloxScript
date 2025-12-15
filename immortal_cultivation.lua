@@ -1031,15 +1031,14 @@ do
     end
 
     local function autoWarpLoopFast()
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
         while isWarping do
+            -- ตรวจสอบว่าเลือกชื่อไอเท็มหรือยัง
             if selectedHerbName and selectedHerbName ~= "None" then
                 local nearestHerb = findNearestHerbFast(selectedHerbName)
+                
                 if nearestHerb then
+                    -- === กรณีเจอไอเท็ม: ทำการวาร์ป ===
                     local herbPosition = nil
-
                     if nearestHerb:IsA("BasePart") then
                         herbPosition = nearestHerb.Position
                     elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
@@ -1050,15 +1049,17 @@ do
 
                     if herbPosition then
                         local targetPosition = herbPosition + Vector3.new(0, 5, 0)
-
                         warpFast(targetPosition)
-                        task.wait(0.1) 
-                    else
-                        print("Herb object found but position could not be determined.")
-                        task.wait(1)
+                        task.wait(0.1) -- พักสั้นๆ หลังวาร์ปเสร็จ
                     end
+                else
+                    -- === กรณีไม่เจอไอเท็ม (ของหมดแมพ): ให้รอจนกว่าจะเกิดใหม่ ===
+                    -- ตรงนี้คือจุดสำคัญที่จะทำให้สคริปต์ไม่ค้างและรันต่อไปเรื่อยๆ
+                    print("Waiting for " .. selectedHerbName .. " to respawn...")
+                    task.wait(2) -- ปรับเวลาการรอตรงนี้ได้ (วินาที)
                 end
             else
+                -- กรณีไม่ได้เลือกชื่อใน Dropdown
                 task.wait(1) 
             end
         end
