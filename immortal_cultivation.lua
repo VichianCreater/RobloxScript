@@ -30,6 +30,7 @@ local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
     ESPM = Window:AddTab({ Title = "ESP Mob", Icon = "eye" }),
+    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "eye" }),
     AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
 }
 
@@ -218,6 +219,127 @@ do
         end
     end)
     -- HerbListDropdown:SetValue("None") 
+    -----------------------------------------------------------------------------------------------------------------
+    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Scriptures ESP", Default = false })
+    local specialESPObjects = {}
+
+    -- กำหนดสีตาม Tier
+    local TierColors = {
+        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว (ธรรมดา)
+        T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
+        T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
+        T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
+        T5 = Color3.fromRGB(255, 0, 0)      -- สีแดง (หายากสุด)
+    }
+
+    -- รายชื่อไอเทมและ Tier
+    local scriptureList = {
+        -- T1
+        ["Qi Condensation Sutra"] = "T1",
+        -- T2
+        ["Maniac's Cultivation Tips"] = "T2",
+        ["Nine Yang Scripture"] = "T2",
+        ["Verdant Wind Scripture"] = "T2",
+        ["Copper Body Formula"] = "T2",
+        ["Six Yin Scripture"] = "T2",
+        -- T3
+        ["Tenebrous Canon"] = "T3",
+        ["Sword Sutra"] = "T3",
+        ["Shadowless Canon"] = "T3",
+        ["Pure Heart Skill"] = "T3",
+        ["Principle of Motion"] = "T3",
+        ["Heavenly Demon Scripture"] = "T3",
+        ["Extreme Sword Sutra"] = "T3",
+        ["Lotus Sutra"] = "T3",
+        ["Principle Of Motion"] = "T3",
+        ["Mother Earth Technique"] = "T3",
+        -- T4
+        ["Steel Body"] = "T4",
+        ["Soul Shedding"] = "T4",
+        ["Dragon Rising"] = "T4",
+        ["Rising Dragon Art"] = "T4",
+        ["Earth Flame Method"] = "T4",
+        ["Steel Body Formula"] = "T4",
+        ["Soul Shedding Scripture"] = "T4",
+        ["Star Reaving Scripture"] = "T4",
+        -- T5
+        ["TAOIST BLOOD"] = "T5",
+        ["jttw"] = "T5"
+    }
+
+    -- ฟังก์ชันสร้าง ESP
+    local function createScriptureESP(object, tier)
+        if object:FindFirstChild("Scripture_ESP") then return end
+        
+        local tierColor = TierColors[tier] or Color3.fromRGB(255, 255, 255)
+        
+        local billboardGui = Instance.new("BillboardGui")
+        billboardGui.Name = "Scripture_ESP"
+        billboardGui.Adornee = object
+        billboardGui.Parent = object
+        billboardGui.Size = UDim2.new(0, 200, 0, 70)
+        billboardGui.StudsOffset = Vector3.new(0, 4, 0)
+        billboardGui.AlwaysOnTop = true
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Parent = billboardGui
+        nameLabel.Text = string.format("[%s] %s", tier, object.Name)
+        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        nameLabel.TextColor3 = tierColor
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.SourceSansBold
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.BackgroundTransparency = 1
+        
+        table.insert(specialESPObjects, billboardGui)
+    end
+
+    local function clearScriptureESP()
+        for _, gui in pairs(specialESPObjects) do
+            if gui and gui.Parent then gui:Destroy() end
+        end
+        specialESPObjects = {}
+    end
+
+    -- Loop ตรวจสอบทุก 5 วินาที
+    task.spawn(function()
+        while true do
+            if specialESPtoggle.Value then
+                local currentItems = game.Workspace:GetChildren()
+                
+                for _, child in pairs(currentItems) do
+                    -- ตรวจสอบชื่อใน List (แบบ Case Sensitive เพื่อความแม่นยำ)
+                    local tier = scriptureList[child.Name]
+                    if tier then
+                        createScriptureESP(child, tier)
+                    end
+                end
+                
+                -- อัปเดตระยะทาง
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("HumanoidRootPart") then
+                    local myPos = char.HumanoidRootPart.Position
+                    for i = #specialESPObjects, 1, -1 do
+                        local gui = specialESPObjects[i]
+                        if gui and gui.Parent then
+                            local dist = (myPos - gui.Parent.Position).Magnitude
+                            local label = gui:FindFirstChild("DistanceLabel")
+                            if label then label.Text = string.format("%.1f studs", dist) end
+                        else
+                            table.remove(specialESPObjects, i)
+                        end
+                    end
+                end
+            else
+                clearScriptureESP()
+            end
+            task.wait(5)
+        end
+    end)
+
+    specialESPtoggle:OnChanged(function()
+        if not specialESPtoggle.Value then clearScriptureESP() end
+    end)
 
     -----------------------------------------------------------------------------------------------------------------
     local mobsFolder = game.Workspace:WaitForChild("Enemies")
@@ -338,7 +460,7 @@ do
 
     local function startAttackMobList()
         local selectedMobNames = MobListDropdown.Value
-        local offset = 4 -- ระยะห่างด้านหลังม็อบที่ต้องการยืน
+        local offset = 4.5 -- ระยะห่างด้านหลังม็อบที่ต้องการยืน
         local attackRange = 20 -- ระยะที่ยอมให้ CFrame ทำงาน
         local localPlayer = game.Players.LocalPlayer
         local character = localPlayer.Character
@@ -364,35 +486,19 @@ do
         local desiredPositionCFrame = targetCFrame * CFrame.new(0, 0, offset) 
 
         if distance <= attackRange then
-            -- 1. เข้าสู่โหมดโจมตี/บังคับ CFrame
-            
-            -- คำนวณ CFrame ที่หันหน้าเข้ามอนสเตอร์
-            -- CFrame.lookAt(ตำแหน่งปัจจุบัน, ตำแหน่งเป้าหมาย) 
             local rotationCFrame = CFrame.lookAt(rootPart.Position, targetPosition)
-            
-            -- สร้าง CFrame สุดท้าย: ใช้ตำแหน่งด้านหลังที่คำนวณไว้ และใช้การหมุนที่หันเข้าหามอนสเตอร์
             local finalCFrame = CFrame.new(desiredPositionCFrame.Position) * rotationCFrame.Rotation
-            
-            -- บังคับตำแหน่งและการหมุนทันที (ยอมให้มีการวาร์ปเล็กน้อยในระยะใกล้)
+
             rootPart.CFrame = finalCFrame
-            
-            -- โจมตี
             punchRemote:FireServer(unpack(args))
-            
-            -- หยุดการสั่งเดิน (MoveTo) เพื่อป้องกันการขัดแย้ง
             humanoid:MoveTo(rootPart.Position) 
 
             FreezMobs()
         else
-            -- 2. เข้าสู่โหมดเดิน (นอกระยะโจมตี)
             if humanoid.FloorMaterial ~= Enum.Material.Air then
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
             end
-            
-            -- สั่งให้เดินไปยังตำแหน่งด้านหลังม็อบ
             humanoid:MoveTo(desiredPositionCFrame.Position)
-            
-            -- ไม่มีการสั่ง CFrame ตรงนี้ เพื่อให้ MoveTo ทำงานได้เต็มที่
         end
     end
 
@@ -550,7 +656,6 @@ do
                 
                 -- อัปเดต Dropdown ด้วยรายการใหม่
                 HerbListDropdownWarp:SetValues(newUniqueHerbNames)
-                print("Herb list updated. Total unique herbs: " .. #newUniqueHerbNames)
             end
             
             -- รอ 10 วินาทีก่อนอัปเดตอีกครั้ง
@@ -640,8 +745,6 @@ do
                             HumanoidRootPart.CFrame = CFrame.new(targetPosition)
                             
                             Humanoid.PlatformStand = true
-                            
-                            print("Warped and collecting: " .. nearestHerb.Name)
                             task.wait(0.2) 
                             
                             Humanoid.PlatformStand = false
@@ -676,7 +779,6 @@ do
 
     HerbListDropdownWarp:OnChanged(function(value)
         selectedHerbName = value
-        print("Selected Herb: " .. selectedHerbName)
     end)
 
     local Noclip = nil
@@ -755,7 +857,6 @@ do
             -- noclip()
             
             if selectedHerbName and selectedHerbName ~= "None" then
-                print("Auto Collect Started (MoveTo + CFrame Warp).")
                 currentWarpThread = task.spawn(autoCollectLoop)
             else
                 warn("Please select a herb from the dropdown first.")
@@ -826,18 +927,38 @@ do
         Default = uniqueHerbNames[1] or "None",
     })
 
-    local warpSpeed = 2
+    local updateThreadFast = nil
+
+    local function updateHerbListFast()
+        -- รันในลูปเพื่ออัปเดต
+        while true do
+            local newUniqueHerbNamesFast = loadHerbNamesFast()
+            
+            -- ตรวจสอบว่ารายการมีการเปลี่ยนแปลงหรือไม่ก่อนอัปเดต GUI
+            if #newUniqueHerbNamesFast ~= #HerbListDropdownWarpFast.Values or 
+            newUniqueHerbNamesFast[1] ~= HerbListDropdownWarpFast.Values[1] then
+
+                HerbListDropdownWarpFast:SetValues(newUniqueHerbNamesFast)
+            end
+            task.wait(10) 
+        end
+    end
+
+    if not updateThreadFast then
+        updateThreadFast = task.spawn(updateHerbListFast)
+    end
+
+    local warpSpeed = 50
 
     local WarpSpeedSlide = Tabs.AutoHerb:AddSlider("warpspeed", {
-        Title = "Warp Time (Seconds)",
-        Description = "Time taken to slide to the herb (Lower = Faster).",
-        Default = 2,
+        Title = "Warp Speed (Studs/s)",
+        Description = "The constant speed of the warp (Higher = Faster).",
+        Default = 50,
         Min = 1,
-        Max = 10,
+        Max = 100,
         Rounding = 1,
-
-        Callback = function(newTime)
-            warpSpeed = newTime 
+        Callback = function(newSpeed)
+            warpSpeed = newSpeed 
         end
     })
 
@@ -847,355 +968,194 @@ do
     })
 
     local function findNearestHerbFast(herbName)
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         if not HumanoidRootPart then return nil end
-
         local nearestHerb = nil
-
         local minDistance = math.huge
-
         for _, herb in pairs(herbsFolder:GetChildren()) do
-
             if herb.Name == herbName then
-
                 if herb:IsA("BasePart") then
-
                     local distance = (HumanoidRootPart.Position - herb.Position).Magnitude
-
                     if distance < minDistance then
-
                         minDistance = distance
-
                         nearestHerb = herb
-
                     end
-
                 elseif herb:IsA("Model") and herb.PrimaryPart then
-
                     local distance = (herb.PrimaryPart.Position - HumanoidRootPart.Position).Magnitude
-
                     if distance < minDistance then
-
                         minDistance = distance
-
                         nearestHerb = herb
-
                     end
-
                 else
-
                     local distance = (herb.WorldPivot.Position - HumanoidRootPart.Position).Magnitude
-
                     if distance < minDistance then
-
                         minDistance = distance
-
                         nearestHerb = herb
-
                     end
-
                 end
-
             end
-
         end
-
         return nearestHerb
-
     end
 
     local function warpFast(targetPosition)
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         if not HumanoidRootPart then return end 
 
         local targetCFrame = CFrame.new(targetPosition)
+        local distance = (targetPosition - HumanoidRootPart.Position).Magnitude
+        local speed = tonumber(warpSpeed) or 50
+        local duration = distance / speed
 
-        local duration = tonumber(warpSpeed)
-
-        if not duration or duration <= 0 then
-
-            duration = 2
-
-        end
+        if duration <= 0 then duration = 0.1 end
 
         local tweenInfo = TweenInfo.new(
-
             duration,
-
             Enum.EasingStyle.Linear,
-
             Enum.EasingDirection.InOut
-
         )
-
         Humanoid.PlatformStand = true
-
+        
         local warpTween = TweenService:Create(HumanoidRootPart, tweenInfo, {CFrame = targetCFrame})
-
         warpTween:Play()
-
+        
         warpTween.Completed:Wait()
-
+        HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+        HumanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
+        task.wait(0.1) 
         Humanoid.PlatformStand = false
-
     end
 
     local function autoWarpLoopFast()
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         while isWarping do
-
             if selectedHerbName and selectedHerbName ~= "None" then
-
                 local nearestHerb = findNearestHerbFast(selectedHerbName)
-
                 if nearestHerb then
-
                     local herbPosition = nil
 
-
-
                     if nearestHerb:IsA("BasePart") then
-
                         herbPosition = nearestHerb.Position
-
                     elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
-
                         herbPosition = nearestHerb.PrimaryPart.Position
-
                     elseif nearestHerb.WorldPivot then
-
                         herbPosition = nearestHerb.WorldPivot.Position
-
                     end
 
                     if herbPosition then
-
                         local targetPosition = herbPosition + Vector3.new(0, 5, 0)
 
-
-
                         warpFast(targetPosition)
-
-                        print("Warped to: " .. nearestHerb.Name)
-
                         task.wait(0.1) 
-
                     else
-
                         print("Herb object found but position could not be determined.")
-
                         task.wait(1)
-
                     end
-
                 end
-
             else
-
                 task.wait(1) 
-
             end
-
         end
-
     end
 
     HerbListDropdownWarpFast:OnChanged(function(value)
-
         selectedHerbName = value
-
         print("Selected Herb: " .. selectedHerbName)
-
     end)
 
     local NoclipConnection = nil
-
     local function noclipFast()
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         for _, v in pairs(game.Workspace:GetDescendants()) do
-
             if v:IsA("BasePart") and not v:IsDescendantOf(LocalPlayer.Character) then
-
                 v.CanCollide = false
-
             end
-
         end
-
         if NoclipConnection then NoclipConnection:Disconnect() end
-
         NoclipConnection = game:GetService('RunService').Stepped:Connect(function()
-
             if LocalPlayer.Character then
-
                 for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-
                     if v:IsA('BasePart') then
-
                         v.CanCollide = false
-
                     end
-
                 end
-
             end
-
         end)
-
     end
 
     local function clipFast()
-
         if NoclipConnection then 
-
             NoclipConnection:Disconnect() 
-
             NoclipConnection = nil 
-
         end
-
     end
 
     local function DeathFirstFunctionFast()
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         if firstTimeUsingDeath then
-
             local character = game.Players.LocalPlayer.Character
-
             local humanoid = character:FindFirstChild("Humanoid")
 
-
-
             if humanoid then
-
                 humanoid.Health = 0
-
             end
-
-
 
             while player.Character == nil or player.Character:FindFirstChild("Humanoid") == nil do
-
                 wait(0.1)
-
             end
-
-
 
             local newCharacter = player.Character
-
             local humanoid = newCharacter:FindFirstChild("Humanoid")
 
-
-
             if humanoid then
-
                 print("ตัวละครใหม่เกิดขึ้นแล้ว!")
-
                 wait(2)
-
             end
-
-
 
             firstTimeUsingDeath = false
-
         end
-
     end
 
-
-
     WarpFastToggle:OnChanged(function(enabled)
-
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-
         local Humanoid = Character:WaitForChild("Humanoid")
-
         isWarping = enabled
 
-
-
         if enabled then
-
             DeathFirstFunctionFast()
-
             wait(0.5)
-
             game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
-
             game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
-
             game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
-
             game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
-
             noclipFast()
 
-
-
             if selectedHerbName and selectedHerbName ~= "None" then
-
                 print("Auto Warp Started.")
-
                 currentWarpThread = task.spawn(autoWarpLoopFast)
-
             else
-
                 warn("Please select a herb from the dropdown first.")
-
                 WarpFastToggle:SetValue(false)
-
             end
-
         else
-
             clipFast()
 
-
-
             print("Auto Warp Stopped.")
-
             if currentWarpThread then
-
                 currentWarpThread = nil
-
             end
-
         end
-
     end)
 ----------------------------------------------------------------------------------------------------
 
