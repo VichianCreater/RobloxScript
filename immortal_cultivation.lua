@@ -106,8 +106,6 @@ do
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
     local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
     local espObjects = {}
-    local herbNames = {}
-    local selectedHerbName = nil
     local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
         Title = "SelectHerb",
         Description = "You can select multiple Herb.",
@@ -116,16 +114,19 @@ do
         Default = {"None", "Null"},
     })
 
+    local herbToESP = {}
+    local currentSelectedNames = {}
+
     local function createESP(object)
+        if herbToESP[object] then return end 
 
         local billboardGui = Instance.new("BillboardGui")
         billboardGui.Adornee = object
         billboardGui.Parent = object
-        billboardGui.Size = UDim2.new(0, 200, 0, 70) -- เพิ่มขนาดในแนวตั้ง
+        billboardGui.Size = UDim2.new(0, 200, 0, 70) 
         billboardGui.StudsOffset = Vector3.new(0, 3, 0)
         billboardGui.AlwaysOnTop = true
 
-        -- 1. TextLabel สำหรับชื่อสมุนไพร (บรรทัดที่ 1)
         local nameTextLabel = Instance.new("TextLabel")
         nameTextLabel.Parent = billboardGui
         nameTextLabel.Text = object.Name
@@ -136,7 +137,6 @@ do
         nameTextLabel.TextSize = 10
         nameTextLabel.BackgroundTransparency = 1
 
-        -- 2. TextLabel สำหรับ ObjectText (บรรทัดที่ 2)
         local objectTextLabel = Instance.new("TextLabel")
         objectTextLabel.Parent = billboardGui
         objectTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
@@ -147,7 +147,6 @@ do
         objectTextLabel.BackgroundTransparency = 1
 
         local objectText = "No Data (Attribute Missing)"
-        
         local proximityPrompt = object:FindFirstChildOfClass("ProximityPrompt")
 
         if proximityPrompt then
@@ -170,60 +169,117 @@ do
         objectTextLabel.Text = objectText
         
         table.insert(espObjects, billboardGui)
+        herbToESP[object] = billboardGui
     end
 
-    local function removeESP()
+    local function removeESPForHerb(object)
+        local billboardGui = herbToESP[object]
+        if billboardGui and billboardGui.Parent then
+            billboardGui:Destroy()
+        end
+        herbToESP[object] = nil
+
+        for i, esp in ipairs(espObjects) do
+            if esp == billboardGui then
+                table.remove(espObjects, i)
+                break
+            end
+        end
+    end
+
+    local function removeAllESP()
         for _, billboardGui in pairs(espObjects) do
             if billboardGui and billboardGui.Parent then
                 billboardGui:Destroy()
             end
         end
         espObjects = {}
+        herbToESP = {}
     end
 
-    local function loadHerbNames()
-        herbNames = {}
+    local function loadAndSetHerbNames()
+        local allHerbNames = {}
         for _, herb in pairs(herbsFolder:GetChildren()) do
-            table.insert(herbNames, herb.Name)
+            table.insert(allHerbNames, herb.Name)
         end
+
         local uniqueHerbNames = {}
-        for _, herbName in pairs(herbNames) do
+        for _, herbName in pairs(allHerbNames) do
             if not table.find(uniqueHerbNames, herbName) then
                 table.insert(uniqueHerbNames, herbName)
             end
         end
+
         HerbListDropdown:SetValues(uniqueHerbNames)
     end
 
-    HerbListDropdown:OnChanged(function(value)
-        removeESP()
-        local selectedHerbNames = {}
-        for herbName, isSelected in pairs(value) do
-            if isSelected then
-                table.insert(selectedHerbNames, herbName)
-            end
-        end
+    -- ฟังก์ชันหลักในการสแกนและอัปเดตทั้งหมด
+    local function scanAndApplyESP()
+        
+        -- ลบ ESP ทั้งหมดก่อนเพื่อเตรียมสร้างใหม่ (ป้องกันปัญหา Herb ถูกลบ)
+        removeAllESP() 
+        
+        -- 1. อัปเดต Dropdown ด้วยชื่อ Herb ปัจจุบันทั้งหมด
+        loadAndSetHerbNames()
 
-        if herbESPtoggle.Value and #selectedHerbNames > 0 then
+        -- ตรวจสอบว่า Toggle เปิดและมีการเลือก
+        if herbESPtoggle.Value and #currentSelectedNames > 0 then
+            -- 2. วนลูปสร้าง ESP ใหม่เฉพาะสำหรับ Herb ที่มีอยู่ในปัจจุบันและถูกเลือก
             for _, herb in pairs(herbsFolder:GetChildren()) do
-                if table.find(selectedHerbNames, herb.Name) then
+                if table.find(currentSelectedNames, herb.Name) then
                     createESP(herb)
                 end
             end
         end
+    end
+
+    -- ลูปหลักสำหรับอัปเดตทุก 5 วินาที
+    task.spawn(function()
+        while true do
+            scanAndApplyESP()
+            task.wait(5) -- หน่วงเวลา 5 วินาที
+        end
+    end)
+
+
+    -- Event Handlers (จัดการเฉพาะการเปลี่ยนค่า UI)
+
+    HerbListDropdown:OnChanged(function(value)
+        -- อัปเดตตาราง currentSelectedNames เมื่อ Dropdown เปลี่ยน
+        currentSelectedNames = {}
+        for herbName, isSelected in pairs(value) do
+            if isSelected then
+                table.insert(currentSelectedNames, herbName)
+            end
+        end
+        
+        -- เรียกใช้การสแกนทันทีเพื่อตอบสนองต่อการเปลี่ยนแปลงการเลือก
+        scanAndApplyESP()
     end)
 
     herbESPtoggle:OnChanged(function()
-        if herbESPtoggle.Value then
-            loadHerbNames()
-        else
-            removeESP()
+        if not herbESPtoggle.Value then
+            removeAllESP()
             HerbListDropdown:SetValues({})
         end
+        
+        -- เรียกใช้การสแกนทันทีเพื่อตอบสนองต่อการเปลี่ยน Toggle
+        scanAndApplyESP()
     end)
+
+    -- โหลดชื่อเริ่มต้นเมื่อเริ่มสคริปต์
+    loadAndSetHerbNames()
+
+    -- ดึงค่าเริ่มต้นจากการตั้งค่า Dropdown
+    currentSelectedNames = {}
+    for herbName, isSelected in pairs(HerbListDropdown.Value) do
+        if isSelected then
+            table.insert(currentSelectedNames, herbName)
+        end
+    end
     -- HerbListDropdown:SetValue("None") 
     -----------------------------------------------------------------------------------------------------------------
-    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Scriptures ESP", Default = false })
+    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Manual ESP", Default = false })
     local specialESPObjects = {}
 
     -- กำหนดสีตาม Tier
@@ -266,7 +322,8 @@ do
         ["Soul Shedding Scripture"] = "T4",
         ["Star Reaving Scripture"] = "T4",
         -- T5
-        ["TAOIST BLOOD"] = "T5",
+        ["Taoist Blood"] = "T5",
+        ["Tower Forging Techique"] = "T5",
         ["jttw"] = "T5"
     }
 
@@ -893,7 +950,7 @@ do
 
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
     local herbNames = {}
-    local selectedHerbName = nil
+    local selectedHerbNameFast = nil
     local isWarping = false
     local currentWarpThread = nil
 
@@ -1036,8 +1093,8 @@ do
     local function autoWarpLoopFast()
         while isWarping do
             -- ตรวจสอบว่าเลือกชื่อไอเท็มหรือยัง
-            if selectedHerbName and selectedHerbName ~= "None" then
-                local nearestHerb = findNearestHerbFast(selectedHerbName)
+            if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
+                local nearestHerb = findNearestHerbFast(selectedHerbNameFast)
                 
                 if nearestHerb then
                     -- === กรณีเจอไอเท็ม: ทำการวาร์ป ===
@@ -1058,7 +1115,7 @@ do
                 else
                     -- === กรณีไม่เจอไอเท็ม (ของหมดแมพ): ให้รอจนกว่าจะเกิดใหม่ ===
                     -- ตรงนี้คือจุดสำคัญที่จะทำให้สคริปต์ไม่ค้างและรันต่อไปเรื่อยๆ
-                    print("Waiting for " .. selectedHerbName .. " to respawn...")
+                    print("Waiting for " .. selectedHerbNameFast .. " to respawn...")
                     task.wait(2) -- ปรับเวลาการรอตรงนี้ได้ (วินาที)
                 end
             else
@@ -1069,8 +1126,8 @@ do
     end
 
     HerbListDropdownWarpFast:OnChanged(function(value)
-        selectedHerbName = value
-        print("Selected Herb: " .. selectedHerbName)
+        selectedHerbNameFast = value
+        print("Selected Herb: " .. selectedHerbNameFast)
     end)
 
     local NoclipConnection = nil
@@ -1145,7 +1202,7 @@ do
             game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
             noclipFast()
 
-            if selectedHerbName and selectedHerbName ~= "None" then
+            if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
                 print("Auto Warp Started.")
                 currentWarpThread = task.spawn(autoWarpLoopFast)
             else
