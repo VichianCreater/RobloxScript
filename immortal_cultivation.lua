@@ -432,15 +432,33 @@ do
 
     local function loadMobNames()
         mobNames = {}
+        
+        -- 1. เพิ่มชื่อ Mob จากโฟลเดอร์ "Enemies"
         for _, mob in pairs(mobsFolder:GetChildren()) do
             table.insert(mobNames, mob.Name)
         end
+        
+        -- 2. ตรวจสอบและเพิ่ม "Saint Nick" (ถ้ามี)
+        local saintNick = game.workspace:FindFirstChild("Saint Nick")
+        if saintNick and saintNick:IsA("Model") then -- ตรวจสอบว่ามีอยู่จริงและเป็น Model
+            table.insert(mobNames, saintNick.Name)
+        end
+
+        -- 3. ตรวจสอบและเพิ่ม "Little Monkey King" (ถ้ามี)
+        local littleMonkeyKing = game.workspace:FindFirstChild("Little Monkey King")
+        if littleMonkeyKing and littleMonkeyKing:IsA("Model") then -- ตรวจสอบว่ามีอยู่จริงและเป็น Model
+            table.insert(mobNames, littleMonkeyKing.Name)
+        end
+
+        -- 4. กรองชื่อซ้ำ (ตามโค้ดเดิม)
         local uniqueMobNames = {}
         for _, mobName in pairs(mobNames) do
             if not table.find(uniqueMobNames, mobName) then
                 table.insert(uniqueMobNames, mobName)
             end
         end
+        
+        -- 5. อัปเดต Dropdown
         MobListDropdown:SetValues(uniqueMobNames)
     end
 
@@ -454,9 +472,21 @@ do
         end
 
         if mobESPtoggle.Value and #selectedMobNames > 0 then
+            -- ลูปเพื่อสร้าง ESP สำหรับมอนสเตอร์ในโฟลเดอร์
             for _, mob in pairs(mobsFolder:GetChildren()) do
                 if table.find(selectedMobNames, mob.Name) then
                     createESP(mob)
+                end
+            end
+            
+            -- ตรวจสอบและสร้าง ESP สำหรับมอนสเตอร์พิเศษ (Saint Nick, Little Monkey King)
+            local specialMobs = {"Saint Nick", "Little Monkey King"}
+            for _, specialName in ipairs(specialMobs) do
+                if table.find(selectedMobNames, specialName) then
+                    local specialMob = game.workspace:FindFirstChild(specialName)
+                    if specialMob and specialMob:IsA("Model") then
+                        createESP(specialMob)
+                    end
                 end
             end
         end
@@ -477,18 +507,48 @@ do
         local nearestTarget = nil
         local shortestDistance = math.huge
         
-        for mobName in pairs(selectedMobNames) do
-            local mobInstance = mobsFolder:FindFirstChild(mobName)
-            local mobRoot = mobInstance and mobInstance:FindFirstChild("HumanoidRootPart")
-            
-            if mobRoot and mobInstance:FindFirstChild("Humanoid") and mobInstance.Humanoid.Health > 0 then
-                local distance = (rootPart.Position - mobRoot.Position).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    nearestTarget = mobRoot
+        -- รวบรวมรายการมอนสเตอร์ทั้งหมดที่ถูกเลือก
+        local mobsToCheck = {}
+        
+        -- 1. เพิ่ม Mob จากโฟลเดอร์ "Enemies"
+        for _, mob in pairs(mobsFolder:GetChildren()) do
+            -- ต้องมั่นใจว่า mob.Name เป็นสตริงเดียวกับใน selectedMobNames
+            if table.find(selectedMobNames, mob.Name) then
+                table.insert(mobsToCheck, mob)
+            end
+        end
+        
+        -- 2. เพิ่มมอนสเตอร์พิเศษที่ถูกเลือก (ถ้ามี)
+        local specialNames = {"Saint Nick", "Little Monkey King"}
+        for _, name in ipairs(specialNames) do
+            if table.find(selectedMobNames, name) then
+                local specialMob = game.workspace:FindFirstChild(name)
+                if specialMob and specialMob:IsA("Model") then
+                    table.insert(mobsToCheck, specialMob)
                 end
             end
         end
+
+        -- 3. วนลูปตรวจสอบเป้าหมายที่ใกล้ที่สุดจากรายการรวมทั้งหมด
+        local nearestTarget = nil
+        local shortestDistance = math.huge
+
+        for _, mobInstance in ipairs(mobsToCheck) do
+            local mobRoot = mobInstance:FindFirstChild("HumanoidRootPart")
+            
+            -- ตรวจสอบสุขภาพและส่วนประกอบที่จำเป็น
+            if mobRoot and mobInstance:FindFirstChild("Humanoid") then
+                local humanoid = mobInstance.Humanoid
+                if humanoid.Health > 0 then
+                    local distance = (rootPart.Position - mobRoot.Position).Magnitude
+                    if distance < shortestDistance then
+                        shortestDistance = distance
+                        nearestTarget = mobRoot
+                    end
+                end
+            end
+        end
+        
         return nearestTarget, shortestDistance
     end
 
@@ -511,10 +571,31 @@ do
         end
     end
 
+    local desiredAttackOffset = 5
+    local OffsetSlider = Tabs.ESPM:AddSlider("AttackOffset", {
+        Title = "Attack Offset",
+        Description = "Distance behind the Mob to stand.",
+        Default = desiredAttackOffset, -- ใช้ค่าเริ่มต้นที่เรากำหนดไว้
+        Min = 0, -- ระยะใกล้สุด (อาจจะยืนด้านหน้ามอนสเตอร์)
+        Max = 20,  -- ระยะไกลสุด (ยืนด้านหลังมอนสเตอร์)
+        Rounding = 1, -- ปัดเศษเป็นทศนิยม 1 ตำแหน่ง
+        Callback = function(newOffset)
+            desiredAttackOffset = newOffset -- อัปเดตตัวแปร global เมื่อผู้ใช้เลื่อน
+        end
+    })
+
     local function startAttackMobList()
-        local selectedMobNames = MobListDropdown.Value
-        local offset = 4.5 -- ระยะห่างด้านหลังม็อบที่ต้องการยืน
-        local attackRange = 20 -- ระยะที่ยอมให้ CFrame ทำงาน
+        -- ********** แก้ไขส่วนนี้ **********
+        local selectedMobNames = {}
+        for mobName, isSelected in pairs(MobListDropdown.Value) do
+            if isSelected then
+                table.insert(selectedMobNames, mobName)
+            end
+        end
+        -- ***********************************
+
+        local offset = desiredAttackOffset
+        local attackRange = 20 
         local localPlayer = game.Players.LocalPlayer
         local character = localPlayer.Character
         local rootPart = character and character:FindFirstChild("HumanoidRootPart")
@@ -527,7 +608,7 @@ do
         end
 
         local nearestTargetRoot, distance = getNearestTargetRoot(selectedMobNames, rootPart)
-        
+
         if not nearestTargetRoot then
             return
         end
@@ -539,6 +620,7 @@ do
         local desiredPositionCFrame = targetCFrame * CFrame.new(0, 0, offset) 
 
         if distance <= attackRange then
+            -- ********** โจมตี **********
             local rotationCFrame = CFrame.lookAt(rootPart.Position, targetPosition)
             local finalCFrame = CFrame.new(desiredPositionCFrame.Position) * rotationCFrame.Rotation
 
@@ -548,6 +630,7 @@ do
 
             FreezMobs()
         else
+            -- ********** เคลื่อนที่เข้าหา **********
             if humanoid.FloorMaterial ~= Enum.Material.Air then
                 humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
             end
