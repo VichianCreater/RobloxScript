@@ -2,6 +2,7 @@
 -- 1-Year Ginseng
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local HttpService = game:GetService("HttpService")
 local firstTimeUsingDeath = false
 
 local ALLOWED_GAME_ID = 7862121304
@@ -689,7 +690,7 @@ do
 
     local HerbListDropdownWarp = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
         Title = "Select Herb to Auto Collect",
-        Description = "Select the type of herb for continuous collection.",
+        Description = "Select the type of herb for collection.",
         Values = uniqueHerbNames,
         Multi = false, 
         Default = uniqueHerbNames[1] or "None",
@@ -942,7 +943,8 @@ do
 
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
     local herbNames = {}
-    local selectedHerbNameFast = nil
+    local selectedHerbNameFast = {}
+    local savedSelection = {}
     local isWarping = false
     local currentWarpThread = nil
 
@@ -972,25 +974,28 @@ do
     local uniqueHerbNames = loadHerbNamesFast()
 
     local HerbListDropdownWarpFast = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
-        Title = "Select Herb to Auto Warp [Faster]",
-        Description = "Select the type of herb for continuous warping.",
+        Title = "Select Herb to Warp [Faster]",
+        Description = "Select the type of herb for warping.",
         Values = uniqueHerbNames,
-        Multi = false, 
-        Default = uniqueHerbNames[1] or "None",
+        Multi = true, 
+        Default = {},
     })
 
     local updateThreadFast = nil
 
     local function updateHerbListFast()
-        -- รันในลูปเพื่ออัปเดต
         while true do
             local newUniqueHerbNamesFast = loadHerbNamesFast()
-            
-            -- ตรวจสอบว่ารายการมีการเปลี่ยนแปลงหรือไม่ก่อนอัปเดต GUI
+
             if #newUniqueHerbNamesFast ~= #HerbListDropdownWarpFast.Values or 
             newUniqueHerbNamesFast[1] ~= HerbListDropdownWarpFast.Values[1] then
 
                 HerbListDropdownWarpFast:SetValues(newUniqueHerbNamesFast)
+                
+                -- ตรวจสอบว่าถ้าเปิด Warp อยู่ ให้เอาค่าที่เซฟไว้กลับมาใส่ใน Dropdown
+                if isWarping and savedSelection then
+                    HerbListDropdownWarpFast:SetValue(savedSelection)
+                end
             end
             task.wait(10) 
         end
@@ -1019,29 +1024,28 @@ do
         Default = false 
     })
 
-    local function findNearestHerbFast(herbName)
+    local function findNearestHerbFast(herbList)
         local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
         local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
         if not HumanoidRootPart then return nil end
+
         local nearestHerb = nil
         local minDistance = math.huge
+
         for _, herb in pairs(herbsFolder:GetChildren()) do
-            if herb.Name == herbName then
+            if type(herbList) == "table" and herbList[herb.Name] == true then
+                
+                local herbPos = nil
                 if herb:IsA("BasePart") then
-                    local distance = (HumanoidRootPart.Position - herb.Position).Magnitude
-                    if distance < minDistance then
-                        minDistance = distance
-                        nearestHerb = herb
-                    end
+                    herbPos = herb.Position
                 elseif herb:IsA("Model") and herb.PrimaryPart then
-                    local distance = (herb.PrimaryPart.Position - HumanoidRootPart.Position).Magnitude
-                    if distance < minDistance then
-                        minDistance = distance
-                        nearestHerb = herb
-                    end
+                    herbPos = herb.PrimaryPart.Position
                 else
-                    local distance = (herb.WorldPivot.Position - HumanoidRootPart.Position).Magnitude
+                    herbPos = herb:GetPivot().Position
+                end
+
+                if herbPos then
+                    local distance = (herbPos - HumanoidRootPart.Position).Magnitude
                     if distance < minDistance then
                         minDistance = distance
                         nearestHerb = herb
@@ -1084,34 +1088,30 @@ do
 
     local function autoWarpLoopFast()
         while isWarping do
-            -- ตรวจสอบว่าเลือกชื่อไอเท็มหรือยัง
-            if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
-                local nearestHerb = findNearestHerbFast(selectedHerbNameFast)
+            if next(savedSelection) ~= nil then
+                
+                local nearestHerb = findNearestHerbFast(savedSelection)
                 
                 if nearestHerb then
-                    -- === กรณีเจอไอเท็ม: ทำการวาร์ป ===
                     local herbPosition = nil
                     if nearestHerb:IsA("BasePart") then
                         herbPosition = nearestHerb.Position
                     elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
                         herbPosition = nearestHerb.PrimaryPart.Position
-                    elseif nearestHerb.WorldPivot then
-                        herbPosition = nearestHerb.WorldPivot.Position
+                    else
+                        herbPosition = nearestHerb:GetPivot().Position
                     end
 
                     if herbPosition then
                         local targetPosition = herbPosition + Vector3.new(0, 5, 0)
                         warpFast(targetPosition)
-                        task.wait(0.1) -- พักสั้นๆ หลังวาร์ปเสร็จ
+                        task.wait(0.1)
                     end
                 else
-                    -- === กรณีไม่เจอไอเท็ม (ของหมดแมพ): ให้รอจนกว่าจะเกิดใหม่ ===
-                    -- ตรงนี้คือจุดสำคัญที่จะทำให้สคริปต์ไม่ค้างและรันต่อไปเรื่อยๆ
-                    print("Waiting for " .. selectedHerbNameFast .. " to respawn...")
-                    task.wait(2) -- ปรับเวลาการรอตรงนี้ได้ (วินาที)
+                    print("All selected herbs are gone. Waiting for respawn...")
+                    task.wait(2)
                 end
             else
-                -- กรณีไม่ได้เลือกชื่อใน Dropdown
                 task.wait(1) 
             end
         end
@@ -1119,7 +1119,15 @@ do
 
     HerbListDropdownWarpFast:OnChanged(function(value)
         selectedHerbNameFast = value
-        print("Selected Herb: " .. selectedHerbNameFast)
+        for _, herbName in pairs(HerbListDropdownWarpFast.Values) do
+            
+            if value[herbName] == true then
+                savedSelection[herbName] = true
+            else
+                savedSelection[herbName] = nil
+            end
+        end
+        print("Master List Updated: " .. game:GetService("HttpService"):JSONEncode(savedSelection))
     end)
 
     local NoclipConnection = nil
@@ -1186,15 +1194,15 @@ do
         isWarping = enabled
 
         if enabled then
+
             DeathFirstFunctionFast()
-            wait(0.5)
+            task.wait(0.5)
 
             local antiNoclip = Character:FindFirstChild("AntiNoclip")
             if antiNoclip then
                 antiNoclip.Disabled = true
             end
 
-            -- ตรวจสอบและปิด AntiFling ใน PlayerScripts
             local pScripts = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
             if pScripts then
                 local af1 = pScripts:FindFirstChild("antifling")
@@ -1203,7 +1211,6 @@ do
                 if af2 then af2.Disabled = true end
             end
 
-            -- สำหรับ StarterPlayer (ปกติไม่แนะนำให้แก้ตอนรันเกม แต่ถ้าจะแก้ให้ใช้แบบนี้)
             local sCharScripts = game:GetService("StarterPlayer"):FindFirstChild("StarterCharacterScripts")
             if sCharScripts then
                 local sn = sCharScripts:FindFirstChild("AntiNoclip")
@@ -1212,20 +1219,24 @@ do
 
             noclipFast()
 
-            if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
-                print("Auto Warp Started.")
+            if next(savedSelection) ~= nil then
                 currentWarpThread = task.spawn(autoWarpLoopFast)
             else
-                warn("Please select a herb from the dropdown first.")
+                warn("Please select herb first!")
                 WarpFastToggle:SetValue(false)
             end
         else
             clipFast()
-
-            print("Auto Warp Stopped.")
+            isWarping = false
             if currentWarpThread then
+                task.cancel(currentWarpThread)
                 currentWarpThread = nil
             end
+            savedSelection = {} 
+            selectedHerbNameFast = {}
+            HerbListDropdownWarpFast:SetValue({}) 
+            print("Clear all selections.")
+            print("Auto Warp Stopped.")
         end
     end)
     
