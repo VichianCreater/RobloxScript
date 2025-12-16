@@ -374,22 +374,6 @@ do
                         createScriptureESP(child, tier)
                     end
                 end
-                
-                -- อัปเดตระยะทาง
-                local char = game.Players.LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local myPos = char.HumanoidRootPart.Position
-                    for i = #specialESPObjects, 1, -1 do
-                        local gui = specialESPObjects[i]
-                        if gui and gui.Parent then
-                            local dist = (myPos - gui.Parent.Position).Magnitude
-                            local label = gui:FindFirstChild("DistanceLabel")
-                            if label then label.Text = string.format("%.1f studs", dist) end
-                        else
-                            table.remove(specialESPObjects, i)
-                        end
-                    end
-                end
             else
                 clearScriptureESP()
             end
