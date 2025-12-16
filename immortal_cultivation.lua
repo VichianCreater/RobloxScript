@@ -942,7 +942,7 @@ do
 
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
     local herbNames = {}
-    local selectedHerbNameFast = {}
+    local selectedHerbNameFast = nil
     local isWarping = false
     local currentWarpThread = nil
 
@@ -975,8 +975,8 @@ do
         Title = "Select Herb to Auto Warp [Faster]",
         Description = "Select the type of herb for continuous warping.",
         Values = uniqueHerbNames,
-        Multi = true, 
-        Default = {},
+        Multi = false, 
+        Default = uniqueHerbNames[1] or "None",
     })
 
     local updateThreadFast = nil
@@ -1107,6 +1107,7 @@ do
                 else
                     -- === กรณีไม่เจอไอเท็ม (ของหมดแมพ): ให้รอจนกว่าจะเกิดใหม่ ===
                     -- ตรงนี้คือจุดสำคัญที่จะทำให้สคริปต์ไม่ค้างและรันต่อไปเรื่อยๆ
+                    print("Waiting for " .. selectedHerbNameFast .. " to respawn...")
                     task.wait(2) -- ปรับเวลาการรอตรงนี้ได้ (วินาที)
                 end
             else
@@ -1118,6 +1119,7 @@ do
 
     HerbListDropdownWarpFast:OnChanged(function(value)
         selectedHerbNameFast = value
+        print("Selected Herb: " .. selectedHerbNameFast)
     end)
 
     local NoclipConnection = nil
@@ -1186,24 +1188,10 @@ do
         if enabled then
             DeathFirstFunctionFast()
             wait(0.5)
-            if game.Players.LocalPlayer.Character.AntiNoclip then
-                game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
-            end
-            if game:GetService("Players").LocalPlayer.PlayerScripts.antifling then
-                game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
-            end
-            if game:GetService("Players").LocalPlayer.PlayerScripts.AntiFling then
-                game:GetService("Players").LocalPlayer.PlayerScripts.AntiFling.Disabled = true
-            end
-            if game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip then
-                game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
-            end
-            if game:GetService("StarterPlayer").StarterPlayerScripts.antifling then
-                game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
-            end
-            if game:GetService("StarterPlayer").StarterPlayerScripts.AntiFling then
-                game:GetService("StarterPlayer").StarterPlayerScripts.AntiFling.Disabled = true
-            end
+            game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
+            game:GetService("Players").LocalPlayer.PlayerScripts.AntiFling.Disabled = true
+            game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
+            game:GetService("StarterPlayer").StarterPlayerScripts.AntiFling.Disabled = true
             noclipFast()
 
             if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
