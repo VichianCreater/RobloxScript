@@ -1197,9 +1197,9 @@ do
             DeathFirstFunctionFast()
             wait(0.5)
             game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
-            game:GetService("Players").LocalPlayer.PlayerScripts.antifling.Disabled = true
+            game:GetService("Players").LocalPlayer.PlayerScripts.AntiFling.Disabled = true
             game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
-            game:GetService("StarterPlayer").StarterPlayerScripts.antifling.Disabled = true
+            game:GetService("StarterPlayer").StarterPlayerScripts.AntiFling.Disabled = true
             noclipFast()
 
             if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
@@ -1218,6 +1218,7 @@ do
             end
         end
     end)
+    
 ----------------------------------------------------------------------------------------------------
 
     local AutoAttack = Tabs.Main:AddToggle("AutoAttackToggle", {Title = "Auto Attack", Default = false })
