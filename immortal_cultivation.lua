@@ -1188,10 +1188,28 @@ do
         if enabled then
             DeathFirstFunctionFast()
             wait(0.5)
-            game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
-            game:GetService("Players").LocalPlayer.PlayerScripts.AntiFling.Disabled = true
-            game:GetService("StarterPlayer").StarterCharacterScripts.AntiNoclip.Disabled = true
-            game:GetService("StarterPlayer").StarterPlayerScripts.AntiFling.Disabled = true
+
+            local antiNoclip = Character:FindFirstChild("AntiNoclip")
+            if antiNoclip then
+                antiNoclip.Disabled = true
+            end
+
+            -- ตรวจสอบและปิด AntiFling ใน PlayerScripts
+            local pScripts = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
+            if pScripts then
+                local af1 = pScripts:FindFirstChild("antifling")
+                local af2 = pScripts:FindFirstChild("AntiFling")
+                if af1 then af1.Disabled = true end
+                if af2 then af2.Disabled = true end
+            end
+
+            -- สำหรับ StarterPlayer (ปกติไม่แนะนำให้แก้ตอนรันเกม แต่ถ้าจะแก้ให้ใช้แบบนี้)
+            local sCharScripts = game:GetService("StarterPlayer"):FindFirstChild("StarterCharacterScripts")
+            if sCharScripts then
+                local sn = sCharScripts:FindFirstChild("AntiNoclip")
+                if sn then sn.Disabled = true end
+            end
+
             noclipFast()
 
             if selectedHerbNameFast and selectedHerbNameFast ~= "None" then
