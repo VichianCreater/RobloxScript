@@ -325,6 +325,7 @@ do
         ["Taoist Blood"] = "T5",
         ["Tower Forging Techique"] = "T5",
         ["Evergreen Manual"] = "T5",
+        ["Beast Soul Manual"] = "T5",
         ["jttw"] = "T5"
     }
 
