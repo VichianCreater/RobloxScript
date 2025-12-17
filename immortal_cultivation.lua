@@ -1,5 +1,4 @@
--- 10-Year Ginseng
--- 1-Year Ginseng
+---------------------------------------------------------------------------------------------------
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local HttpService = game:GetService("HttpService")
@@ -1277,10 +1276,27 @@ do
         Title = "Clear Herb List",
         Description = "Click to clear all the herb in selected list",
         Callback = function()
-            print("Clear all selections.")
-            savedSelection = {} 
-            selectedHerbNameFast = {}
-            HerbListDropdownWarpFast:SetValue({}) 
+            Window:Dialog({
+                Title = "Clear All Selected Herbs",
+                Content = "Confirm to clear all selected herbs.",
+                Buttons = {
+                    {
+                        Title = "Confirm",
+                        Callback = function()
+                            print("Clear all selections.")
+                            savedSelection = {} 
+                            selectedHerbNameFast = {}
+                            HerbListDropdownWarpFast:SetValue({}) 
+                        end
+                    },
+                    {
+                        Title = "Cancel",
+                        Callback = function()
+                            print("Cancelled")
+                        end
+                    }
+                }
+            })
         end
     })
 
