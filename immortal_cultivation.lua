@@ -130,7 +130,7 @@ do
 
         local nameTextLabel = Instance.new("TextLabel")
         nameTextLabel.Parent = billboardGui
-        nameTextLabel.Text = object.Name
+        nameTextLabel.Text = "🌿 "..object.Name
         nameTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
         nameTextLabel.Position = UDim2.new(0, 0, 0, 0)
         nameTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -345,7 +345,7 @@ do
 
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Parent = billboardGui
-        nameLabel.Text = string.format("[%s] %s", tier, object.Name)
+        nameLabel.Text = "📕 "..string.format("[%s] %s", tier, object.Name)
         nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
         nameLabel.TextColor3 = tierColor
         nameLabel.TextSize = 14
@@ -442,7 +442,7 @@ do
 
         local nameTextLabel = Instance.new("TextLabel")
         nameTextLabel.Parent = billboardGui
-        nameTextLabel.Text = object.Name
+        nameTextLabel.Text = "☠️ "..object.Name
         nameTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
         nameTextLabel.Position = UDim2.new(0, 0, 0, 0)
         nameTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
