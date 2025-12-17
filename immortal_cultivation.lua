@@ -702,6 +702,11 @@ do
     })
     -----------------------------------------------------------------------------------------------------------------
 
+    HowToUseAutoFast = Tabs.AutoHerb:AddParagraph({
+        Title = "How to do it work",
+        Content = "\n1 . On the auto press E function\n2 . Select herbs in dropdown\n3 . On auto herb warp function\n\nThe dropdown will only show herbs that are spawned in the server, but the script will add the herb you select to the list and still auto-warp when the herb respawns."
+    })
+
     local Players = game:GetService("Players")
     local player = Players.LocalPlayer
     local workspace = game:GetService("Workspace")
@@ -764,286 +769,286 @@ do
 
     -----------------------------------------------------
     -----------------------------------------------------------------------------------------------------------------
-    local Players = game:GetService("Players")
-    local RunService = game:GetService("RunService")
-    local LocalPlayer = Players.LocalPlayer
+    -- local Players = game:GetService("Players")
+    -- local RunService = game:GetService("RunService")
+    -- local LocalPlayer = Players.LocalPlayer
 
-    local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-    local Humanoid = Character:WaitForChild("Humanoid")
+    -- local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    -- local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    -- local Humanoid = Character:WaitForChild("Humanoid")
 
-    local herbsFolder = game.Workspace:WaitForChild("Herbs")
-    local herbNames = {}
-    local selectedHerbName = nil
-    local isWarping = false
-    local currentWarpThread = nil
-    local warpRange = 10 -- กำหนดระยะที่อนุญาตให้ใช้ CFrame วาร์ป
+    -- local herbsFolder = game.Workspace:WaitForChild("Herbs")
+    -- local herbNames = {}
+    -- local selectedHerbName = nil
+    -- local isWarping = false
+    -- local currentWarpThread = nil
+    -- local warpRange = 10 -- กำหนดระยะที่อนุญาตให้ใช้ CFrame วาร์ป
 
-    if not Tabs then
-        warn("Tabs is not defined. Please ensure the framework/library is loaded correctly.")
-        return
-    end
+    -- if not Tabs then
+    --     warn("Tabs is not defined. Please ensure the framework/library is loaded correctly.")
+    --     return
+    -- end
 
-    local function loadHerbNames()
-        herbNames = {}
-        for _, herb in pairs(herbsFolder:GetChildren()) do
-            table.insert(herbNames, herb.Name)
-        end
-        local uniqueHerbNames = {}
-        for _, herbName in pairs(herbNames) do
-            if not table.find(uniqueHerbNames, herbName) then
-                table.insert(uniqueHerbNames, herbName)
-            end
-        end
+    -- local function loadHerbNames()
+    --     herbNames = {}
+    --     for _, herb in pairs(herbsFolder:GetChildren()) do
+    --         table.insert(herbNames, herb.Name)
+    --     end
+    --     local uniqueHerbNames = {}
+    --     for _, herbName in pairs(herbNames) do
+    --         if not table.find(uniqueHerbNames, herbName) then
+    --             table.insert(uniqueHerbNames, herbName)
+    --         end
+    --     end
         
-        table.sort(uniqueHerbNames) 
+    --     table.sort(uniqueHerbNames) 
         
-        return uniqueHerbNames
-    end
+    --     return uniqueHerbNames
+    -- end
 
-    local uniqueHerbNames = loadHerbNames()
+    -- local uniqueHerbNames = loadHerbNames()
 
-    local HerbListDropdownWarp = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
-        Title = "Select Herb to Auto Collect",
-        Description = "Select the type of herb for collection.",
-        Values = uniqueHerbNames,
-        Multi = false, 
-        Default = uniqueHerbNames[1] or "None",
-    })
+    -- local HerbListDropdownWarp = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
+    --     Title = "Select Herb to Auto Collect",
+    --     Description = "Select the type of herb for collection.",
+    --     Values = uniqueHerbNames,
+    --     Multi = false, 
+    --     Default = uniqueHerbNames[1] or "None",
+    -- })
 
-    local updateThread = nil
+    -- local updateThread = nil
 
-    local function updateHerbList()
-        -- รันในลูปเพื่ออัปเดต
-        while true do
-            local newUniqueHerbNames = loadHerbNames()
+    -- local function updateHerbList()
+    --     -- รันในลูปเพื่ออัปเดต
+    --     while true do
+    --         local newUniqueHerbNames = loadHerbNames()
             
-            -- ตรวจสอบว่ารายการมีการเปลี่ยนแปลงหรือไม่ก่อนอัปเดต GUI
-            if #newUniqueHerbNames ~= #HerbListDropdownWarp.Values or 
-            newUniqueHerbNames[1] ~= HerbListDropdownWarp.Values[1] then
+    --         -- ตรวจสอบว่ารายการมีการเปลี่ยนแปลงหรือไม่ก่อนอัปเดต GUI
+    --         if #newUniqueHerbNames ~= #HerbListDropdownWarp.Values or 
+    --         newUniqueHerbNames[1] ~= HerbListDropdownWarp.Values[1] then
                 
-                -- อัปเดต Dropdown ด้วยรายการใหม่
-                HerbListDropdownWarp:SetValues(newUniqueHerbNames)
-            end
+    --             -- อัปเดต Dropdown ด้วยรายการใหม่
+    --             HerbListDropdownWarp:SetValues(newUniqueHerbNames)
+    --         end
             
-            -- รอ 10 วินาทีก่อนอัปเดตอีกครั้ง
-            task.wait(10) 
-        end
-    end
+    --         -- รอ 10 วินาทีก่อนอัปเดตอีกครั้ง
+    --         task.wait(10) 
+    --     end
+    -- end
 
-    -- เริ่มการทำงานของ Updater ทันทีที่โหลดโค้ด
-    if not updateThread then
-        updateThread = task.spawn(updateHerbList)
-    end
+    -- -- เริ่มการทำงานของ Updater ทันทีที่โหลดโค้ด
+    -- if not updateThread then
+    --     updateThread = task.spawn(updateHerbList)
+    -- end
 
-    -- ลบ WarpSpeedSlide ที่ใช้ Tween ออกไป
+    -- -- ลบ WarpSpeedSlide ที่ใช้ Tween ออกไป
 
-    local WarpToggle = Tabs.AutoHerb:AddToggle("AutoWarpToggle", {
-        Title = "Start Auto Herb Collect", 
-        Default = false 
-    })
+    -- local WarpToggle = Tabs.AutoHerb:AddToggle("AutoWarpToggle", {
+    --     Title = "Start Auto Herb Collect", 
+    --     Default = false 
+    -- })
 
-    local function findNearestHerb(herbName)
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
-        if not HumanoidRootPart then return nil, math.huge end
+    -- local function findNearestHerb(herbName)
+    --     local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    --     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    --     local Humanoid = Character:WaitForChild("Humanoid")
+    --     if not HumanoidRootPart then return nil, math.huge end
 
-        local nearestHerb = nil
-        local minDistance = math.huge
+    --     local nearestHerb = nil
+    --     local minDistance = math.huge
 
-        for _, herb in pairs(herbsFolder:GetChildren()) do
-            if herb.Name == herbName then
-                local herbPosition = nil
-                local distance = math.huge
+    --     for _, herb in pairs(herbsFolder:GetChildren()) do
+    --         if herb.Name == herbName then
+    --             local herbPosition = nil
+    --             local distance = math.huge
 
-                if herb:IsA("BasePart") then
-                    herbPosition = herb.Position
-                elseif herb:IsA("Model") and herb.PrimaryPart then
-                    herbPosition = herb.PrimaryPart.Position
-                elseif herb.WorldPivot then
-                    herbPosition = herb.WorldPivot.Position
-                end
+    --             if herb:IsA("BasePart") then
+    --                 herbPosition = herb.Position
+    --             elseif herb:IsA("Model") and herb.PrimaryPart then
+    --                 herbPosition = herb.PrimaryPart.Position
+    --             elseif herb.WorldPivot then
+    --                 herbPosition = herb.WorldPivot.Position
+    --             end
 
-                if herbPosition then
-                    distance = (HumanoidRootPart.Position - herbPosition).Magnitude
-                    if distance < minDistance then
-                        minDistance = distance
-                        nearestHerb = herb
-                    end
-                end
-            end
-        end
+    --             if herbPosition then
+    --                 distance = (HumanoidRootPart.Position - herbPosition).Magnitude
+    --                 if distance < minDistance then
+    --                     minDistance = distance
+    --                     nearestHerb = herb
+    --                 end
+    --             end
+    --         end
+    --     end
         
-        return nearestHerb, minDistance
-    end
+    --     return nearestHerb, minDistance
+    -- end
 
-    -- ลบฟังก์ชัน warp() ที่ใช้ Tween ออกไป
+    -- -- ลบฟังก์ชัน warp() ที่ใช้ Tween ออกไป
 
-    local function autoCollectLoop()
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
-        local lastHerbWarped = nil 
+    -- local function autoCollectLoop()
+    --     local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    --     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    --     local Humanoid = Character:WaitForChild("Humanoid")
+    --     local lastHerbWarped = nil 
         
-        local MOVE_TO_OFFSET_Y = 3   -- สำหรับ MoveTo: ให้ลอยเหนือพื้น 3 หน่วยขณะเดิน
-        local WARP_OFFSET_Y = 1      -- สำหรับ CFrame Warp: ให้ยืนอยู่เหนือ Herb 1 หน่วย
+    --     local MOVE_TO_OFFSET_Y = 3   -- สำหรับ MoveTo: ให้ลอยเหนือพื้น 3 หน่วยขณะเดิน
+    --     local WARP_OFFSET_Y = 1      -- สำหรับ CFrame Warp: ให้ยืนอยู่เหนือ Herb 1 หน่วย
 
-        while isWarping do
-            if selectedHerbName and selectedHerbName ~= "None" then
-                local nearestHerb, distance = findNearestHerb(selectedHerbName)
+    --     while isWarping do
+    --         if selectedHerbName and selectedHerbName ~= "None" then
+    --             local nearestHerb, distance = findNearestHerb(selectedHerbName)
 
-                if nearestHerb then
-                    local herbPosition = nil
-                    if nearestHerb:IsA("BasePart") then
-                        herbPosition = nearestHerb.Position
-                    elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
-                        herbPosition = nearestHerb.PrimaryPart.Position
-                    elseif nearestHerb.WorldPivot then
-                        herbPosition = nearestHerb.WorldPivot.Position
-                    end
+    --             if nearestHerb then
+    --                 local herbPosition = nil
+    --                 if nearestHerb:IsA("BasePart") then
+    --                     herbPosition = nearestHerb.Position
+    --                 elseif nearestHerb:IsA("Model") and nearestHerb.PrimaryPart then
+    --                     herbPosition = nearestHerb.PrimaryPart.Position
+    --                 elseif nearestHerb.WorldPivot then
+    --                     herbPosition = nearestHerb.WorldPivot.Position
+    --                 end
 
-                    if herbPosition then
+    --                 if herbPosition then
                         
-                        if distance <= warpRange then
-                            -- **[เงื่อนไขการวาร์ป]: เข้าสู่ระยะวาร์ป (<= 7)**
+    --                     if distance <= warpRange then
+    --                         -- **[เงื่อนไขการวาร์ป]: เข้าสู่ระยะวาร์ป (<= 7)**
                             
-                            local targetPosition = herbPosition + Vector3.new(0, WARP_OFFSET_Y, 0)
+    --                         local targetPosition = herbPosition + Vector3.new(0, WARP_OFFSET_Y, 0)
                             
-                            HumanoidRootPart.CFrame = CFrame.new(targetPosition)
+    --                         HumanoidRootPart.CFrame = CFrame.new(targetPosition)
                             
-                            Humanoid.PlatformStand = true
-                            task.wait(0.2) 
+    --                         Humanoid.PlatformStand = true
+    --                         task.wait(0.2) 
                             
-                            Humanoid.PlatformStand = false
-                            task.wait(0.5) 
+    --                         Humanoid.PlatformStand = false
+    --                         task.wait(0.5) 
                             
-                        else
-                            -- **[เงื่อนไขการเดิน]: อยู่นอกระยะวาร์ป (> 7)**
+    --                     else
+    --                         -- **[เงื่อนไขการเดิน]: อยู่นอกระยะวาร์ป (> 7)**
 
-                            local targetPosition = herbPosition + Vector3.new(0, MOVE_TO_OFFSET_Y, 0)
+    --                         local targetPosition = herbPosition + Vector3.new(0, MOVE_TO_OFFSET_Y, 0)
 
-                            -- **การแก้ไขปัญหาการลอย: สั่งกระโดดเฉพาะเมื่ออยู่บนพื้น**
-                            if Humanoid.FloorMaterial ~= Enum.Material.Air then
-                                Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
-                            end
+    --                         -- **การแก้ไขปัญหาการลอย: สั่งกระโดดเฉพาะเมื่ออยู่บนพื้น**
+    --                         if Humanoid.FloorMaterial ~= Enum.Material.Air then
+    --                             Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
+    --                         end
                             
-                            -- สั่งให้เดินไปหาตำแหน่งนั้นด้วย MoveTo
-                            Humanoid:MoveTo(targetPosition)
-                            task.wait(0.1) 
-                        end
-                    else
-                        task.wait(1)
-                    end
-                else
-                    -- ไม่พบ Herb ที่เลือก
-                    task.wait(1) 
-                end
-            else
-                task.wait(1) 
-            end
-        end
-    end
+    --                         -- สั่งให้เดินไปหาตำแหน่งนั้นด้วย MoveTo
+    --                         Humanoid:MoveTo(targetPosition)
+    --                         task.wait(0.1) 
+    --                     end
+    --                 else
+    --                     task.wait(1)
+    --                 end
+    --             else
+    --                 -- ไม่พบ Herb ที่เลือก
+    --                 task.wait(1) 
+    --             end
+    --         else
+    --             task.wait(1) 
+    --         end
+    --     end
+    -- end
 
-    HerbListDropdownWarp:OnChanged(function(value)
-        selectedHerbName = value
-    end)
+    -- HerbListDropdownWarp:OnChanged(function(value)
+    --     selectedHerbName = value
+    -- end)
 
-    local Noclip = nil
-    local Clip = nil
+    -- local Noclip = nil
+    -- local Clip = nil
 
-    function noclip()
-        Clip = false
-        local function Nocl()
-            if Clip == false and game.Players.LocalPlayer.Character ~= nil then
-                for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA('BasePart') and v.CanCollide and v.Name ~= floatName then
-                        v.CanCollide = false
-                    end
-                end
-            end
-            wait(0.21) -- basic optimization
-        end
-        Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
-    end
+    -- function noclip()
+    --     Clip = false
+    --     local function Nocl()
+    --         if Clip == false and game.Players.LocalPlayer.Character ~= nil then
+    --             for _,v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+    --                 if v:IsA('BasePart') and v.CanCollide and v.Name ~= floatName then
+    --                     v.CanCollide = false
+    --                 end
+    --             end
+    --         end
+    --         wait(0.21) -- basic optimization
+    --     end
+    --     Noclip = game:GetService('RunService').Stepped:Connect(Nocl)
+    -- end
 
-    function clip()
-        if Noclip then Noclip:Disconnect() end
-        Clip = true
-    end
+    -- function clip()
+    --     if Noclip then Noclip:Disconnect() end
+    --     Clip = true
+    -- end
 
-    -- ตัวแปรนี้ถูกใช้ใน DeathFirstFunction ซึ่งไม่มีการประกาศในโค้ดเดิม
-    local firstTimeUsingDeath = true
+    -- -- ตัวแปรนี้ถูกใช้ใน DeathFirstFunction ซึ่งไม่มีการประกาศในโค้ดเดิม
+    -- local firstTimeUsingDeath = true
 
-    local function DeathFirstFunction()
-        local player = game.Players.LocalPlayer
-        local Character = player.Character or player.CharacterAdded:Wait()
+    -- local function DeathFirstFunction()
+    --     local player = game.Players.LocalPlayer
+    --     local Character = player.Character or player.CharacterAdded:Wait()
         
-        if firstTimeUsingDeath then
-            local humanoid = Character:FindFirstChild("Humanoid")
+    --     if firstTimeUsingDeath then
+    --         local humanoid = Character:FindFirstChild("Humanoid")
             
-            if humanoid then
-                humanoid.Health = 0
-            end
+    --         if humanoid then
+    --             humanoid.Health = 0
+    --         end
 
-            -- รอจนกระทั่งตัวละครใหม่ถูกโหลด
-            while player.Character == nil or player.Character:FindFirstChild("Humanoid") == nil do
-                task.wait(0.1)
-            end
+    --         -- รอจนกระทั่งตัวละครใหม่ถูกโหลด
+    --         while player.Character == nil or player.Character:FindFirstChild("Humanoid") == nil do
+    --             task.wait(0.1)
+    --         end
 
-            local newCharacter = player.Character
-            local humanoid = newCharacter:FindFirstChild("Humanoid")
+    --         local newCharacter = player.Character
+    --         local humanoid = newCharacter:FindFirstChild("Humanoid")
 
-            if humanoid then
-                print("ตัวละครใหม่เกิดขึ้นแล้ว!")
-                task.wait(2)
-            end
+    --         if humanoid then
+    --             print("ตัวละครใหม่เกิดขึ้นแล้ว!")
+    --             task.wait(2)
+    --         end
 
-            firstTimeUsingDeath = false
-        end
-    end
+    --         firstTimeUsingDeath = false
+    --     end
+    -- end
 
-    WarpToggle:OnChanged(function(enabled)
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
-        isWarping = enabled
+    -- WarpToggle:OnChanged(function(enabled)
+    --     local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    --     local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+    --     local Humanoid = Character:WaitForChild("Humanoid")
+    --     isWarping = enabled
         
-        if enabled then
-            DeathFirstFunction()
-            task.wait(0.5)
+    --     if enabled then
+    --         DeathFirstFunction()
+    --         task.wait(0.5)
             
-            -- ปิด Anti-Cheat Scripts (ควรตั้งค่า Scripts เหล่านี้ตามชื่อจริงในเกม)
-            local StarterPlayer = game:GetService("StarterPlayer")
-            if game.Players.LocalPlayer.Character:FindFirstChild("AntiNoclip") then
-                game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
-            end
-            if StarterPlayer.StarterCharacterScripts:FindFirstChild("AntiNoclip") then
-                StarterPlayer.StarterCharacterScripts.AntiNoclip.Disabled = true
-            end
+    --         -- ปิด Anti-Cheat Scripts (ควรตั้งค่า Scripts เหล่านี้ตามชื่อจริงในเกม)
+    --         local StarterPlayer = game:GetService("StarterPlayer")
+    --         if game.Players.LocalPlayer.Character:FindFirstChild("AntiNoclip") then
+    --             game.Players.LocalPlayer.Character.AntiNoclip.Disabled = true
+    --         end
+    --         if StarterPlayer.StarterCharacterScripts:FindFirstChild("AntiNoclip") then
+    --             StarterPlayer.StarterCharacterScripts.AntiNoclip.Disabled = true
+    --         end
             
-            -- noclip()
+    --         -- noclip()
             
-            if selectedHerbName and selectedHerbName ~= "None" then
-                currentWarpThread = task.spawn(autoCollectLoop)
-            else
-                warn("Please select a herb from the dropdown first.")
-                WarpToggle:SetValue(false)
-            end
-        else
-            -- clip()
+    --         if selectedHerbName and selectedHerbName ~= "None" then
+    --             currentWarpThread = task.spawn(autoCollectLoop)
+    --         else
+    --             warn("Please select a herb from the dropdown first.")
+    --             WarpToggle:SetValue(false)
+    --         end
+    --     else
+    --         -- clip()
             
-            print("Auto Collect Stopped.")
-            if currentWarpThread then
-                -- ยกเลิก Thread ถ้าจำเป็น (แต่การตั้งค่า isWarping = false ก็เพียงพอ)
-                currentWarpThread = nil
-            end
-        end
-    end)
+    --         print("Auto Collect Stopped.")
+    --         if currentWarpThread then
+    --             -- ยกเลิก Thread ถ้าจำเป็น (แต่การตั้งค่า isWarping = false ก็เพียงพอ)
+    --             currentWarpThread = nil
+    --         end
+    --     end
+    -- end)
 
-    Tabs.AutoHerb:AddParagraph({
-        Title = "------------------------  This below is faster version  ------------------------",
-    })
+    -- Tabs.AutoHerb:AddParagraph({
+    --     Title = "------------------------  This below is faster version  ------------------------",
+    -- })
 
     -----------------------------------------------------------------------------------------------------------------
 
@@ -1095,6 +1100,28 @@ do
         Multi = true, 
         Default = {},
     })
+
+    local HerbParagraph = nil
+
+    local function updateParagraph()
+        if HerbParagraph then
+            HerbParagraph:Destroy() 
+            HerbParagraph = nil
+        end
+
+        local list = {}
+        for name, _ in pairs(savedSelection) do
+            table.insert(list, "• " .. name)
+        end
+        local content = #list > 0 and table.concat(list, "\n") or "No herbs selected."
+
+        HerbParagraph = Tabs.AutoHerb:AddParagraph({
+            Title = "Selected Herbs list (" .. #list .. ")",
+            Content = content
+        })
+    end
+
+    updateParagraph()
 
     local updateThreadFast = nil
 
@@ -1172,33 +1199,47 @@ do
     end
 
     local function warpFast(targetPosition)
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-        local Humanoid = Character:WaitForChild("Humanoid")
-        if not HumanoidRootPart then return end 
+        local Character = LocalPlayer.Character
+        if not Character then return end
+        
+        local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+        local Humanoid = Character:FindFirstChild("Humanoid")
+        local Debris = game:GetService("Debris")
+        if not HumanoidRootPart or not Humanoid then return end 
+
+        for _, v in pairs(HumanoidRootPart:GetChildren()) do
+            if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then
+                v:Destroy()
+            end
+        end
 
         local targetCFrame = CFrame.new(targetPosition)
         local distance = (targetPosition - HumanoidRootPart.Position).Magnitude
         local speed = tonumber(warpSpeed) or 50
         local duration = distance / speed
-
         if duration <= 0 then duration = 0.1 end
 
-        local tweenInfo = TweenInfo.new(
-            duration,
-            Enum.EasingStyle.Linear,
-            Enum.EasingDirection.InOut
-        )
-        Humanoid.PlatformStand = true
-        
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "WarpBV"
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = HumanoidRootPart
+
+        local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
         local warpTween = TweenService:Create(HumanoidRootPart, tweenInfo, {CFrame = targetCFrame})
+
+        Humanoid.PlatformStand = true
         warpTween:Play()
-        
+        warpTween.Completed:Connect(function()
+            if bv then bv:Destroy() end
+            Humanoid.PlatformStand = false
+            Humanoid:ChangeState(Enum.HumanoidStateType.GettingUp) 
+            
+            HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
+            HumanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
+        end)
         warpTween.Completed:Wait()
-        HumanoidRootPart.Velocity = Vector3.new(0, 0, 0)
-        HumanoidRootPart.RotVelocity = Vector3.new(0, 0, 0)
-        task.wait(0.1) 
-        Humanoid.PlatformStand = false
+        task.wait(0.1)
     end
 
     local function autoWarpLoopFast()
@@ -1232,6 +1273,17 @@ do
         end
     end
 
+    Tabs.AutoHerb:AddButton({
+        Title = "Clear Herb List",
+        Description = "Click to clear all the herb in selected list",
+        Callback = function()
+            print("Clear all selections.")
+            savedSelection = {} 
+            selectedHerbNameFast = {}
+            HerbListDropdownWarpFast:SetValue({}) 
+        end
+    })
+
     HerbListDropdownWarpFast:OnChanged(function(value)
         selectedHerbNameFast = value
         for _, herbName in pairs(HerbListDropdownWarpFast.Values) do
@@ -1242,6 +1294,7 @@ do
                 savedSelection[herbName] = nil
             end
         end
+        updateParagraph()
         print("Master List Updated: " .. game:GetService("HttpService"):JSONEncode(savedSelection))
     end)
 
@@ -1347,10 +1400,6 @@ do
                 task.cancel(currentWarpThread)
                 currentWarpThread = nil
             end
-            savedSelection = {} 
-            selectedHerbNameFast = {}
-            HerbListDropdownWarpFast:SetValue({}) 
-            print("Clear all selections.")
             print("Auto Warp Stopped.")
         end
     end)
