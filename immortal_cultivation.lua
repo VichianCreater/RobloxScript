@@ -29,9 +29,9 @@ local Window = Fluent:CreateWindow({
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
     ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
-    ESPM = Window:AddTab({ Title = "ESP Mob", Icon = "eye" }),
-    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "eye" }),
+    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
     AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
 }
 
@@ -105,7 +105,7 @@ do
 
     ------------------------------------------------------------------------------------------------------------------------
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
-    local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
+    local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP [Click first the Herblist will show]", Default = false })
     local espObjects = {}
     local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
         Title = "SelectHerb",
@@ -388,8 +388,39 @@ do
     end)
 
     -----------------------------------------------------------------------------------------------------------------
+    
+
+    -- Auto Equip Sword
+
+    local autoEquipSword = Tabs.ESPM:AddToggle("autoEquipSwordToggle", {Title = "Equip Sword[Training Jian]", Default = false })
+    local swordEquip = false
+    autoEquipSword:OnChanged(function()
+        local player = game:GetService("Players").LocalPlayer
+        local vim = game:GetService("VirtualInputManager")
+
+        if autoEquipSword.Value then 
+            swordEquip = true
+            while swordEquip do
+                local character = player.Character or player.CharacterAdded:Wait()
+                local swordInChar = character:FindFirstChild("Training Jian")
+                if not swordInChar then
+                    local inventoryFrame = player.PlayerGui.Main.Inventory.ScrollingFrame
+                    local itemInInv = inventoryFrame:FindFirstChild("Training Jian")
+                    
+                    if itemInInv then
+                        vim:SendKeyEvent(true, Enum.KeyCode.G, false, game)
+                        vim:SendKeyEvent(false, Enum.KeyCode.G, false, game)
+                    end
+                end
+                task.wait(1)
+            end
+        else
+            swordEquip = false
+        end
+    end)
+    
     local mobsFolder = game.Workspace:WaitForChild("Enemies")
-    local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP", Default = false })
+    local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP [Click first the Moblist will show]", Default = false })
     local mobespObjects = {}
     local mobNames = {}
     local selectedMobName = nil
