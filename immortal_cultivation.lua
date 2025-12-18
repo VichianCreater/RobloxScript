@@ -1,6 +1,6 @@
----------------------------------------------------------------------------------------------------
-
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 local HttpService = game:GetService("HttpService")
 local firstTimeUsingDeath = false
 
@@ -26,28 +26,23 @@ local Window = Fluent:CreateWindow({
     MinimizeKey = Enum.KeyCode.LeftAlt
 })
 
-local Tabs = {
-    Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
-    ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
-    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
-    AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
-}
-
-local Options = Fluent.Options
-
-Fluent:Notify({
-    Title = "Alert",
-    Content = "Script Loaded.",
-    Duration = 8
-})
-
 local VirtualUser = game:GetService('VirtualUser')
  
 game:GetService('Players').LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
+    ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
+    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
+    AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+local Options = Fluent.Options
 
 do
     Tabs.Main:AddParagraph({
@@ -103,205 +98,199 @@ do
     Options.WalkSpeedToggle:SetValue(false)
 
     ------------------------------------------------------------------------------------------------------------------------
-    local herbsFolder = game.Workspace:WaitForChild("Herbs")
-    local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP [Click first the Herblist will show]", Default = false })
-    local espObjects = {}
-    local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
-        Title = "SelectHerb",
-        Description = "You can select multiple Herb.",
-        Values = {},
-        Multi = true,
-        Default = {"None", "Null"},
-    })
+    local RunService = game:GetService("RunService")
+    local Camera = workspace.CurrentCamera
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+    local ESPGui = Instance.new("ScreenGui")
+    ESPGui.Name = "HerbESPScreen"
+    ESPGui.ResetOnSpawn = false
+    ESPGui.DisplayOrder = 10
+    ESPGui.Parent = PlayerGui
 
-    local herbToESP = {}
+    local herbsFolder = game.Workspace:WaitForChild("Herbs")
+    local espObjects = {} 
     local currentSelectedNames = {}
 
-    local function createESP(object)
-        if herbToESP[object] then return end 
-
-        local billboardGui = Instance.new("BillboardGui")
-        billboardGui.Adornee = object
-        billboardGui.Parent = object
-        billboardGui.Size = UDim2.new(0, 200, 0, 70) 
-        billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-        billboardGui.AlwaysOnTop = true
-
-        local nameTextLabel = Instance.new("TextLabel")
-        nameTextLabel.Parent = billboardGui
-        nameTextLabel.Text = "🌿 "..object.Name
-        nameTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        nameTextLabel.Position = UDim2.new(0, 0, 0, 0)
-        nameTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameTextLabel.TextStrokeTransparency = 0.8
-        nameTextLabel.TextSize = 10
-        nameTextLabel.BackgroundTransparency = 1
-
-        local objectTextLabel = Instance.new("TextLabel")
-        objectTextLabel.Parent = billboardGui
-        objectTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        objectTextLabel.Position = UDim2.new(0, 0, 0.2, 0)
-        objectTextLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
-        objectTextLabel.TextStrokeTransparency = 0.8
-        objectTextLabel.TextSize = 8
-        objectTextLabel.BackgroundTransparency = 1
-
-        local objectText = "No Data (Attribute Missing)"
-        local proximityPrompt = object:FindFirstChildOfClass("ProximityPrompt")
-
-        if proximityPrompt then
-            objectText = proximityPrompt.ObjectText
-
-            if string.find(objectText, "1") then
-                objectTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-            end
-            if string.find(objectText, "10") then
-                objectTextLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-            end
-            if string.find(objectText, "100") then
-                objectTextLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-            end
-            if string.find(objectText, "1000") then
-                objectTextLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    local function getUniqueHerbNames()
+        local names = {}
+        local hash = {}
+        for _, herb in pairs(herbsFolder:GetChildren()) do
+            if not hash[herb.Name] then
+                table.insert(names, herb.Name)
+                hash[herb.Name] = true
             end
         end
-
-        objectTextLabel.Text = objectText
-        
-        table.insert(espObjects, billboardGui)
-        herbToESP[object] = billboardGui
+        return names
     end
 
-    local function removeESPForHerb(object)
-        local billboardGui = herbToESP[object]
-        if billboardGui and billboardGui.Parent then
-            billboardGui:Destroy()
-        end
-        herbToESP[object] = nil
+    local function createESP(object)
+        if espObjects[object] then return end
 
-        for i, esp in ipairs(espObjects) do
-            if esp == billboardGui then
-                table.remove(espObjects, i)
-                break
-            end
-        end
+        local container = Instance.new("Frame")
+        container.BackgroundTransparency = 1
+        container.Size = UDim2.new(0, 150, 0, 40)
+        container.Visible = false
+        container.Parent = ESPGui
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Name = "NameLabel"
+        nameLabel.Parent = container
+        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "🌿 " .. object.Name
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        nameLabel.TextSize = 12
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0.5
+
+        local infoLabel = Instance.new("TextLabel")
+        infoLabel.Name = "InfoLabel"
+        infoLabel.Parent = container
+        infoLabel.Position = UDim2.new(0, 0, 0.5, 0)
+        infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        infoLabel.BackgroundTransparency = 1
+        infoLabel.TextSize = 10
+        infoLabel.Font = Enum.Font.Gotham
+        infoLabel.TextStrokeTransparency = 0.5
+
+        local prompt = object:FindFirstChildOfClass("ProximityPrompt")
+        local infoText = prompt and prompt.ObjectText or "Collecting..."
+        infoLabel.Text = infoText
+        
+        if string.find(infoText, "1000") then infoLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+        elseif string.find(infoText, "100") then infoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+        elseif string.find(infoText, "10") then infoLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+        else infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200) end
+
+        espObjects[object] = {
+            Container = container,
+            Target = object
+        }
     end
 
     local function removeAllESP()
-        for _, billboardGui in pairs(espObjects) do
-            if billboardGui and billboardGui.Parent then
-                billboardGui:Destroy()
-            end
+        for obj, data in pairs(espObjects) do
+            if data.Container then data.Container:Destroy() end
         end
         espObjects = {}
-        herbToESP = {}
     end
 
-    local function loadAndSetHerbNames()
-        local allHerbNames = {}
-        for _, herb in pairs(herbsFolder:GetChildren()) do
-            table.insert(allHerbNames, herb.Name)
+    local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
+    local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
+        Title = "Select Herb Types",
+        Values = getUniqueHerbNames(),
+        Multi = true,
+        Default = {},
+    })
+
+    RunService.RenderStepped:Connect(function()
+        if not herbESPtoggle.Value then
+            for _, data in pairs(espObjects) do data.Container.Visible = false end
+            return
         end
 
-        local uniqueHerbNames = {}
-        for _, herbName in pairs(allHerbNames) do
-            if not table.find(uniqueHerbNames, herbName) then
-                table.insert(uniqueHerbNames, herbName)
-            end
-        end
-
-        HerbListDropdown:SetValues(uniqueHerbNames)
-    end
-
-    -- ฟังก์ชันหลักในการสแกนและอัปเดตทั้งหมด
-    local function scanAndApplyESP()
-        
-        -- ลบ ESP ทั้งหมดก่อนเพื่อเตรียมสร้างใหม่ (ป้องกันปัญหา Herb ถูกลบ)
-        removeAllESP() 
-        
-        -- 1. อัปเดต Dropdown ด้วยชื่อ Herb ปัจจุบันทั้งหมด
-        loadAndSetHerbNames()
-
-        -- ตรวจสอบว่า Toggle เปิดและมีการเลือก
-        if herbESPtoggle.Value and #currentSelectedNames > 0 then
-            -- 2. วนลูปสร้าง ESP ใหม่เฉพาะสำหรับ Herb ที่มีอยู่ในปัจจุบันและถูกเลือก
-            for _, herb in pairs(herbsFolder:GetChildren()) do
-                if table.find(currentSelectedNames, herb.Name) then
-                    createESP(herb)
+        for obj, data in pairs(espObjects) do
+            if obj and obj.Parent then
+                local pos = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position) or (obj:IsA("BasePart") and obj.Position)
+                
+                if pos then
+                    local vector, onScreen = Camera:WorldToViewportPoint(pos)
+                    if onScreen then
+                        data.Container.Visible = true
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
+                    else
+                        data.Container.Visible = false
+                    end
                 end
+            else
+                data.Container:Destroy()
+                espObjects[obj] = nil
             end
-        end
-    end
-
-    -- ลูปหลักสำหรับอัปเดตทุก 5 วินาที
-    task.spawn(function()
-        while true do
-            scanAndApplyESP()
-            task.wait(5) -- หน่วงเวลา 5 วินาที
         end
     end)
 
 
-    -- Event Handlers (จัดการเฉพาะการเปลี่ยนค่า UI)
+    local function refreshESP()
+        if not herbESPtoggle.Value then
+            removeAllESP()
+            return
+        end
 
-    HerbListDropdown:OnChanged(function(value)
-        -- อัปเดตตาราง currentSelectedNames เมื่อ Dropdown เปลี่ยน
-        currentSelectedNames = {}
-        for herbName, isSelected in pairs(value) do
-            if isSelected then
-                table.insert(currentSelectedNames, herbName)
+        for obj, data in pairs(espObjects) do
+            if not table.find(currentSelectedNames, obj.Name) then
+                data.Container:Destroy()
+                espObjects[obj] = nil
             end
         end
-        
-        -- เรียกใช้การสแกนทันทีเพื่อตอบสนองต่อการเปลี่ยนแปลงการเลือก
-        scanAndApplyESP()
+
+        for _, herb in pairs(herbsFolder:GetChildren()) do
+            if table.find(currentSelectedNames, herb.Name) then
+                createESP(herb)
+            end
+        end
+    end
+
+    HerbListDropdown:OnChanged(function(value)
+        currentSelectedNames = {}
+        for herbName, isSelected in pairs(value) do
+            if isSelected then table.insert(currentSelectedNames, herbName) end
+        end
+        refreshESP()
     end)
 
     herbESPtoggle:OnChanged(function()
-        if not herbESPtoggle.Value then
+        if herbESPtoggle.Value then
+            HerbListDropdown:SetValues(getUniqueHerbNames())
+        else
             removeAllESP()
-            HerbListDropdown:SetValues({})
         end
-        
-        -- เรียกใช้การสแกนทันทีเพื่อตอบสนองต่อการเปลี่ยน Toggle
-        scanAndApplyESP()
+        refreshESP()
     end)
 
-    -- โหลดชื่อเริ่มต้นเมื่อเริ่มสคริปต์
-    loadAndSetHerbNames()
-
-    -- ดึงค่าเริ่มต้นจากการตั้งค่า Dropdown
-    currentSelectedNames = {}
-    for herbName, isSelected in pairs(HerbListDropdown.Value) do
-        if isSelected then
-            table.insert(currentSelectedNames, herbName)
+    task.spawn(function()
+        while true do
+            if herbESPtoggle.Value then
+                refreshESP()
+                HerbListDropdown:SetValues(getUniqueHerbNames())
+            end
+            task.wait(5)
         end
-    end
-    -- HerbListDropdown:SetValue("None") 
-    -----------------------------------------------------------------------------------------------------------------
-    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Manual ESP", Default = false })
-    local specialESPObjects = {}
+    end)
 
-    -- กำหนดสีตาม Tier
+    currentSelectedNames = {}
+    refreshESP()
+
+    -----------------------------------------------------------------------------------------------------------------
+    local RunService = game:GetService("RunService")
+    local Camera = workspace.CurrentCamera
+    local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    -- สร้าง ScreenGui สำหรับ Scripture ESP แยกไว้
+    local ScriptureGui = PlayerGui:FindFirstChild("ScriptureESPScreen") or Instance.new("ScreenGui")
+    ScriptureGui.Name = "ScriptureESPScreen"
+    ScriptureGui.ResetOnSpawn = false
+    ScriptureGui.Parent = PlayerGui
+
+    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Manual ESP", Default = false })
+    local specialESPObjects = {} -- เก็บ { [Object] = {UIFrame, Tier} }
+
     local TierColors = {
-        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว (ธรรมดา)
+        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว
         T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
         T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
         T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
-        T5 = Color3.fromRGB(255, 0, 0)      -- สีแดง (หายากสุด)
+        T5 = Color3.fromRGB(255, 0, 0)      -- สีแดง
     }
 
-    -- รายชื่อไอเทมและ Tier
     local scriptureList = {
-        -- T1
         ["Qi Condensation Sutra"] = "T1",
-        -- T2
         ["Maniac's Cultivation Tips"] = "T2",
         ["Nine Yang Scripture"] = "T2",
         ["Verdant Wind Scripture"] = "T2",
         ["Copper Body Formula"] = "T2",
         ["Six Yin Scripture"] = "T2",
-        -- T3
         ["Tenebrous Canon"] = "T3",
         ["Sword Sutra"] = "T3",
         ["Shadowless Canon"] = "T3",
@@ -312,7 +301,6 @@ do
         ["Lotus Sutra"] = "T3",
         ["Principle Of Motion"] = "T3",
         ["Mother Earth Technique"] = "T3",
-        -- T4
         ["Steel Body"] = "T4",
         ["Soul Shedding"] = "T4",
         ["Dragon Rising"] = "T4",
@@ -321,7 +309,6 @@ do
         ["Steel Body Formula"] = "T4",
         ["Soul Shedding Scripture"] = "T4",
         ["Star Reaving Scripture"] = "T4",
-        -- T5
         ["Taoist Blood"] = "T5",
         ["Tower Forging Techique"] = "T5",
         ["Evergreen Manual"] = "T5",
@@ -329,377 +316,378 @@ do
         ["jttw"] = "T5"
     }
 
-    -- ฟังก์ชันสร้าง ESP
-    local function createScriptureESP(object, tier)
-        if object:FindFirstChild("Scripture_ESP") then return end
-        
-        local tierColor = TierColors[tier] or Color3.fromRGB(255, 255, 255)
-        
-        local billboardGui = Instance.new("BillboardGui")
-        billboardGui.Name = "Scripture_ESP"
-        billboardGui.Adornee = object
-        billboardGui.Parent = object
-        billboardGui.Size = UDim2.new(0, 200, 0, 70)
-        billboardGui.StudsOffset = Vector3.new(0, 4, 0)
-        billboardGui.AlwaysOnTop = true
+    -- ฟังก์ชันสร้าง UI 2D
+    local function createScriptureUI(object, tier)
+        if specialESPObjects[object] then return end
+
+        local container = Instance.new("Frame")
+        container.Name = "ESP_" .. object.Name
+        container.BackgroundTransparency = 1
+        container.Size = UDim2.new(0, 200, 0, 40)
+        container.Visible = false
+        container.Parent = ScriptureGui
 
         local nameLabel = Instance.new("TextLabel")
-        nameLabel.Parent = billboardGui
-        nameLabel.Text = "📕 "..string.format("[%s] %s", tier, object.Name)
-        nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        nameLabel.TextColor3 = tierColor
+        nameLabel.Parent = container
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "📕 " .. string.format("[%s] %s", tier, object.Name)
+        nameLabel.TextColor3 = TierColors[tier] or Color3.fromRGB(255, 255, 255)
         nameLabel.TextSize = 14
         nameLabel.Font = Enum.Font.SourceSansBold
         nameLabel.TextStrokeTransparency = 0
-        nameLabel.BackgroundTransparency = 1
-        
-        table.insert(specialESPObjects, billboardGui)
+        nameLabel.TextStrokeColor3 = Color3.new(0,0,0)
+
+        specialESPObjects[object] = {
+            UI = container,
+            Tier = tier
+        }
     end
 
     local function clearScriptureESP()
-        for _, gui in pairs(specialESPObjects) do
-            if gui and gui.Parent then gui:Destroy() end
+        for obj, data in pairs(specialESPObjects) do
+            if data.UI then data.UI:Destroy() end
         end
         specialESPObjects = {}
     end
 
-    -- Loop ตรวจสอบทุก 5 วินาที
+    -- ระบบอัปเดตตำแหน่ง UI ตามการเคลื่อนที่ของกล้อง
+    RunService.RenderStepped:Connect(function()
+        if not specialESPtoggle.Value then
+            for _, data in pairs(specialESPObjects) do data.UI.Visible = false end
+            return
+        end
+
+        for object, data in pairs(specialESPObjects) do
+            if object and object.Parent then
+                -- ใช้ Position ของพาร์ท (ตรวจสอบว่าเป็น BasePart หรือไม่)
+                local partPosition = object:IsA("BasePart") and object.Position or (object:IsA("Model") and object:GetPivot().Position)
+                
+                if partPosition then
+                    local vector, onScreen = Camera:WorldToViewportPoint(partPosition)
+
+                    if onScreen then
+                        data.UI.Visible = true
+                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 40)
+                    else
+                        data.UI.Visible = false
+                    end
+                end
+            else
+                -- ถ้าไอเทมหายไป (มีคนเก็บ) ให้ลบ UI ทิ้ง
+                if data.UI then data.UI:Destroy() end
+                specialESPObjects[object] = nil
+            end
+        end
+    end)
+
+    -- Loop ตรวจสอบไอเทมใหม่ๆ
     task.spawn(function()
         while true do
             if specialESPtoggle.Value then
                 local currentItems = game.Workspace:GetChildren()
-                
                 for _, child in pairs(currentItems) do
-                    -- ตรวจสอบชื่อใน List (แบบ Case Sensitive เพื่อความแม่นยำ)
                     local tier = scriptureList[child.Name]
                     if tier then
-                        createScriptureESP(child, tier)
+                        createScriptureUI(child, tier)
                     end
                 end
-            else
-                clearScriptureESP()
             end
             task.wait(5)
         end
     end)
 
     specialESPtoggle:OnChanged(function()
-        if not specialESPtoggle.Value then clearScriptureESP() end
+        if not specialESPtoggle.Value then 
+            clearScriptureESP() 
+        end
     end)
 
     -----------------------------------------------------------------------------------------------------------------
-    
+
+    Tabs.ESPM:AddParagraph({
+        Title = "It will make the game banned",
+    })
 
     -- Auto Equip Sword
 
-    local autoEquipSword = Tabs.ESPM:AddToggle("autoEquipSwordToggle", {Title = "Equip Sword[Training Jian]", Default = false })
-    local swordEquip = false
-    autoEquipSword:OnChanged(function()
-        local player = game:GetService("Players").LocalPlayer
-        local vim = game:GetService("VirtualInputManager")
+    -- local autoEquipSword = Tabs.ESPM:AddToggle("autoEquipSwordToggle", {Title = "Equip Sword[Training Jian]", Default = false })
+    -- local swordEquip = false
+    -- autoEquipSword:OnChanged(function()
+    --     local player = game:GetService("Players").LocalPlayer
+    --     local vim = game:GetService("VirtualInputManager")
 
-        if autoEquipSword.Value then 
-            swordEquip = true
-            while swordEquip do
-                local character = player.Character or player.CharacterAdded:Wait()
-                local swordInChar = character:FindFirstChild("Training Jian")
-                if not swordInChar then
-                    local inventoryFrame = player.PlayerGui.Main.Inventory.ScrollingFrame
-                    local itemInInv = inventoryFrame:FindFirstChild("Training Jian")
+    --     if autoEquipSword.Value then 
+    --         swordEquip = true
+    --         while swordEquip do
+    --             local character = player.Character or player.CharacterAdded:Wait()
+    --             local swordInChar = character:FindFirstChild("Training Jian")
+    --             if not swordInChar then
+    --                 local inventoryFrame = player.PlayerGui.Main.Inventory.ScrollingFrame
+    --                 local itemInInv = inventoryFrame:FindFirstChild("Training Jian")
                     
-                    if itemInInv then
-                        vim:SendKeyEvent(true, Enum.KeyCode.G, false, game)
-                        vim:SendKeyEvent(false, Enum.KeyCode.G, false, game)
-                    end
-                end
-                task.wait(1)
-            end
-        else
-            swordEquip = false
-        end
-    end)
+    --                 if itemInInv then
+    --                     vim:SendKeyEvent(true, Enum.KeyCode.G, false, game)
+    --                     vim:SendKeyEvent(false, Enum.KeyCode.G, false, game)
+    --                 end
+    --             end
+    --             task.wait(1)
+    --         end
+    --     else
+    --         swordEquip = false
+    --     end
+    -- end)
     
-    local mobsFolder = game.Workspace:WaitForChild("Enemies")
-    local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP [Click first the Moblist will show]", Default = false })
-    local mobespObjects = {}
-    local mobNames = {}
-    local selectedMobName = nil
-    local MobListDropdown = Tabs.ESPM:AddDropdown("SelectMob", {
-        Title = "SelectMob",
-        Description = "You can select multiple Mob.",
-        Values = {},
-        Multi = true,
-        Default = {"None", "Null"},
-    })
+    -- local RunService = game:GetService("RunService")
+    -- local Camera = workspace.CurrentCamera
+    -- local Players = game:GetService("Players")
+    -- local LocalPlayer = Players.LocalPlayer
+    -- local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-    local function createESP(object)
-        local billboardGui = Instance.new("BillboardGui")
-        billboardGui.Adornee = object
-        billboardGui.Parent = object
-        billboardGui.Size = UDim2.new(0, 200, 0, 70)
-        billboardGui.StudsOffset = Vector3.new(0, 3, 0)
-        billboardGui.AlwaysOnTop = true
+    -- -- สร้าง ScreenGui สำหรับ Mob ESP
+    -- local MobESPGui = PlayerGui:FindFirstChild("MobESPScreen") or Instance.new("ScreenGui")
+    -- MobESPGui.Name = "MobESPScreen"
+    -- MobESPGui.ResetOnSpawn = false
+    -- MobESPGui.Parent = PlayerGui
 
-        local nameTextLabel = Instance.new("TextLabel")
-        nameTextLabel.Parent = billboardGui
-        nameTextLabel.Text = "☠️ "..object.Name
-        nameTextLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        nameTextLabel.Position = UDim2.new(0, 0, 0, 0)
-        nameTextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameTextLabel.TextStrokeTransparency = 0.8
-        nameTextLabel.TextSize = 10
-        nameTextLabel.BackgroundTransparency = 1
+    -- local mobsFolder = game.Workspace:WaitForChild("Enemies")
+    -- local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP", Default = false })
+    -- local mobespObjects = {} -- เก็บ { [Object] = {UIFrame, NameLabel} }
+
+    -- local MobListDropdown = Tabs.ESPM:AddDropdown("SelectMob", {
+    --     Title = "Select Mob",
+    --     Description = "You can select multiple Mob.",
+    --     Values = {},
+    --     Multi = true,
+    --     Default = {"None"},
+    -- })
+
+    -- -- ฟังก์ชันดึงรายชื่อมอนสเตอร์ทั้งหมด (รวมพิเศษ)
+    -- local function getUniqueMobNames()
+    --     local names = {}
+    --     local hash = {}
         
-        table.insert(mobespObjects, billboardGui)
-    end
-
-    local function removeMobESP()
-        for _, billboardGui in pairs(mobespObjects) do
-            if billboardGui and billboardGui.Parent then
-                billboardGui:Destroy()
-            end
-        end
-        mobespObjects = {}
-    end
-
-    local function loadMobNames()
-        mobNames = {}
+    --     -- จากโฟลเดอร์ Enemies
+    --     for _, mob in pairs(mobsFolder:GetChildren()) do
+    --         if not hash[mob.Name] then
+    --             table.insert(names, mob.Name)
+    --             hash[mob.Name] = true
+    --         end
+    --     end
         
-        -- 1. เพิ่มชื่อ Mob จากโฟลเดอร์ "Enemies"
-        for _, mob in pairs(mobsFolder:GetChildren()) do
-            table.insert(mobNames, mob.Name)
-        end
-        
-        -- 2. ตรวจสอบและเพิ่ม "Saint Nick" (ถ้ามี)
-        local saintNick = game.workspace:FindFirstChild("Saint Nick")
-        if saintNick and saintNick:IsA("Model") then -- ตรวจสอบว่ามีอยู่จริงและเป็น Model
-            table.insert(mobNames, saintNick.Name)
-        end
+    --     -- จาก Workspace (มอนสเตอร์พิเศษ)
+    --     local specials = {"Saint Nick", "Little Monkey King"}
+    --     for _, sName in ipairs(specials) do
+    --         if game.Workspace:FindFirstChild(sName) and not hash[sName] then
+    --             table.insert(names, sName)
+    --             hash[sName] = true
+    --         end
+    --     end
+    --     return names
+    -- end
 
-        -- 3. ตรวจสอบและเพิ่ม "Little Monkey King" (ถ้ามี)
-        local littleMonkeyKing = game.workspace:FindFirstChild("Little Monkey King")
-        if littleMonkeyKing and littleMonkeyKing:IsA("Model") then -- ตรวจสอบว่ามีอยู่จริงและเป็น Model
-            table.insert(mobNames, littleMonkeyKing.Name)
-        end
+    -- -- ฟังก์ชันสร้าง UI 2D สำหรับม็อบ
+    -- local function createMobUI(object)
+    --     if mobespObjects[object] then return end
 
-        -- 4. กรองชื่อซ้ำ (ตามโค้ดเดิม)
-        local uniqueMobNames = {}
-        for _, mobName in pairs(mobNames) do
-            if not table.find(uniqueMobNames, mobName) then
-                table.insert(uniqueMobNames, mobName)
-            end
-        end
-        
-        -- 5. อัปเดต Dropdown
-        MobListDropdown:SetValues(uniqueMobNames)
-    end
+    --     local container = Instance.new("Frame")
+    --     container.BackgroundTransparency = 1
+    --     container.Size = UDim2.new(0, 150, 0, 30)
+    --     container.Visible = false
+    --     container.Parent = MobESPGui
 
-    MobListDropdown:OnChanged(function(value)
-        removeMobESP()
-        local selectedMobNames = {}
-        for mobName, isSelected in pairs(value) do
-            if isSelected then
-                table.insert(selectedMobNames, mobName)
-            end
-        end
+    --     local nameLabel = Instance.new("TextLabel")
+    --     nameLabel.Parent = container
+    --     nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    --     nameLabel.BackgroundTransparency = 1
+    --     nameLabel.Text = "☠️ " .. object.Name
+    --     nameLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- สีแดงอ่อนให้ดูเป็นศัตรู
+    --     nameLabel.TextSize = 12
+    --     nameLabel.Font = Enum.Font.GothamBold
+    --     nameLabel.TextStrokeTransparency = 0.2
 
-        if mobESPtoggle.Value and #selectedMobNames > 0 then
-            -- ลูปเพื่อสร้าง ESP สำหรับมอนสเตอร์ในโฟลเดอร์
-            for _, mob in pairs(mobsFolder:GetChildren()) do
-                if table.find(selectedMobNames, mob.Name) then
-                    createESP(mob)
-                end
-            end
-            
-            -- ตรวจสอบและสร้าง ESP สำหรับมอนสเตอร์พิเศษ (Saint Nick, Little Monkey King)
-            local specialMobs = {"Saint Nick", "Little Monkey King"}
-            for _, specialName in ipairs(specialMobs) do
-                if table.find(selectedMobNames, specialName) then
-                    local specialMob = game.workspace:FindFirstChild(specialName)
-                    if specialMob and specialMob:IsA("Model") then
-                        createESP(specialMob)
-                    end
-                end
-            end
-        end
-    end)
+    --     mobespObjects[object] = {
+    --         UI = container
+    --     }
+    -- end
 
-    mobESPtoggle:OnChanged(function()
-        if mobESPtoggle.Value then
-            loadMobNames()
-        else
-            removeMobESP()
-            MobListDropdown:SetValues({})
-        end
-    end)
+    -- local function removeMobESP()
+    --     for obj, data in pairs(mobespObjects) do
+    --         if data.UI then data.UI:Destroy() end
+    --     end
+    --     mobespObjects = {}
+    -- end
 
-    local heartbeatConnection = nil
+    -- -- อัปเดตตำแหน่ง UI ม็อบทุกเฟรม
+    -- RunService.RenderStepped:Connect(function()
+    --     if not mobESPtoggle.Value then
+    --         for _, data in pairs(mobespObjects) do data.UI.Visible = false end
+    --         return
+    --     end
 
-    local function getNearestTargetRoot(selectedMobNames, rootPart)
-        local nearestTarget = nil
-        local shortestDistance = math.huge
-        
-        -- รวบรวมรายการมอนสเตอร์ทั้งหมดที่ถูกเลือก
-        local mobsToCheck = {}
-        
-        -- 1. เพิ่ม Mob จากโฟลเดอร์ "Enemies"
-        for _, mob in pairs(mobsFolder:GetChildren()) do
-            -- ต้องมั่นใจว่า mob.Name เป็นสตริงเดียวกับใน selectedMobNames
-            if table.find(selectedMobNames, mob.Name) then
-                table.insert(mobsToCheck, mob)
-            end
-        end
-        
-        -- 2. เพิ่มมอนสเตอร์พิเศษที่ถูกเลือก (ถ้ามี)
-        local specialNames = {"Saint Nick", "Little Monkey King"}
-        for _, name in ipairs(specialNames) do
-            if table.find(selectedMobNames, name) then
-                local specialMob = game.workspace:FindFirstChild(name)
-                if specialMob and specialMob:IsA("Model") then
-                    table.insert(mobsToCheck, specialMob)
-                end
-            end
-        end
+    --     for object, data in pairs(mobespObjects) do
+    --         if object and object.Parent then
+    --             local root = object:FindFirstChild("HumanoidRootPart")
+    --             if root then
+    --                 local vector, onScreen = Camera:WorldToViewportPoint(root.Position)
+    --                 if onScreen then
+    --                     data.UI.Visible = true
+    --                     data.UI.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 50)
+    --                 else
+    --                     data.UI.Visible = false
+    --                 end
+    --             end
+    --         else
+    --             if data.UI then data.UI:Destroy() end
+    --             mobespObjects[object] = nil
+    --         end
+    --     end
+    -- end)
 
-        -- 3. วนลูปตรวจสอบเป้าหมายที่ใกล้ที่สุดจากรายการรวมทั้งหมด
-        local nearestTarget = nil
-        local shortestDistance = math.huge
+    -- -- ฟังก์ชันรีเฟรช ESP ตามรายการที่เลือก
+    -- local function refreshMobESP()
+    --     if not mobESPtoggle.Value then
+    --         removeMobESP()
+    --         return
+    --     end
 
-        for _, mobInstance in ipairs(mobsToCheck) do
-            local mobRoot = mobInstance:FindFirstChild("HumanoidRootPart")
-            
-            -- ตรวจสอบสุขภาพและส่วนประกอบที่จำเป็น
-            if mobRoot and mobInstance:FindFirstChild("Humanoid") then
-                local humanoid = mobInstance.Humanoid
-                if humanoid.Health > 0 then
-                    local distance = (rootPart.Position - mobRoot.Position).Magnitude
-                    if distance < shortestDistance then
-                        shortestDistance = distance
-                        nearestTarget = mobRoot
-                    end
-                end
-            end
-        end
-        
-        return nearestTarget, shortestDistance
-    end
+    --     local selectedValue = MobListDropdown.Value
+    --     local selectedList = {}
+    --     for name, isSelected in pairs(selectedValue) do
+    --         if isSelected then table.insert(selectedList, name) end
+    --     end
 
-    local function FreezMobs()
-        if game.workspace:FindFirstChild("Saint Nick") then
-            workspace["Saint Nick"].HumanoidRootPart.Anchored = true
-        end
+    --     -- ตรวจสอบโฟลเดอร์ Enemies
+    --     for _, mob in pairs(mobsFolder:GetChildren()) do
+    --         if table.find(selectedList, mob.Name) then
+    --             createMobUI(mob)
+    --         end
+    --     end
 
-        if game.workspace:FindFirstChild("Little Monkey King") then
-            workspace["Little Monkey King"].HumanoidRootPart.Anchored = true
-        end
+    --     -- ตรวจสอบมอนพิเศษ
+    --     local specials = {"Saint Nick", "Little Monkey King"}
+    --     for _, sName in ipairs(specials) do
+    --         local sObj = game.Workspace:FindFirstChild(sName)
+    --         if sObj and table.find(selectedList, sName) then
+    --             createMobUI(sObj)
+    --         end
+    --     end
+    -- end
 
-        for _, mob in ipairs(mobsFolder:GetChildren()) do
-            if mob:IsA("Model") then
-                local rootPart = mob:FindFirstChild("HumanoidRootPart")
-                if rootPart and rootPart:IsA("BasePart") then
-                    rootPart.Anchored = true
-                end
-            end
-        end
-    end
+    -- -- [ ส่วนของ Auto Attack และ Logic อื่นๆ ]
 
-    local desiredAttackOffset = 5
-    local OffsetSlider = Tabs.ESPM:AddSlider("AttackOffset", {
-        Title = "Attack Offset",
-        Description = "Distance behind the Mob to stand.",
-        Default = desiredAttackOffset, -- ใช้ค่าเริ่มต้นที่เรากำหนดไว้
-        Min = 0, -- ระยะใกล้สุด (อาจจะยืนด้านหน้ามอนสเตอร์)
-        Max = 20,  -- ระยะไกลสุด (ยืนด้านหลังมอนสเตอร์)
-        Rounding = 1, -- ปัดเศษเป็นทศนิยม 1 ตำแหน่ง
-        Callback = function(newOffset)
-            desiredAttackOffset = newOffset -- อัปเดตตัวแปร global เมื่อผู้ใช้เลื่อน
-        end
-    })
+    -- local function getNearestTargetRoot()
+    --     local selectedValue = MobListDropdown.Value
+    --     local selectedList = {}
+    --     for name, isSelected in pairs(selectedValue) do
+    --         if isSelected then table.insert(selectedList, name) end
+    --     end
 
-    local function startAttackMobList()
-        -- ********** แก้ไขส่วนนี้ **********
-        local selectedMobNames = {}
-        for mobName, isSelected in pairs(MobListDropdown.Value) do
-            if isSelected then
-                table.insert(selectedMobNames, mobName)
-            end
-        end
-        -- ***********************************
+    --     local character = LocalPlayer.Character
+    --     local myRoot = character and character:FindFirstChild("HumanoidRootPart")
+    --     if not myRoot then return nil, math.huge end
 
-        local offset = desiredAttackOffset
-        local attackRange = 20 
-        local localPlayer = game.Players.LocalPlayer
-        local character = localPlayer.Character
-        local rootPart = character and character:FindFirstChild("HumanoidRootPart")
-        local humanoid = character and character:FindFirstChild("Humanoid")
-        local punchRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Punch")
-        local args = { 0 } 
+    --     local nearestTarget = nil
+    --     local shortestDistance = math.huge
 
-        if not rootPart or not humanoid or humanoid.Health <= 0 then
-            return
-        end
+    --     -- รวมม็อบทั้งหมดที่ตรงกับเงื่อนไข
+    --     local allPotential = {}
+    --     for _, m in pairs(mobsFolder:GetChildren()) do table.insert(allPotential, m) end
+    --     for _, sName in ipairs({"Saint Nick", "Little Monkey King"}) do
+    --         local sObj = game.Workspace:FindFirstChild(sName)
+    --         if sObj then table.insert(allPotential, sObj) end
+    --     end
 
-        local nearestTargetRoot, distance = getNearestTargetRoot(selectedMobNames, rootPart)
+    --     for _, mob in ipairs(allPotential) do
+    --         if table.find(selectedList, mob.Name) then
+    --             local hum = mob:FindFirstChild("Humanoid")
+    --             local root = mob:FindFirstChild("HumanoidRootPart")
+    --             if hum and root and hum.Health > 0 then
+    --                 local dist = (myRoot.Position - root.Position).Magnitude
+    --                 if dist < shortestDistance then
+    --                     shortestDistance = dist
+    --                     nearestTarget = root
+    --                 end
+    --             end
+    --         end
+    --     end
+    --     return nearestTarget, shortestDistance
+    -- end
 
-        if not nearestTargetRoot then
-            return
-        end
+    -- -- [ ลอจิกการทำงานของปุ่มต่างๆ ]
 
-        local targetPosition = nearestTargetRoot.Position
-        local targetCFrame = nearestTargetRoot.CFrame
-        
-        -- คำนวณตำแหน่งด้านหลังม็อบที่ต้องการยืน (Desired Position)
-        local desiredPositionCFrame = targetCFrame * CFrame.new(0, 0, offset) 
+    -- MobListDropdown:OnChanged(function()
+    --     refreshMobESP()
+    -- end)
 
-        if distance <= attackRange then
-            -- ********** โจมตี **********
-            local rotationCFrame = CFrame.lookAt(rootPart.Position, targetPosition)
-            local finalCFrame = CFrame.new(desiredPositionCFrame.Position) * rotationCFrame.Rotation
+    -- mobESPtoggle:OnChanged(function()
+    --     if mobESPtoggle.Value then
+    --         MobListDropdown:SetValues(getUniqueHerbNames())
+    --         refreshMobESP()
+    --     else
+    --         removeMobESP()
+    --     end
+    -- end)
 
-            rootPart.CFrame = finalCFrame
-            punchRemote:FireServer(unpack(args))
-            humanoid:MoveTo(rootPart.Position) 
+    -- -- Loop ตรวจสอบม็อบเกิดใหม่และอัปเดต List
+    -- task.spawn(function()
+    --     while true do
+    --         if mobESPtoggle.Value then
+    --             MobListDropdown:SetValues(getUniqueMobNames())
+    --             refreshMobESP()
+    --         end
+    --         task.wait(5)
+    --     end
+    -- end)
 
-            FreezMobs()
-        else
-            -- ********** เคลื่อนที่เข้าหา **********
-            if humanoid.FloorMaterial ~= Enum.Material.Air then
-                humanoid:ChangeState(Enum.HumanoidStateType.Jumping) 
-            end
-            humanoid:MoveTo(desiredPositionCFrame.Position)
-        end
-    end
+    -- -- ปุ่ม Auto Attack (ใช้ลอจิกเดิมของคุณแต่ปรับปรุงเล็กน้อย)
+    -- local autoAttackMoblist = Tabs.ESPM:AddToggle("AttackMobESPToggle", {Title = "Attack Mob ESP", Default = false })
+    -- local heartbeatConnection = nil
 
-    local autoAttackMoblist = Tabs.ESPM:AddToggle("AttackMobESPToggle", {Title = "Attack Mob ESP", Default = false })
-
-    autoAttackMoblist:OnChanged(function()
-        if autoAttackMoblist.Value then 
-            if not heartbeatConnection then
-                heartbeatConnection = game:GetService("RunService").Heartbeat:Connect(startAttackMobList)
-            end
-        else
-            if heartbeatConnection then
-                heartbeatConnection:Disconnect()
-                heartbeatConnection = nil
-            end
-        end
-    end)
+    -- autoAttackMoblist:OnChanged(function()
+    --     if autoAttackMoblist.Value then 
+    --         if not heartbeatConnection then
+    --             heartbeatConnection = RunService.Heartbeat:Connect(function()
+    --                 local target, dist = getNearestTargetRoot()
+    --                 if target and LocalPlayer.Character then
+    --                     local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    --                     local punchRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Punch")
+                        
+    --                     if myRoot then
+    --                         -- วาร์ปไปข้างหลังตาม Offset
+    --                         local offset = _G.desiredAttackOffset or 5
+    --                         myRoot.CFrame = target.CFrame * CFrame.new(0, 0, offset) * CFrame.Angles(0, math.pi, 0)
+    --                         punchRemote:FireServer(0)
+                            
+    --                         -- Freeze ม็อบ (ใช้ฟังก์ชันเดิมของคุณ)
+    --                         target.Anchored = true
+    --                     end
+    --                 end
+    --             end)
+    --         end
+    --     else
+    --         if heartbeatConnection then
+    --             heartbeatConnection:Disconnect()
+    --             heartbeatConnection = nil
+    --         end
+    --     end
+    -- end)
 
     -----------------------------------------------------------------------------------------------------------------
 
-    Tabs.Main:AddButton({
-        Title = "Freeze All Mob",
-        Description = "Just Freeze The Mob",
-        Callback = function()
-            FreezMobs()
+    -- Tabs.Main:AddButton({
+    --     Title = "Freeze All Mob",
+    --     Description = "Just Freeze The Mob",
+    --     Callback = function()
+    --         FreezMobs()
 
-            Fluent:Notify({
-                Title = "Notify",
-                Content = "Now the mob is freeze",
-                Duration = 3
-            })
-        end
-    })
+    --         Fluent:Notify({
+    --             Title = "Notify",
+    --             Content = "Now the mob is freeze",
+    --             Duration = 3
+    --         })
+    --     end
+    -- })
     -----------------------------------------------------------------------------------------------------------------
 
     HowToUseAutoFast = Tabs.AutoHerb:AddParagraph({
@@ -1479,17 +1467,40 @@ do
 
 end
 
+
+-- Addons:
+-- SaveManager (Allows you to have a configuration system)
+-- InterfaceManager (Allows you to have a interface managment system)
+
+-- Hand the library over to our managers
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+-- Ignore keys that are used by ThemeManager.
+-- (we dont want configs to save themes, do we?)
+SaveManager:IgnoreThemeSettings()
+
+-- You can add indexes of elements the save manager should ignore
+SaveManager:SetIgnoreIndexes({})
+
+-- use case for doing it this way:
+-- a script hub could have themes in a global folder
+-- and game configs in a separate folder per game
+InterfaceManager:SetFolder("VichianHUB")
+SaveManager:SetFolder("VichianHUB/specific-game")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+
 Window:SelectTab(1)
 
+Fluent:Notify({
+    Title = "Fluent",
+    Content = "The script has been loaded.",
+    Duration = 8
+})
 
---------------- auto breaktrou
-
--- game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Breakthrough"):FireServer()
-
-
--- ------------------------------------- auto craft potion
-
--- local args = {
--- 	"Qi Gathering"
--- }
--- game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("CraftPill"):FireServer(unpack(args))
+-- You can use the SaveManager:LoadAutoloadConfig() to load a config
+-- which has been marked to be one that auto loads!
+SaveManager:LoadAutoloadConfig()
