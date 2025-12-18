@@ -465,7 +465,7 @@ do
         nameLabel.Parent = bbg
         nameLabel.Size = UDim2.new(1, 0, 1, 0)
         nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = "🔥 " .. string.format("[%s] %s", tier, object.Name).. " 🔥"
+        nameLabel.Text = "🔥 " .. string.format("[Flame] %s", object.Name).. " 🔥"
         nameLabel.TextColor3 = TierColors[tier] or Color3.fromRGB(255, 255, 255)
         nameLabel.TextSize = 14
         nameLabel.Font = Enum.Font.GothamBold
