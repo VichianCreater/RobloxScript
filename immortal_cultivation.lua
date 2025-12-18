@@ -196,10 +196,10 @@ do
                 local pos = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position) or (obj:IsA("BasePart") and obj.Position)
                 
                 if pos then
-                    local vector, onScreen = Camera:WorldToViewportPoint(pos)
+                    local vector, onScreen = Camera:WorldToViewportPoint(pos + Vector3.new(0, 3, 0))
                     if onScreen then
                         data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 100)
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
                     else
                         data.Container.Visible = false
                     end
@@ -210,7 +210,6 @@ do
             end
         end
     end)
-
 
     local function refreshESP()
         if not herbESPtoggle.Value then
@@ -364,11 +363,11 @@ do
                 local partPosition = object:IsA("BasePart") and object.Position or (object:IsA("Model") and object:GetPivot().Position)
                 
                 if partPosition then
-                    local vector, onScreen = Camera:WorldToViewportPoint(partPosition)
+                    local vector, onScreen = Camera:WorldToViewportPoint(partPosition + Vector3.new(0, 3, 0))
 
                     if onScreen then
                         data.UI.Visible = true
-                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 100)
+                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 40)
                     else
                         data.UI.Visible = false
                     end
@@ -532,10 +531,10 @@ do
             if obj and obj.Parent then
                 local root = obj:FindFirstChild("HumanoidRootPart")
                 if root then
-                    local vector, onScreen = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 4, 0))
+                    local vector, onScreen = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 5, 0))
                     if onScreen then
                         data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 100)
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
                     else
                         data.Container.Visible = false
                     end
