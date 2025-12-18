@@ -38,6 +38,7 @@ local Tabs = {
     ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
     ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
     ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
+    ESPFlame = Window:AddTab({ Title = "ESP Flame", Icon = "flame" }),
     AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -329,11 +330,14 @@ do
         ["Steel Body Formula"] = "T4",
         ["Soul Shedding Scripture"] = "T4",
         ["Star Reaving Scripture"] = "T4",
-        ["Taoist Blood"] = "T5",
+        ["Return to Basic"] = "T5",
+        ["Taotie's Blood"] = "T5",
         ["Tower Forging Techique"] = "T5",
+        ["Tower Forging"] = "T5",
         ["Evergreen Manual"] = "T5",
         ["Beast Soul Manual"] = "T5",
-        ["jttw"] = "T5"
+        ["Beast Soul Possession"] = "T5",
+        ["Journey To The West"] = "T5"
     }
 
     -- ฟังก์ชันสร้าง BillboardGui
@@ -403,13 +407,119 @@ do
                     end
                 end
             end
-            task.wait(5)
+            task.wait(2)
         end
     end)
 
     specialESPtoggle:OnChanged(function()
         if not specialESPtoggle.Value then 
             clearScriptureESP() 
+        end
+    end)
+
+    -----------------------------------------------------------------------------------------------------------------
+
+    local RunService = game:GetService("RunService")
+    local Camera = workspace.CurrentCamera
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+
+    local success, targetParent = pcall(function()
+        return CoreGui
+    end)
+    local ESPParent = success and targetParent or Players.LocalPlayer:WaitForChild("PlayerGui")
+
+    local MysteriusFlameESPToggle = Tabs.ESPFlame:AddToggle("MysteriusFlameESP", {Title = "Show Flame ESP", Default = false })
+    local FlameESPObject = {}
+
+    local TierColors = {
+        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว
+        T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
+        T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
+        T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
+        T5 = Color3.fromRGB(255, 0, 0)       -- สีแดง
+    }
+
+    local MysteriusFlameList = {
+        ["Disaster Rose"] = "T5",
+        ["Great River"] = "T5",
+        ["Poison Death"] = "T5",
+        ["Azure Moon"] = "T5",
+        ["Ice Devil"] = "T5",
+        ["Karmic Dao"] = "T5",
+        ["Ruinous"] = "T5",
+    }
+
+    local function createMysteriusFlameESP(object, tier)
+        if FlameESPObject[object] then return end
+
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "MysteriusFlameESP_" .. object.Name
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 200, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object
+        bbg.Parent = ESPParent
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Parent = bbg
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "🔥 " .. string.format("[%s] %s", tier, object.Name).. " 🔥"
+        nameLabel.TextColor3 = TierColors[tier] or Color3.fromRGB(255, 255, 255)
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+        FlameESPObject[object] = {
+            Instance = bbg,
+            Tier = tier
+        }
+    end
+
+    local function clearMysteriusFlameESP()
+        for obj, data in pairs(FlameESPObject) do
+            if data.Instance then data.Instance:Destroy() end
+        end
+        FlameESPObject = {}
+    end
+
+    RunService.RenderStepped:Connect(function()
+        local isEnabled = MysteriusFlameESPToggle.Value
+        
+        for object, data in pairs(FlameESPObject) do
+            if object and object.Parent and isEnabled then
+                data.Instance.Enabled = true
+            else
+                if not isEnabled then
+                    data.Instance.Enabled = false
+                else
+                    if data.Instance then data.Instance:Destroy() end
+                    FlameESPObject[object] = nil
+                end
+            end
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            if MysteriusFlameESPToggle.Value then
+                local currentItems = game.Workspace:GetChildren()
+                for _, child in pairs(currentItems) do
+                    local tier = MysteriusFlameList[child.Name]
+                    if tier then
+                        createMysteriusFlameESP(child, tier)
+                    end
+                end
+            end
+            task.wait(2)
+        end
+    end)
+
+    MysteriusFlameESPToggle:OnChanged(function()
+        if not MysteriusFlameESPToggle.Value then 
+            clearMysteriusFlameESP() 
         end
     end)
 
