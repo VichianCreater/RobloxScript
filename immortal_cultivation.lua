@@ -55,47 +55,47 @@ do
     local humanoid = character:WaitForChild("Humanoid")
 
     ------------------------------------------------------------------------------------------------------------------------
-    local desiredWalkSpeed = humanoid.WalkSpeed
+    -- local desiredWalkSpeed = humanoid.WalkSpeed
 
-    local WalkSpeedSlideBar = Tabs.Main:AddSlider("Walkspeed", {
-        Title = "Walk Speed",
-        Description = "Speed",
-        Default = desiredWalkSpeed,
-        Min = humanoid.WalkSpeed,
-        Max = 100,
-        Rounding = 1,
-        Callback = function(newSpeed)
-            desiredWalkSpeed = newSpeed
-            if Options.WalkSpeedToggle.Value then
-                humanoid.WalkSpeed = desiredWalkSpeed
-            end
-        end
-    })
+    -- local WalkSpeedSlideBar = Tabs.Main:AddSlider("Walkspeed", {
+    --     Title = "Walk Speed",
+    --     Description = "Speed",
+    --     Default = desiredWalkSpeed,
+    --     Min = humanoid.WalkSpeed,
+    --     Max = 100,
+    --     Rounding = 1,
+    --     Callback = function(newSpeed)
+    --         desiredWalkSpeed = newSpeed
+    --         if Options.WalkSpeedToggle.Value then
+    --             humanoid.WalkSpeed = desiredWalkSpeed
+    --         end
+    --     end
+    -- })
 
-    local ChangeWalkSpeed = Tabs.Main:AddToggle("WalkSpeedToggle", {Title = "Change - Walkspeed", Default = false })
-    local IsWalkSpeedChange = false
+    -- local ChangeWalkSpeed = Tabs.Main:AddToggle("WalkSpeedToggle", {Title = "Change - Walkspeed", Default = false })
+    -- local IsWalkSpeedChange = false
 
-    local function WalkSpeedChange()
-        local character = player.Character or player.CharacterAdded:Wait()
-        local humanoid = character:WaitForChild("Humanoid")
-        humanoid.WalkSpeed = desiredWalkSpeed
-    end
+    -- local function WalkSpeedChange()
+    --     local character = player.Character or player.CharacterAdded:Wait()
+    --     local humanoid = character:WaitForChild("Humanoid")
+    --     humanoid.WalkSpeed = desiredWalkSpeed
+    -- end
 
-    ChangeWalkSpeed:OnChanged(function()
-        if Options.WalkSpeedToggle.Value then
-            IsWalkSpeedChange = true
-            WalkSpeedChange()
-            while IsWalkSpeedChange do
-                WalkSpeedChange()
-                task.wait(0.01)
-            end
-        else
-            IsWalkSpeedChange = false
-        end
-        print("Toggle changed:", Options.WalkSpeedToggle.Value)
-    end)
+    -- ChangeWalkSpeed:OnChanged(function()
+    --     if Options.WalkSpeedToggle.Value then
+    --         IsWalkSpeedChange = true
+    --         WalkSpeedChange()
+    --         while IsWalkSpeedChange do
+    --             WalkSpeedChange()
+    --             task.wait(0.01)
+    --         end
+    --     else
+    --         IsWalkSpeedChange = false
+    --     end
+    --     print("Toggle changed:", Options.WalkSpeedToggle.Value)
+    -- end)
 
-    Options.WalkSpeedToggle:SetValue(false)
+    -- Options.WalkSpeedToggle:SetValue(false)
 
     ------------------------------------------------------------------------------------------------------------------------
     local RunService = game:GetService("RunService")
@@ -404,290 +404,275 @@ do
     end)
 
     -----------------------------------------------------------------------------------------------------------------
+    
+    local mobsFolder = game.Workspace:WaitForChild("Enemies")
+    local TweenService = game:GetService("TweenService")
+    local runService = game:GetService("RunService")
+    local localPlayer = game.Players.LocalPlayer
+    local camera = workspace.CurrentCamera
 
-    Tabs.ESPM:AddParagraph({
-        Title = "It will make the game banned",
+    -- ### [1] การตั้งค่า ScreenGui ESP (ใช้โครงสร้างแบบเดียวกับ Herb) ###
+    local espGui = localPlayer:WaitForChild("PlayerGui"):FindFirstChild("MobESPSystem") or Instance.new("ScreenGui")
+    espGui.Name = "MobESPSystem"
+    espGui.ResetOnSpawn = false
+    espGui.DisplayOrder = 15
+    espGui.Parent = localPlayer:WaitForChild("PlayerGui")
+
+    local mobEspObjects = {} -- เก็บข้อมูล {Container, Target}
+    local currentSelectedMobNames = {}
+    local isWarpingToMob = false
+    local currentMobWarpTween = nil
+    local warpSpeedMob = 50 
+    local desiredAttackOffset = 5
+    local firstTimeUsingDeath = true
+
+    -- ### [2] ฟังก์ชันช่วยเหลือ (Freeze & Search) ###
+    local function FreezMobs()
+        for _, name in ipairs({"Saint Nick", "Little Monkey King"}) do
+            local special = workspace:FindFirstChild(name)
+            if special and special:FindFirstChild("HumanoidRootPart") then
+                special.HumanoidRootPart.Anchored = true
+            end
+        end
+        for _, mob in ipairs(mobsFolder:GetChildren()) do
+            local root = mob:FindFirstChild("HumanoidRootPart")
+            if root then root.Anchored = true end
+        end
+    end
+
+    -- ### [3] ฟังก์ชัน ESP (ถอดแบบจากโค้ด Herb ของคุณ) ###
+    local function createMobESP(object)
+        if mobEspObjects[object] then return end
+
+        local container = Instance.new("Frame")
+        container.BackgroundTransparency = 1
+        container.Size = UDim2.new(0, 150, 0, 40)
+        container.Visible = false
+        container.Parent = espGui
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Name = "NameLabel"
+        nameLabel.Parent = container
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "☠️ " .. object.Name
+        nameLabel.TextColor3 = Color3.fromRGB(255, 80, 80) -- สีแดงเข้มเพื่อให้ต่างจากสมุนไพร
+        nameLabel.TextSize = 12
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0.5
+
+        mobEspObjects[object] = {
+            Container = container,
+            Target = object
+        }
+    end
+
+    local function removeAllMobESP()
+        for obj, data in pairs(mobEspObjects) do
+            if data.Container then data.Container:Destroy() end
+        end
+        mobEspObjects = {}
+    end
+
+    -- ### [4] ระบบจัดการ UI & Loop (ถอดแบบจาก Herb) ###
+    local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP", Default = false })
+    local MobListDropdown = Tabs.ESPM:AddDropdown("SelectMob", {
+        Title = "Select Mob",
+        Values = {},
+        Multi = true,
+        Default = {},
     })
 
-    -- Auto Equip Sword
+    -- อัปเดตรายชื่อม็อบเข้า Dropdown
+    local function updateMobList()
+        local names = {}
+        local hash = {}
+        for _, mob in pairs(mobsFolder:GetChildren()) do
+            if not hash[mob.Name] then table.insert(names, mob.Name) hash[mob.Name] = true end
+        end
+        for _, name in ipairs({"Saint Nick", "Little Monkey King"}) do
+            if workspace:FindFirstChild(name) and not hash[name] then table.insert(names, name) end
+        end
+        MobListDropdown:SetValues(names)
+    end
 
-    -- local autoEquipSword = Tabs.ESPM:AddToggle("autoEquipSwordToggle", {Title = "Equip Sword[Training Jian]", Default = false })
-    -- local swordEquip = false
-    -- autoEquipSword:OnChanged(function()
-    --     local player = game:GetService("Players").LocalPlayer
-    --     local vim = game:GetService("VirtualInputManager")
+    -- ฟังก์ชัน Refresh ESP
+    local function refreshMobESP()
+        if not mobESPtoggle.Value then
+            removeAllMobESP()
+            return
+        end
 
-    --     if autoEquipSword.Value then 
-    --         swordEquip = true
-    --         while swordEquip do
-    --             local character = player.Character or player.CharacterAdded:Wait()
-    --             local swordInChar = character:FindFirstChild("Training Jian")
-    --             if not swordInChar then
-    --                 local inventoryFrame = player.PlayerGui.Main.Inventory.ScrollingFrame
-    --                 local itemInInv = inventoryFrame:FindFirstChild("Training Jian")
-                    
-    --                 if itemInInv then
-    --                     vim:SendKeyEvent(true, Enum.KeyCode.G, false, game)
-    --                     vim:SendKeyEvent(false, Enum.KeyCode.G, false, game)
-    --                 end
-    --             end
-    --             task.wait(1)
-    --         end
-    --     else
-    --         swordEquip = false
-    --     end
-    -- end)
-    
-    -- local RunService = game:GetService("RunService")
-    -- local Camera = workspace.CurrentCamera
-    -- local Players = game:GetService("Players")
-    -- local LocalPlayer = Players.LocalPlayer
-    -- local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+        -- ลบอันที่ไม่ถูกเลือกใน Dropdown ออก
+        for obj, data in pairs(mobEspObjects) do
+            if not table.find(currentSelectedMobNames, obj.Name) then
+                data.Container:Destroy()
+                mobEspObjects[obj] = nil
+            end
+        end
 
-    -- -- สร้าง ScreenGui สำหรับ Mob ESP
-    -- local MobESPGui = PlayerGui:FindFirstChild("MobESPScreen") or Instance.new("ScreenGui")
-    -- MobESPGui.Name = "MobESPScreen"
-    -- MobESPGui.ResetOnSpawn = false
-    -- MobESPGui.Parent = PlayerGui
+        -- สแกนหาตัวที่เลือกเพื่อสร้าง ESP
+        for _, mob in pairs(mobsFolder:GetChildren()) do
+            if table.find(currentSelectedMobNames, mob.Name) then createMobESP(mob) end
+        end
+        for _, name in ipairs({"Saint Nick", "Little Monkey King"}) do
+            local sm = workspace:FindFirstChild(name)
+            if sm and table.find(currentSelectedMobNames, name) then createMobESP(sm) end
+        end
+    end
 
-    -- local mobsFolder = game.Workspace:WaitForChild("Enemies")
-    -- local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP", Default = false })
-    -- local mobespObjects = {} -- เก็บ { [Object] = {UIFrame, NameLabel} }
+    -- RenderStepped อัปเดตตำแหน่ง (แบบเดียวกับ Herb)
+    runService.RenderStepped:Connect(function()
+        if not mobESPtoggle.Value then
+            for _, data in pairs(mobEspObjects) do data.Container.Visible = false end
+            return
+        end
 
-    -- local MobListDropdown = Tabs.ESPM:AddDropdown("SelectMob", {
-    --     Title = "Select Mob",
-    --     Description = "You can select multiple Mob.",
-    --     Values = {},
-    --     Multi = true,
-    --     Default = {"None"},
-    -- })
+        for obj, data in pairs(mobEspObjects) do
+            if obj and obj.Parent then
+                local root = obj:FindFirstChild("HumanoidRootPart")
+                if root then
+                    local vector, onScreen = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 4, 0))
+                    if onScreen then
+                        data.Container.Visible = true
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
+                    else
+                        data.Container.Visible = false
+                    end
+                end
+            else
+                if data.Container then data.Container:Destroy() end
+                mobEspObjects[obj] = nil
+            end
+        end
+    end)
 
-    -- -- ฟังก์ชันดึงรายชื่อมอนสเตอร์ทั้งหมด (รวมพิเศษ)
-    -- local function getUniqueMobNames()
-    --     local names = {}
-    --     local hash = {}
-        
-    --     -- จากโฟลเดอร์ Enemies
-    --     for _, mob in pairs(mobsFolder:GetChildren()) do
-    --         if not hash[mob.Name] then
-    --             table.insert(names, mob.Name)
-    --             hash[mob.Name] = true
-    --         end
-    --     end
-        
-    --     -- จาก Workspace (มอนสเตอร์พิเศษ)
-    --     local specials = {"Saint Nick", "Little Monkey King"}
-    --     for _, sName in ipairs(specials) do
-    --         if game.Workspace:FindFirstChild(sName) and not hash[sName] then
-    --             table.insert(names, sName)
-    --             hash[sName] = true
-    --         end
-    --     end
-    --     return names
-    -- end
+    -- เชื่อมต่อเหตุการณ์ UI
+    MobListDropdown:OnChanged(function(value)
+        currentSelectedMobNames = {}
+        for name, isSelected in pairs(value) do
+            if isSelected then table.insert(currentSelectedMobNames, name) end
+        end
+        refreshMobESP()
+    end)
 
-    -- -- ฟังก์ชันสร้าง UI 2D สำหรับม็อบ
-    -- local function createMobUI(object)
-    --     if mobespObjects[object] then return end
+    mobESPtoggle:OnChanged(function()
+        if mobESPtoggle.Value then updateMobList() else removeAllMobESP() end
+        refreshMobESP()
+    end)
 
-    --     local container = Instance.new("Frame")
-    --     container.BackgroundTransparency = 1
-    --     container.Size = UDim2.new(0, 150, 0, 30)
-    --     container.Visible = false
-    --     container.Parent = MobESPGui
+    task.spawn(function()
+        while true do
+            if mobESPtoggle.Value then 
+                refreshMobESP() 
+                updateMobList() 
+            end
+            task.wait(5)
+        end
+    end)
 
-    --     local nameLabel = Instance.new("TextLabel")
-    --     nameLabel.Parent = container
-    --     nameLabel.Size = UDim2.new(1, 0, 1, 0)
-    --     nameLabel.BackgroundTransparency = 1
-    --     nameLabel.Text = "☠️ " .. object.Name
-    --     nameLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- สีแดงอ่อนให้ดูเป็นศัตรู
-    --     nameLabel.TextSize = 12
-    --     nameLabel.Font = Enum.Font.GothamBold
-    --     nameLabel.TextStrokeTransparency = 0.2
+    -- ### [5] ระบบโจมตีและวาร์ป (ส่วนฟังชั่นเดิมของคุณ) ###
+    Tabs.ESPM:AddSlider("AttackOffset", { Title = "Attack Offset", Default = 5, Min = 0, Max = 20, Rounding = 1, Callback = function(v) desiredAttackOffset = v end })
+    Tabs.ESPM:AddSlider("MobWarpSpeed", { Title = "Warp Speed (Studs/s)", Default = 50, Min = 10, Max = 100, Rounding = 1, Callback = function(v) warpSpeedMob = v end })
 
-    --     mobespObjects[object] = {
-    --         UI = container
-    --     }
-    -- end
+    local function getNearestTargetRoot(selectedMobNames, rootPart)
+        local nearestTarget, shortestDistance = nil, math.huge
+        local targets = {}
+        for _, mob in pairs(mobsFolder:GetChildren()) do if table.find(selectedMobNames, mob.Name) then table.insert(targets, mob) end end
+        for _, name in ipairs({"Saint Nick", "Little Monkey King"}) do
+            local sm = workspace:FindFirstChild(name)
+            if sm and table.find(selectedMobNames, name) then table.insert(targets, sm) end
+        end
+        for _, mob in ipairs(targets) do
+            local mRoot = mob:FindFirstChild("HumanoidRootPart")
+            local hum = mob:FindFirstChild("Humanoid")
+            if mRoot and hum and hum.Health > 0 then
+                local dist = (rootPart.Position - mRoot.Position).Magnitude
+                if dist < shortestDistance then shortestDistance = dist nearestTarget = mRoot end
+            end
+        end
+        return nearestTarget, shortestDistance
+    end
 
-    -- local function removeMobESP()
-    --     for obj, data in pairs(mobespObjects) do
-    --         if data.UI then data.UI:Destroy() end
-    --     end
-    --     mobespObjects = {}
-    -- end
+    local function mobWarpTween(targetCFrame)
+        local char = localPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+        local distance = (targetCFrame.Position - root.Position).Magnitude
+        if distance < 2 then return end
+        local duration = distance / math.max(warpSpeedMob, 1)
+        local bv = Instance.new("BodyVelocity", root)
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+        currentMobWarpTween = TweenService:Create(root, tweenInfo, {CFrame = targetCFrame})
+        char.Humanoid.PlatformStand = true
+        currentMobWarpTween:Play()
+        currentMobWarpTween.Completed:Wait()
+        bv:Destroy()
+        char.Humanoid.PlatformStand = false
+    end
 
-    -- -- อัปเดตตำแหน่ง UI ม็อบทุกเฟรม
-    -- RunService.RenderStepped:Connect(function()
-    --     if not mobESPtoggle.Value then
-    --         for _, data in pairs(mobespObjects) do data.UI.Visible = false end
-    --         return
-    --     end
+    local function attackMobLoop()
+        while isWarpingToMob do
+            local char = localPlayer.Character
+            local root = char and char:FindFirstChild("HumanoidRootPart")
+            if not root then task.wait(1) continue end
+            local targetRoot, dist = getNearestTargetRoot(currentSelectedMobNames, root)
+            if targetRoot then
+                local targetCFrame = targetRoot.CFrame * CFrame.new(0, 0, desiredAttackOffset)
+                if dist > (desiredAttackOffset + 2) then
+                    mobWarpTween(targetCFrame)
+                else
+                    root.CFrame = CFrame.lookAt(root.Position, targetRoot.Position)
+                    game:GetService("ReplicatedStorage").Remotes.Punch:FireServer(0)
+                    task.wait(0.1)
+                end
+            end
+            task.wait(0.1)
+        end
+    end
 
-    --     for object, data in pairs(mobespObjects) do
-    --         if object and object.Parent then
-    --             local root = object:FindFirstChild("HumanoidRootPart")
-    --             if root then
-    --                 local vector, onScreen = Camera:WorldToViewportPoint(root.Position)
-    --                 if onScreen then
-    --                     data.UI.Visible = true
-    --                     data.UI.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 50)
-    --                 else
-    --                     data.UI.Visible = false
-    --                 end
-    --             end
-    --         else
-    --             if data.UI then data.UI:Destroy() end
-    --             mobespObjects[object] = nil
-    --         end
-    --     end
-    -- end)
+    local function DeathFirstFunctionMob()
+        if firstTimeUsingDeath then
+            local char = localPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.Health = 0
+                localPlayer.CharacterAdded:Wait()
+                task.wait(2)
+            end
+            firstTimeUsingDeath = false
+        end
+    end
 
-    -- -- ฟังก์ชันรีเฟรช ESP ตามรายการที่เลือก
-    -- local function refreshMobESP()
-    --     if not mobESPtoggle.Value then
-    --         removeMobESP()
-    --         return
-    --     end
+    local autoAttackMoblist = Tabs.ESPM:AddToggle("AttackMobESPToggle", {Title = "Auto Warp & Attack Mob", Default = false })
+    autoAttackMoblist:OnChanged(function()
+        isWarpingToMob = autoAttackMoblist.Value
+        if isWarpingToMob then
+            DeathFirstFunctionMob()
+            task.wait(1)
+            FreezMobs()
+            task.spawn(attackMobLoop)
+        elseif currentMobWarpTween then
+            currentMobWarpTween:Cancel()
+        end
+    end)
 
-    --     local selectedValue = MobListDropdown.Value
-    --     local selectedList = {}
-    --     for name, isSelected in pairs(selectedValue) do
-    --         if isSelected then table.insert(selectedList, name) end
-    --     end
+    ---------------------------------------------------------------------------------------------------------------
 
-    --     -- ตรวจสอบโฟลเดอร์ Enemies
-    --     for _, mob in pairs(mobsFolder:GetChildren()) do
-    --         if table.find(selectedList, mob.Name) then
-    --             createMobUI(mob)
-    --         end
-    --     end
+    Tabs.Main:AddButton({
+        Title = "Freeze All Mob",
+        Description = "Just Freeze The Mob",
+        Callback = function()
+            FreezMobs()
 
-    --     -- ตรวจสอบมอนพิเศษ
-    --     local specials = {"Saint Nick", "Little Monkey King"}
-    --     for _, sName in ipairs(specials) do
-    --         local sObj = game.Workspace:FindFirstChild(sName)
-    --         if sObj and table.find(selectedList, sName) then
-    --             createMobUI(sObj)
-    --         end
-    --     end
-    -- end
-
-    -- -- [ ส่วนของ Auto Attack และ Logic อื่นๆ ]
-
-    -- local function getNearestTargetRoot()
-    --     local selectedValue = MobListDropdown.Value
-    --     local selectedList = {}
-    --     for name, isSelected in pairs(selectedValue) do
-    --         if isSelected then table.insert(selectedList, name) end
-    --     end
-
-    --     local character = LocalPlayer.Character
-    --     local myRoot = character and character:FindFirstChild("HumanoidRootPart")
-    --     if not myRoot then return nil, math.huge end
-
-    --     local nearestTarget = nil
-    --     local shortestDistance = math.huge
-
-    --     -- รวมม็อบทั้งหมดที่ตรงกับเงื่อนไข
-    --     local allPotential = {}
-    --     for _, m in pairs(mobsFolder:GetChildren()) do table.insert(allPotential, m) end
-    --     for _, sName in ipairs({"Saint Nick", "Little Monkey King"}) do
-    --         local sObj = game.Workspace:FindFirstChild(sName)
-    --         if sObj then table.insert(allPotential, sObj) end
-    --     end
-
-    --     for _, mob in ipairs(allPotential) do
-    --         if table.find(selectedList, mob.Name) then
-    --             local hum = mob:FindFirstChild("Humanoid")
-    --             local root = mob:FindFirstChild("HumanoidRootPart")
-    --             if hum and root and hum.Health > 0 then
-    --                 local dist = (myRoot.Position - root.Position).Magnitude
-    --                 if dist < shortestDistance then
-    --                     shortestDistance = dist
-    --                     nearestTarget = root
-    --                 end
-    --             end
-    --         end
-    --     end
-    --     return nearestTarget, shortestDistance
-    -- end
-
-    -- -- [ ลอจิกการทำงานของปุ่มต่างๆ ]
-
-    -- MobListDropdown:OnChanged(function()
-    --     refreshMobESP()
-    -- end)
-
-    -- mobESPtoggle:OnChanged(function()
-    --     if mobESPtoggle.Value then
-    --         MobListDropdown:SetValues(getUniqueHerbNames())
-    --         refreshMobESP()
-    --     else
-    --         removeMobESP()
-    --     end
-    -- end)
-
-    -- -- Loop ตรวจสอบม็อบเกิดใหม่และอัปเดต List
-    -- task.spawn(function()
-    --     while true do
-    --         if mobESPtoggle.Value then
-    --             MobListDropdown:SetValues(getUniqueMobNames())
-    --             refreshMobESP()
-    --         end
-    --         task.wait(5)
-    --     end
-    -- end)
-
-    -- -- ปุ่ม Auto Attack (ใช้ลอจิกเดิมของคุณแต่ปรับปรุงเล็กน้อย)
-    -- local autoAttackMoblist = Tabs.ESPM:AddToggle("AttackMobESPToggle", {Title = "Attack Mob ESP", Default = false })
-    -- local heartbeatConnection = nil
-
-    -- autoAttackMoblist:OnChanged(function()
-    --     if autoAttackMoblist.Value then 
-    --         if not heartbeatConnection then
-    --             heartbeatConnection = RunService.Heartbeat:Connect(function()
-    --                 local target, dist = getNearestTargetRoot()
-    --                 if target and LocalPlayer.Character then
-    --                     local myRoot = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-    --                     local punchRemote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Punch")
-                        
-    --                     if myRoot then
-    --                         -- วาร์ปไปข้างหลังตาม Offset
-    --                         local offset = _G.desiredAttackOffset or 5
-    --                         myRoot.CFrame = target.CFrame * CFrame.new(0, 0, offset) * CFrame.Angles(0, math.pi, 0)
-    --                         punchRemote:FireServer(0)
-                            
-    --                         -- Freeze ม็อบ (ใช้ฟังก์ชันเดิมของคุณ)
-    --                         target.Anchored = true
-    --                     end
-    --                 end
-    --             end)
-    --         end
-    --     else
-    --         if heartbeatConnection then
-    --             heartbeatConnection:Disconnect()
-    --             heartbeatConnection = nil
-    --         end
-    --     end
-    -- end)
-
-    -----------------------------------------------------------------------------------------------------------------
-
-    -- Tabs.Main:AddButton({
-    --     Title = "Freeze All Mob",
-    --     Description = "Just Freeze The Mob",
-    --     Callback = function()
-    --         FreezMobs()
-
-    --         Fluent:Notify({
-    --             Title = "Notify",
-    --             Content = "Now the mob is freeze",
-    --             Duration = 3
-    --         })
-    --     end
-    -- })
+            Fluent:Notify({
+                Title = "Notify",
+                Content = "Now the mob is freeze",
+                Duration = 3
+            })
+        end
+    })
     -----------------------------------------------------------------------------------------------------------------
 
     HowToUseAutoFast = Tabs.AutoHerb:AddParagraph({
@@ -1410,28 +1395,6 @@ do
     end)
     
 ----------------------------------------------------------------------------------------------------
-
-    local AutoAttack = Tabs.Main:AddToggle("AutoAttackToggle", {Title = "Auto Attack", Default = false })
-    local IsAutoAttack = false
-
-    AutoAttack:OnChanged(function()
-        if Options.AutoAttackToggle.Value then
-            IsAutoAttack = true
-            while IsAutoAttack do
-                local args = {
-                    0
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("Punch"):FireServer(unpack(args))
-                task.wait(0.2)
-            end
-
-        else
-            IsAutoAttack = false 
-        end
-        print("Toggle changed:", Options.AutoAttackToggle.Value)
-    end)
-
-    Options.AutoAttackToggle:SetValue(false)
 
     Tabs.Main:AddButton({
         Title = "HOP Server",
