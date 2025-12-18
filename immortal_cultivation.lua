@@ -148,7 +148,7 @@ do
         local infoLabel = Instance.new("TextLabel")
         infoLabel.Name = "InfoLabel"
         infoLabel.Parent = container
-        infoLabel.Position = UDim2.new(0, 0, 0.5, 0)
+        infoLabel.Position = UDim2.new(0, 0, 0.25, 0)
         infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
         infoLabel.BackgroundTransparency = 1
         infoLabel.TextSize = 10
@@ -199,7 +199,7 @@ do
                     local vector, onScreen = Camera:WorldToViewportPoint(pos)
                     if onScreen then
                         data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 100)
                     else
                         data.Container.Visible = false
                     end
@@ -368,7 +368,7 @@ do
 
                     if onScreen then
                         data.UI.Visible = true
-                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 40)
+                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 100)
                     else
                         data.UI.Visible = false
                     end
@@ -535,7 +535,7 @@ do
                     local vector, onScreen = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 4, 0))
                     if onScreen then
                         data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
+                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 100)
                     else
                         data.Container.Visible = false
                     end
