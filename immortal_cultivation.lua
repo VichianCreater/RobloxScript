@@ -101,18 +101,21 @@ do
     local RunService = game:GetService("RunService")
     local Camera = workspace.CurrentCamera
     local Players = game:GetService("Players")
+    local CoreGui = game:GetService("CoreGui")
     local LocalPlayer = Players.LocalPlayer
     local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-    local ESPGui = Instance.new("ScreenGui")
-    ESPGui.Name = "HerbESPScreen"
-    ESPGui.ResetOnSpawn = false
-    ESPGui.DisplayOrder = 10
-    ESPGui.Parent = PlayerGui
+
+    -- ตรวจสอบสิทธิ์การเข้าถึง CoreGui (ถ้าใช้ Executor ทั่วไปจะเข้าได้)
+    local success, targetParent = pcall(function()
+        return CoreGui
+    end)
+    local ESPParent = success and targetParent or PlayerGui
 
     local herbsFolder = game.Workspace:WaitForChild("Herbs")
     local espObjects = {} 
     local currentSelectedNames = {}
 
+    -- ฟังก์ชันดึงรายชื่อสมุนไพรแบบไม่ซ้ำ
     local function getUniqueHerbNames()
         local names = {}
         local hash = {}
@@ -125,23 +128,31 @@ do
         return names
     end
 
+    -- ฟังก์ชันสร้าง ESP
     local function createESP(object)
         if espObjects[object] then return end
 
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "HerbESP_" .. object.Name
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 150, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object
+        bbg.Parent = ESPParent
+
         local container = Instance.new("Frame")
+        container.Size = UDim2.new(1, 0, 1, 0)
         container.BackgroundTransparency = 1
-        container.Size = UDim2.new(0, 150, 0, 40)
-        container.Visible = false
-        container.Parent = ESPGui
+        container.Parent = bbg
 
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
         nameLabel.Parent = container
         nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
         nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = "🌿 " .. object.Name
+        nameLabel.Text = "🌿 " .. object.Name -- แสดงแค่ชื่อ ไม่แสดงระยะทาง
         nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLabel.TextSize = 12
+        nameLabel.TextSize = 14
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0.5
 
@@ -151,21 +162,28 @@ do
         infoLabel.Position = UDim2.new(0, 0, 0.25, 0)
         infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
         infoLabel.BackgroundTransparency = 1
-        infoLabel.TextSize = 10
+        infoLabel.TextSize = 11
         infoLabel.Font = Enum.Font.Gotham
         infoLabel.TextStrokeTransparency = 0.5
 
+        -- ดึงข้อมูลจาก ProximityPrompt
         local prompt = object:FindFirstChildOfClass("ProximityPrompt")
-        local infoText = prompt and prompt.ObjectText or "Collecting..."
+        local infoText = prompt and prompt.ObjectText or ""
         infoLabel.Text = infoText
         
-        if string.find(infoText, "1000") then infoLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
-        elseif string.find(infoText, "100") then infoLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
-        elseif string.find(infoText, "10") then infoLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-        else infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200) end
+        -- ตั้งค่าสีตามเงื่อนไขข้อความ
+        if string.find(infoText, "1000") then 
+            infoLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+        elseif string.find(infoText, "100") then 
+            infoLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
+        elseif string.find(infoText, "10") then 
+            infoLabel.TextColor3 = Color3.fromRGB(85, 255, 85)
+        else 
+            infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200) 
+        end
 
         espObjects[object] = {
-            Container = container,
+            Container = bbg,
             Target = object
         }
     end
@@ -177,6 +195,7 @@ do
         espObjects = {}
     end
 
+    -- UI Setup (Fluent/Rayfield)
     local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
     local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
         Title = "Select Herb Types",
@@ -185,38 +204,34 @@ do
         Default = {},
     })
 
+    -- ฟังก์ชันอัปเดตการแสดงผล (Check State)
     RunService.RenderStepped:Connect(function()
-        if not herbESPtoggle.Value then
-            for _, data in pairs(espObjects) do data.Container.Visible = false end
-            return
-        end
-
+        local isEnabled = herbESPtoggle.Value
+        
         for obj, data in pairs(espObjects) do
-            if obj and obj.Parent then
-                local pos = obj:IsA("Model") and (obj.PrimaryPart and obj.PrimaryPart.Position) or (obj:IsA("BasePart") and obj.Position)
-                
-                if pos then
-                    local vector, onScreen = Camera:WorldToViewportPoint(pos + Vector3.new(0, 3, 0))
-                    if onScreen then
-                        data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
-                    else
-                        data.Container.Visible = false
-                    end
-                end
+            if obj and obj.Parent and isEnabled then
+                data.Container.Enabled = true
             else
-                data.Container:Destroy()
-                espObjects[obj] = nil
+                if not isEnabled then
+                    data.Container.Enabled = false
+                else
+                    -- ลบออกถ้า Object ถูกเก็บไปแล้ว
+                    if data.Container then data.Container:Destroy() end
+                    espObjects[obj] = nil
+                end
             end
         end
     end)
 
     local function refreshESP()
         if not herbESPtoggle.Value then
-            removeAllESP()
+            for _, data in pairs(espObjects) do 
+                if data.Container then data.Container.Enabled = false end 
+            end
             return
         end
 
+        -- ลบ ESP ที่ไม่อยู่ในรายการที่เลือก
         for obj, data in pairs(espObjects) do
             if not table.find(currentSelectedNames, obj.Name) then
                 data.Container:Destroy()
@@ -224,6 +239,7 @@ do
             end
         end
 
+        -- สร้าง ESP สำหรับตัวที่เลือก
         for _, herb in pairs(herbsFolder:GetChildren()) do
             if table.find(currentSelectedNames, herb.Name) then
                 createESP(herb)
@@ -231,6 +247,7 @@ do
         end
     end
 
+    -- Events การเปลี่ยนแปลงค่าใน UI
     HerbListDropdown:OnChanged(function(value)
         currentSelectedNames = {}
         for herbName, isSelected in pairs(value) do
@@ -240,47 +257,51 @@ do
     end)
 
     herbESPtoggle:OnChanged(function()
-        if herbESPtoggle.Value then
-            HerbListDropdown:SetValues(getUniqueHerbNames())
-        else
+        if not herbESPtoggle.Value then
             removeAllESP()
+        else
+            HerbListDropdown:SetValues(getUniqueHerbNames())
+            refreshESP()
         end
-        refreshESP()
     end)
 
+    -- ลูปเช็คสมุนไพรเกิดใหม่ (Refresh ทุก 5 วินาที)
     task.spawn(function()
         while true do
             if herbESPtoggle.Value then
-                refreshESP()
+                -- อัปเดต Dropdown เผื่อมีสมุนไพรชนิดใหม่โผล่มา
                 HerbListDropdown:SetValues(getUniqueHerbNames())
+                refreshESP()
             end
             task.wait(5)
         end
     end)
 
+    -- เริ่มต้นทำงานครั้งแรก
     currentSelectedNames = {}
     refreshESP()
 
     -----------------------------------------------------------------------------------------------------------------
     local RunService = game:GetService("RunService")
     local Camera = workspace.CurrentCamera
-    local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
 
-    -- สร้าง ScreenGui สำหรับ Scripture ESP แยกไว้
-    local ScriptureGui = PlayerGui:FindFirstChild("ScriptureESPScreen") or Instance.new("ScreenGui")
-    ScriptureGui.Name = "ScriptureESPScreen"
-    ScriptureGui.ResetOnSpawn = false
-    ScriptureGui.Parent = PlayerGui
+    -- ตรวจสอบสิทธิ์การเข้าถึง CoreGui
+    local success, targetParent = pcall(function()
+        return CoreGui
+    end)
+    local ESPParent = success and targetParent or Players.LocalPlayer:WaitForChild("PlayerGui")
 
     local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Manual ESP", Default = false })
-    local specialESPObjects = {} -- เก็บ { [Object] = {UIFrame, Tier} }
+    local specialESPObjects = {} -- เก็บ { [Object] = {BillboardGui, Tier} }
 
     local TierColors = {
         T1 = Color3.fromRGB(255, 255, 255), -- สีขาว
         T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
         T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
         T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
-        T5 = Color3.fromRGB(255, 0, 0)      -- สีแดง
+        T5 = Color3.fromRGB(255, 0, 0)       -- สีแดง
     }
 
     local scriptureList = {
@@ -315,72 +336,62 @@ do
         ["jttw"] = "T5"
     }
 
-    -- ฟังก์ชันสร้าง UI 2D
-    local function createScriptureUI(object, tier)
+    -- ฟังก์ชันสร้าง BillboardGui
+    local function createScriptureESP(object, tier)
         if specialESPObjects[object] then return end
 
-        local container = Instance.new("Frame")
-        container.Name = "ESP_" .. object.Name
-        container.BackgroundTransparency = 1
-        container.Size = UDim2.new(0, 200, 0, 40)
-        container.Visible = false
-        container.Parent = ScriptureGui
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "ScriptureESP_" .. object.Name
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 200, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object
+        bbg.Parent = ESPParent
 
         local nameLabel = Instance.new("TextLabel")
-        nameLabel.Parent = container
+        nameLabel.Parent = bbg
         nameLabel.Size = UDim2.new(1, 0, 1, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = "📕 " .. string.format("[%s] %s", tier, object.Name)
         nameLabel.TextColor3 = TierColors[tier] or Color3.fromRGB(255, 255, 255)
         nameLabel.TextSize = 14
-        nameLabel.Font = Enum.Font.SourceSansBold
+        nameLabel.Font = Enum.Font.GothamBold -- ใช้ฟอนต์ที่ดูทันสมัยขึ้น
         nameLabel.TextStrokeTransparency = 0
-        nameLabel.TextStrokeColor3 = Color3.new(0,0,0)
+        nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
 
         specialESPObjects[object] = {
-            UI = container,
+            Instance = bbg,
             Tier = tier
         }
     end
 
     local function clearScriptureESP()
         for obj, data in pairs(specialESPObjects) do
-            if data.UI then data.UI:Destroy() end
+            if data.Instance then data.Instance:Destroy() end
         end
         specialESPObjects = {}
     end
 
-    -- ระบบอัปเดตตำแหน่ง UI ตามการเคลื่อนที่ของกล้อง
+    -- อัปเดตสถานะการแสดงผล
     RunService.RenderStepped:Connect(function()
-        if not specialESPtoggle.Value then
-            for _, data in pairs(specialESPObjects) do data.UI.Visible = false end
-            return
-        end
-
+        local isEnabled = specialESPtoggle.Value
+        
         for object, data in pairs(specialESPObjects) do
-            if object and object.Parent then
-                -- ใช้ Position ของพาร์ท (ตรวจสอบว่าเป็น BasePart หรือไม่)
-                local partPosition = object:IsA("BasePart") and object.Position or (object:IsA("Model") and object:GetPivot().Position)
-                
-                if partPosition then
-                    local vector, onScreen = Camera:WorldToViewportPoint(partPosition + Vector3.new(0, 3, 0))
-
-                    if onScreen then
-                        data.UI.Visible = true
-                        data.UI.Position = UDim2.new(0, vector.X - 100, 0, vector.Y - 40)
-                    else
-                        data.UI.Visible = false
-                    end
-                end
+            if object and object.Parent and isEnabled then
+                data.Instance.Enabled = true
             else
-                -- ถ้าไอเทมหายไป (มีคนเก็บ) ให้ลบ UI ทิ้ง
-                if data.UI then data.UI:Destroy() end
-                specialESPObjects[object] = nil
+                if not isEnabled then
+                    data.Instance.Enabled = false
+                else
+                    -- ถ้าไอเทมหายไปให้ลบออกจากหน่วยความจำ
+                    if data.Instance then data.Instance:Destroy() end
+                    specialESPObjects[object] = nil
+                end
             end
         end
     end)
 
-    -- Loop ตรวจสอบไอเทมใหม่ๆ
+    -- Loop ตรวจสอบไอเทมใน Workspace ทุกๆ 5 วินาที
     task.spawn(function()
         while true do
             if specialESPtoggle.Value then
@@ -388,7 +399,7 @@ do
                 for _, child in pairs(currentItems) do
                     local tier = scriptureList[child.Name]
                     if tier then
-                        createScriptureUI(child, tier)
+                        createScriptureESP(child, tier)
                     end
                 end
             end
@@ -409,15 +420,15 @@ do
     local runService = game:GetService("RunService")
     local localPlayer = game.Players.LocalPlayer
     local camera = workspace.CurrentCamera
+    local CoreGui = game:GetService("CoreGui")
 
-    -- ### [1] การตั้งค่า ScreenGui ESP (ใช้โครงสร้างแบบเดียวกับ Herb) ###
-    local espGui = localPlayer:WaitForChild("PlayerGui"):FindFirstChild("MobESPSystem") or Instance.new("ScreenGui")
-    espGui.Name = "MobESPSystem"
-    espGui.ResetOnSpawn = false
-    espGui.DisplayOrder = 15
-    espGui.Parent = localPlayer:WaitForChild("PlayerGui")
+    -- ### [1] การตั้งค่า ESP Parent (CoreGui) ###
+    local success, targetParent = pcall(function()
+        return CoreGui
+    end)
+    local ESPParent = success and targetParent or localPlayer:WaitForChild("PlayerGui")
 
-    local mobEspObjects = {} -- เก็บข้อมูล {Container, Target}
+    local mobEspObjects = {} -- เก็บข้อมูล {Instance, Target}
     local currentSelectedMobNames = {}
     local isWarpingToMob = false
     local currentMobWarpTween = nil
@@ -439,41 +450,44 @@ do
         end
     end
 
-    -- ### [3] ฟังก์ชัน ESP (ถอดแบบจากโค้ด Herb ของคุณ) ###
+    -- ### [3] ฟังก์ชัน ESP (BillboardGui ใน CoreGui) ###
     local function createMobESP(object)
         if mobEspObjects[object] then return end
 
-        local container = Instance.new("Frame")
-        container.BackgroundTransparency = 1
-        container.Size = UDim2.new(0, 150, 0, 40)
-        container.Visible = false
-        container.Parent = espGui
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "MobESP_" .. object.Name
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 150, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object:FindFirstChild("HumanoidRootPart") or object
+        bbg.Parent = ESPParent
 
         local nameLabel = Instance.new("TextLabel")
         nameLabel.Name = "NameLabel"
-        nameLabel.Parent = container
+        nameLabel.Parent = bbg
         nameLabel.Size = UDim2.new(1, 0, 1, 0)
         nameLabel.BackgroundTransparency = 1
         nameLabel.Text = "☠️ " .. object.Name
-        nameLabel.TextColor3 = Color3.fromRGB(255, 80, 80) -- สีแดงเข้มเพื่อให้ต่างจากสมุนไพร
-        nameLabel.TextSize = 12
+        nameLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
+        nameLabel.TextSize = 14
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0.5
+        nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
 
         mobEspObjects[object] = {
-            Container = container,
+            Instance = bbg,
             Target = object
         }
     end
 
     local function removeAllMobESP()
         for obj, data in pairs(mobEspObjects) do
-            if data.Container then data.Container:Destroy() end
+            if data.Instance then data.Instance:Destroy() end
         end
         mobEspObjects = {}
     end
 
-    -- ### [4] ระบบจัดการ UI & Loop (ถอดแบบจาก Herb) ###
+    -- ### [4] ระบบจัดการ UI & Dropdown ###
     local mobESPtoggle = Tabs.ESPM:AddToggle("MobESPToggle", {Title = "Show Mob ESP", Default = false })
     local MobListDropdown = Tabs.ESPM:AddDropdown("SelectMob", {
         Title = "Select Mob",
@@ -482,7 +496,6 @@ do
         Default = {},
     })
 
-    -- อัปเดตรายชื่อม็อบเข้า Dropdown
     local function updateMobList()
         local names = {}
         local hash = {}
@@ -495,22 +508,19 @@ do
         MobListDropdown:SetValues(names)
     end
 
-    -- ฟังก์ชัน Refresh ESP
     local function refreshMobESP()
         if not mobESPtoggle.Value then
-            removeAllMobESP()
+            for _, data in pairs(mobEspObjects) do data.Instance.Enabled = false end
             return
         end
 
-        -- ลบอันที่ไม่ถูกเลือกใน Dropdown ออก
         for obj, data in pairs(mobEspObjects) do
             if not table.find(currentSelectedMobNames, obj.Name) then
-                data.Container:Destroy()
+                data.Instance:Destroy()
                 mobEspObjects[obj] = nil
             end
         end
 
-        -- สแกนหาตัวที่เลือกเพื่อสร้าง ESP
         for _, mob in pairs(mobsFolder:GetChildren()) do
             if table.find(currentSelectedMobNames, mob.Name) then createMobESP(mob) end
         end
@@ -520,33 +530,25 @@ do
         end
     end
 
-    -- RenderStepped อัปเดตตำแหน่ง (แบบเดียวกับ Herb)
+    -- RenderStepped อัปเดตสถานะ Billboard
     runService.RenderStepped:Connect(function()
-        if not mobESPtoggle.Value then
-            for _, data in pairs(mobEspObjects) do data.Container.Visible = false end
-            return
-        end
-
+        local isEnabled = mobESPtoggle.Value
         for obj, data in pairs(mobEspObjects) do
-            if obj and obj.Parent then
-                local root = obj:FindFirstChild("HumanoidRootPart")
-                if root then
-                    local vector, onScreen = camera:WorldToViewportPoint(root.Position + Vector3.new(0, 5, 0))
-                    if onScreen then
-                        data.Container.Visible = true
-                        data.Container.Position = UDim2.new(0, vector.X - 75, 0, vector.Y - 20)
-                    else
-                        data.Container.Visible = false
-                    end
-                end
+            if obj and obj.Parent and isEnabled then
+                local hum = obj:FindFirstChild("Humanoid")
+                data.Instance.Enabled = (hum and hum.Health > 0) or true
             else
-                if data.Container then data.Container:Destroy() end
-                mobEspObjects[obj] = nil
+                if not isEnabled then
+                    data.Instance.Enabled = false
+                else
+                    if data.Instance then data.Instance:Destroy() end
+                    mobEspObjects[obj] = nil
+                end
             end
         end
     end)
 
-    -- เชื่อมต่อเหตุการณ์ UI
+    -- Events สำหรับ Dropdown
     MobListDropdown:OnChanged(function(value)
         currentSelectedMobNames = {}
         for name, isSelected in pairs(value) do
@@ -560,17 +562,18 @@ do
         refreshMobESP()
     end)
 
+    -- Loop อัปเดตรายชื่อม็อบเกิดใหม่
     task.spawn(function()
         while true do
             if mobESPtoggle.Value then 
-                refreshMobESP() 
                 updateMobList() 
+                refreshMobESP() 
             end
             task.wait(5)
         end
     end)
 
-    -- ### [5] ระบบโจมตีและวาร์ป (ส่วนฟังชั่นเดิมของคุณ) ###
+    -- ### [5] ระบบโจมตีและวาร์ป (ฟังก์ชันเดิมทั้งหมด) ###
     Tabs.ESPM:AddSlider("AttackOffset", { Title = "Attack Offset", Default = 5, Min = 0, Max = 20, Rounding = 1, Callback = function(v) desiredAttackOffset = v end })
     Tabs.ESPM:AddSlider("MobWarpSpeed", { Title = "Warp Speed (Studs/s)", Default = 50, Min = 10, Max = 100, Rounding = 1, Callback = function(v) warpSpeedMob = v end })
 
