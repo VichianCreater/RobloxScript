@@ -779,9 +779,9 @@ do
 
     ---------------------------------------------------------------------------------------------------------------
 
-    Tabs.Main:AddButton({
+    Tabs.ESPM:AddButton({
         Title = "Freeze All Mob",
-        Description = "Just Freeze The Mob",
+        Description = "Click to freeze mob when automatic freeze not work",
         Callback = function()
             FreezMobs()
 
