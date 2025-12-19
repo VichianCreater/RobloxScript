@@ -1557,8 +1557,27 @@ do
         end
     })
 
+    if not isfolder("VichianHUB") then
+        makefolder("VichianHUB")
+    end
+
+    local FILE_PART = "VichianHUB/log_server_list.txt"
     local TeleportService = game:GetService("TeleportService")
     local HttpService = game:GetService("HttpService")
+
+    local function GetLoggedServers()
+        if isfile(FILE_PART) then
+            local content = readfile(FILE_PART)
+            return HttpService:JSONDecode(content) or {}
+        end
+        return {}
+    end
+
+    local function SaveServerToLog(serverId)
+        local logged = GetLoggedServers()
+        logged[serverId] = true
+        writefile(FILE_PART, HttpService:JSONEncode(logged))
+    end
 
     local ServerList = Tabs.HSV:AddDropdown("SelectServer", {
         Title = "HOP Selected (Players/Max)",
@@ -1568,9 +1587,12 @@ do
         Default = "None",
     })
 
+    local CurrentServers = {}
+
     local function UpdateServerDropdown()
         local ServerTable = {}
         local ServerDataMap = {}
+        local loggedServers = GetLoggedServers()
         
         local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
         
@@ -1581,7 +1603,7 @@ do
 
         if success and result.data then
             for _, s in pairs(result.data) do
-                if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                if s.id ~= game.JobId and s.playing < s.maxPlayers and not loggedServers[s.id] then
                     local label = "Players: " .. s.playing .. "/" .. s.maxPlayers .. " [" .. s.id:sub(1,8) .. "]"
                     table.insert(ServerTable, label)
                     ServerDataMap[label] = s.id
@@ -1590,18 +1612,70 @@ do
         end
 
         ServerList:SetValues(ServerTable)
-        return ServerDataMap
+        CurrentServers = ServerDataMap
     end
 
-    local CurrentServers = UpdateServerDropdown()
+    Tabs.HSV:AddButton({
+        Title = "Clear Server Log",
+        Description = "Clear the server log to appere in dropdown again.",
+        Callback = function()
+            Window:Dialog({
+                Title = "Clear All Server Log",
+                Content = "Confirm to clear all server logs.",
+                Buttons = {
+                    {
+                        Title = "Confirm",
+                        Callback = function()
+                            if isfile(FILE_PART) then
+                                delfile(FILE_PART)
+                                print("Cleared server logs!")
+                                UpdateServerDropdown()
+                            end
+                        end
+                    },
+                    {
+                        Title = "Cancel",
+                        Callback = function()
+                            print("Cancelled")
+                        end
+                    }
+                }
+            })
+        end
+    })
 
     ServerList:OnChanged(function(Value)
         local targetServerId = CurrentServers[Value]
         if targetServerId then
-            print("Teleporting to:", targetServerId)
+            Fluent:Notify({
+                Title = "Teleporting to ",
+                Content = targetServerId,
+                Duration = 3
+            })
+            print("Saving to log and teleporting to:", targetServerId)
+            SaveServerToLog(targetServerId)
+            wait(3)
             TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServerId, game.Players.LocalPlayer)
         end
     end)
+
+    task.spawn(function()
+        while true do
+            local count = 0
+            for _ in pairs(CurrentServers) do count = count + 1 end
+            if count == 0 then
+                Fluent:Notify({
+                    Title = "No servers available in list",
+                    Content = "fetching new data...",
+                    Duration = 3
+                })
+                UpdateServerDropdown()
+            end
+            
+            task.wait(5)
+        end
+    end)
+
 end
 
 
