@@ -151,36 +151,42 @@ do
         nameLabel.Parent = container
         nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
         nameLabel.BackgroundTransparency = 1
-        nameLabel.Text = "🌿 " .. object.Name -- แสดงแค่ชื่อ ไม่แสดงระยะทาง
+        -- nameLabel.Text = "🌿 " .. object.Name
         nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         nameLabel.TextSize = 14
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0.5
 
-        local infoLabel = Instance.new("TextLabel")
-        infoLabel.Name = "InfoLabel"
-        infoLabel.Parent = container
-        infoLabel.Position = UDim2.new(0, 0, 0.25, 0)
-        infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
-        infoLabel.BackgroundTransparency = 1
-        infoLabel.TextSize = 11
-        infoLabel.Font = Enum.Font.Gotham
-        infoLabel.TextStrokeTransparency = 0.5
+        -- local infoLabel = Instance.new("TextLabel")
+        -- infoLabel.Name = "InfoLabel"
+        -- infoLabel.Parent = container
+        -- infoLabel.Position = UDim2.new(0, 0, 0.25, 0)
+        -- infoLabel.Size = UDim2.new(1, 0, 0.5, 0)
+        -- infoLabel.BackgroundTransparency = 1
+        -- infoLabel.TextSize = 12
+        -- infoLabel.Font = Enum.Font.Gotham
+        -- infoLabel.TextStrokeTransparency = 0.7
 
-        -- ดึงข้อมูลจาก ProximityPrompt
         local prompt = object:FindFirstChildOfClass("ProximityPrompt")
         local infoText = prompt and prompt.ObjectText or ""
-        infoLabel.Text = infoText
-        
-        -- ตั้งค่าสีตามเงื่อนไขข้อความ
+        -- infoLabel.Text = infoText
+
         if string.find(infoText, "1000") then 
-            infoLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+            -- infoLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+            nameLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
+            nameLabel.Text = "🌿 1000-Y : " .. object.Name
         elseif string.find(infoText, "100") then 
-            infoLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
+            -- infoLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
+            nameLabel.TextColor3 = Color3.fromRGB(255, 85, 85)
+            nameLabel.Text = "🌿 100-Y : " .. object.Name
         elseif string.find(infoText, "10") then 
-            infoLabel.TextColor3 = Color3.fromRGB(85, 255, 85)
+            -- infoLabel.TextColor3 = Color3.fromRGB(85, 255, 85)
+            nameLabel.TextColor3 = Color3.fromRGB(85, 255, 85)
+            nameLabel.Text = "🌿 10-Y : " .. object.Name
         else 
-            infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200) 
+            -- infoLabel.TextColor3 = Color3.fromRGB(255, 255, 255) 
+            nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            nameLabel.Text = "🌿 1-Y : " .. object.Name
         end
 
         espObjects[object] = {
