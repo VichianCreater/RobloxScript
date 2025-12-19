@@ -40,6 +40,7 @@ local Tabs = {
     ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
     ESPFlame = Window:AddTab({ Title = "ESP Flame", Icon = "flame" }),
     AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
+    HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
 
@@ -1513,10 +1514,20 @@ do
     end)
     
 ----------------------------------------------------------------------------------------------------
+    local Success, Info = pcall(function()
+        return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+    end)
 
-    Tabs.Main:AddButton({
-        Title = "HOP Server",
-        Description = "Click To Teleport HOP Server",
+    local GameName = Success and Info.Name or "Unknown Game"
+
+    Tabs.HSV:AddParagraph({
+        Title = "Server Information.",
+        Content = "\nGame Name : " .. GameName .. "\nGame ID : " .. game.PlaceId .. "\nServer ID : " .. game.JobId
+    })
+
+    Tabs.HSV:AddButton({
+        Title = "HOP Server [Faster]",
+        Description = "Click To Teleport Random Server",
         Callback = function()
             local TeleportService = game:GetService("TeleportService")
             local HttpService = game:GetService("HttpService")
@@ -1546,6 +1557,51 @@ do
         end
     })
 
+    local TeleportService = game:GetService("TeleportService")
+    local HttpService = game:GetService("HttpService")
+
+    local ServerList = Tabs.HSV:AddDropdown("SelectServer", {
+        Title = "HOP Selected (Players/Max)",
+        Description = "Select To HOP Server",
+        Values = {},
+        Multi = false,
+        Default = "None",
+    })
+
+    local function UpdateServerDropdown()
+        local ServerTable = {}
+        local ServerDataMap = {}
+        
+        local url = "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+        
+        local success, result = pcall(function()
+            local raw = game:HttpGet(url)
+            return HttpService:JSONDecode(raw)
+        end)
+
+        if success and result.data then
+            for _, s in pairs(result.data) do
+                if s.id ~= game.JobId and s.playing < s.maxPlayers then
+                    local label = "Players: " .. s.playing .. "/" .. s.maxPlayers .. " [" .. s.id:sub(1,8) .. "]"
+                    table.insert(ServerTable, label)
+                    ServerDataMap[label] = s.id
+                end
+            end
+        end
+
+        ServerList:SetValues(ServerTable)
+        return ServerDataMap
+    end
+
+    local CurrentServers = UpdateServerDropdown()
+
+    ServerList:OnChanged(function(Value)
+        local targetServerId = CurrentServers[Value]
+        if targetServerId then
+            print("Teleporting to:", targetServerId)
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, targetServerId, game.Players.LocalPlayer)
+        end
+    end)
 end
 
 
