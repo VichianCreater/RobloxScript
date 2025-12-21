@@ -36,8 +36,10 @@ end)
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     AutoFarm = Window:AddTab({ Title = "Auto - Monster", Icon = "swords" }),
-    EGGS = Window:AddTab({ Title = "Eggs", Icon = "egg" }),
     AutoUp = Window:AddTab({ Title = "Auto Upgrade", Icon = "plus" }),
+    EGGS = Window:AddTab({ Title = "Eggs", Icon = "egg" }),
+    Delete_Shadow = Window:AddTab({ Title = "Auto Delete Shadow", Icon = "trash-2" }),
+    WeaponSplitTab = Window:AddTab({ Title = "Auto Split Weapon", Icon = "trash-2" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -130,18 +132,25 @@ do
         Default = {},
     })
 
-    -- [[ ฟังก์ชันอัปเดต Dropdown อัตโนมัติ ]]
-    task.spawn(function()
-        while true do
-            -- อัปเดตรายชื่อเฉพาะตอนที่ไม่ได้เปิดหน้าต่าง Dropdown ค้างไว้อยู่ (หรืออัปเดตตลอดเวลาได้เลย)
+    -- สร้างปุ่มสำหรับอัปเดตรายชื่อมอนสเตอร์ใน Dropdown
+    Tabs.AutoFarm:AddButton({
+        Title = "Refresh Monster List",
+        Description = "Click to update the list of available monsters",
+        Callback = function()
+            -- ดึงรายชื่อใหม่
             local currentList = getEnemyList()
             
-            -- ใช้คำสั่ง SetValues เพื่อเปลี่ยนรายการข้างใน
+            -- อัปเดตเข้าไปใน Dropdown
             MonsterDropdown:SetValues(currentList)
-            
-            task.wait(2) -- รอ 2 วินาทีตามที่คุณต้องการ
+
+            -- แจ้งเตือนผู้ใช้
+            Fluent:Notify({
+                Title = "Monster List Updated",
+                Content = "Found " .. #currentList .. " types of monsters.",
+                Duration = 3
+            })
         end
-    end)
+    })
 
     -- ฟังก์ชันเช็คว่ามอนสเตอร์ตายหรือยังจาก Text (เช่น "0/500k")
     local function isDead(enemy)
@@ -383,6 +392,236 @@ do
         IsAutoAuras = Options.AurasToggle.Value
         if IsAutoAuras then 
             task.spawn(startAutoAuras) 
+        end
+    end)
+----------------------------------------------------------------------------------------------------
+    local Shadown_Tier = {"E", "D", "C", "B", "A", "S", "SS", "SSS"}
+    local Shadown_Star = {"No Star", "🌟", "🌟🌟", "🌟🌟🌟", "🌟🌟🌟🌟"}
+
+    -- สร้าง Multi-Dropdown สำหรับ Tier
+    local TierSelect = Tabs.Delete_Shadow:AddDropdown("TierSelect", {
+        Title = "Select Shadow Tiers to Delete",
+        Values = Shadown_Tier,
+        Multi = true,
+        Default = {},
+    })
+
+    -- สร้าง Multi-Dropdown สำหรับ Stars
+    local StarSelect = Tabs.Delete_Shadow:AddDropdown("StarSelect", {
+        Title = "Select Shadow Stars to Delete",
+        Values = Shadown_Star,
+        Multi = true,
+        Default = {},
+    })
+
+    local function RemoveSelectedShadows()
+        local ShadowsFolder = game:GetService("Players").LocalPlayer.PlayerGui.UI.Frames.Inventory.NewMain.body.lists.Shadows.pets
+        local Bridge = game:GetService("ReplicatedStorage"):WaitForChild("Bridge")
+        
+        local selectedTiers = Options.TierSelect.Value
+        local selectedStars = Options.StarSelect.Value
+        
+        local listToDelete = {}
+        local count = 0
+
+        for _, shadow in pairs(ShadowsFolder:GetChildren()) do
+            -- เช็คว่าเป็น Frame ของ Shadow และมีปุ่มอยู่ข้างใน
+            if shadow:IsA("Frame") and shadow:FindFirstChild("Button") then
+                local petId = shadow.Name
+                
+                -- [[ ส่วนที่เพิ่มใหม่: เช็คว่าใส่ใช้งานอยู่หรือไม่ ]]
+                local equippedIcon = shadow.Button:FindFirstChild("Equipped")
+                local isEquipped = equippedIcon and equippedIcon.Visible == true
+
+                -- ถ้าไม่ได้ใส่ใช้งานอยู่ (isEquipped เป็น false) ถึงจะไปเช็คเงื่อนไขการลบต่อ
+                if not isEquipped then
+                    
+                    -- 1. เช็ค Tier
+                    local rarityLabel = shadow.Button:FindFirstChild("rarity2") and shadow.Button.rarity2:FindFirstChild("RaritySymb")
+                    local tierText = rarityLabel and rarityLabel.Text or ""
+                    local tierMatch = selectedTiers[tierText]
+                    
+                    -- 2. เช็ค Star
+                    local nameLabel = shadow.Button:FindFirstChild("PetName")
+                    local nameText = nameLabel and nameLabel.Text or ""
+                    local starMatch = false
+                    local hasAnyStar = string.find(nameText, "🌟")
+                    
+                    for starOption, _ in pairs(selectedStars) do
+                        if starOption == "No Star" then
+                            if not hasAnyStar then starMatch = true break end
+                        elseif string.find(nameText, starOption) then
+                            starMatch = true
+                            break
+                        end
+                    end
+
+                    -- 3. ถ้าตรงเงื่อนไข Tier และ Star (และไม่ได้ Equipped) ให้เก็บ ID ไว้
+                    if tierMatch and starMatch then
+                        listToDelete[petId] = true
+                        count = count + 1
+                    end
+                end
+            end
+        end
+
+        -- ส่งคำสั่งลบแบบกลุ่ม (Batch)
+        if count > 0 then
+            local args = {"Pets", "Delete", listToDelete}
+            Bridge:FireServer(unpack(args))
+        
+            Fluent:Notify({Title = "Success", Content = "Deleted " .. count .. " shadows", Duration = 3})
+        else
+            if not Options.Delete_shadow_toggle.Value then
+                Fluent:Notify({Title = "Not Found", Content = "No matching shadows to delete", Duration = 3})
+            end
+        end
+    end
+
+    Tabs.Delete_Shadow:AddButton({
+        Title = "Delete Selected Shadows",
+        Description = "Permanently removes shadows based on Tier and Stars selected above",
+        Callback = function()
+            -- ใส่คำสั่งเรียกใช้งานฟังก์ชันลบ
+            RemoveSelectedShadows()
+        end
+    })
+
+    local ShadowDeleteToggle = Tabs.Delete_Shadow:AddToggle("Delete_shadow_toggle", {Title = "Auto Dlete Shadow", Default = false })
+    ShadowDeleteToggle:OnChanged(function()
+        if Options.Delete_shadow_toggle.Value then
+            isDeleteShadow = true
+            while isDeleteShadow do
+                RemoveSelectedShadows()
+                wait(0.5)
+            end
+        else
+            isDeleteShadow = false
+        end
+    end)
+
+    Options.Delete_shadow_toggle:SetValue(false)
+
+----------------------------------------------------------------------------------------------------
+
+    local WeaponListPath = game:GetService("Players").LocalPlayer.PlayerGui.UI.Frames.Inventory.NewMain.body.lists.Weapons.list
+    local Bridge = game:GetService("ReplicatedStorage"):WaitForChild("Bridge")
+
+    local isAutoSplit = false
+
+    -- ฟังก์ชันสำหรับดึงชื่ออาวุธและจำนวนมาแสดง
+    local function GetAvailableWeapons()
+        local weapons = {"Select All"}
+        for _, item in pairs(WeaponListPath:GetChildren()) do
+            if item:IsA("Frame") and item.Visible == true then
+                local button = item:FindFirstChild("Button")
+                local countLabel = button and button:FindFirstChild("CountFrame") and button.CountFrame:FindFirstChild("Count")
+                
+                local amount = countLabel and countLabel.Text or "0"
+                -- รูปแบบ: "ชื่ออาวุธ [จำนวน]"
+                local displayName = item.Name .. " [" .. amount .. "]"
+                table.insert(weapons, displayName)
+            end
+        end
+        return weapons
+    end
+
+    -- สร้าง Multi-Dropdown
+    local WeaponSelect = Tabs.WeaponSplitTab:AddDropdown("WeaponSelect", {
+        Title = "Select Weapons to Split",
+        Values = GetAvailableWeapons(),
+        Multi = true,
+        Default = {},
+    })
+
+    -- Logic สำหรับ Select All
+    WeaponSelect:OnChanged(function(Value)
+        if Value["Select All"] then
+            local allWeapons = {}
+            for _, v in pairs(WeaponSelect.Values) do
+                if v ~= "Select All" then
+                    allWeapons[v] = true
+                end
+            end
+            WeaponSelect:SetValue(allWeapons)
+        end
+    end)
+
+    -- ฟังก์ชันหลักสำหรับการ Split
+    local function SplitLogic()
+        local selectedValues = Options.WeaponSelect.Value
+        local countSplit = 0
+
+        for displayName, isSelected in pairs(selectedValues) do
+            if isSelected and displayName ~= "Select All" then
+                -- ตัดสตริงเพื่อเอาชื่ออาวุธจริงๆ ออกมา (ตัดตั้งแต่ช่องว่างและ [ ออกไป)
+                local weaponName = displayName:gsub(" %[%d+%%]$",""):gsub(" %[%d+%]","")
+                
+                local weaponFrame = WeaponListPath:FindFirstChild(weaponName)
+                if weaponFrame and weaponFrame.Visible then
+                    local button = weaponFrame:FindFirstChild("Button")
+                    if button then
+                        -- เช็คว่าสวมใส่อยู่หรือไม่
+                        local equippedIcon = button:FindFirstChild("Equipped")
+                        if equippedIcon and equippedIcon.Visible == true then
+                            continue 
+                        end
+
+                        local countLabel = button:FindFirstChild("CountFrame") and button.CountFrame:FindFirstChild("Count")
+                        local amount = countLabel and tonumber(countLabel.Text) or 0
+                        
+                        if amount > 0 then
+                            local args = {
+                                "Wsplit", "Split",
+                                { CurrentSword = weaponName, Amount = amount }
+                            }
+                            Bridge:FireServer(unpack(args))
+                            countSplit = countSplit + 1
+                        end
+                    end
+                end
+            end
+        end
+        return countSplit
+    end
+
+    Tabs.WeaponSplitTab:AddButton({
+        Title = "Refresh & Clear Selection",
+        Callback = function()
+            WeaponSelect:SetValue({}) 
+            WeaponSelect:SetValues(GetAvailableWeapons())
+            Fluent:Notify({Title = "System", Content = "List & Counts Updated", Duration = 2})
+        end
+    })
+
+    --- [[ UI Controls ]] ---
+
+    Tabs.WeaponSplitTab:AddButton({
+        Title = "Split Selected Now",
+        Description = "Permanently removes weapon based on selected above",
+        Callback = function()
+            local result = SplitLogic()
+            if result > 0 then
+                Fluent:Notify({Title = "Success", Content = "Splitted " .. result .. " types", Duration = 3})
+            end
+        end
+    })
+
+    local AutoSplitToggle = Tabs.WeaponSplitTab:AddToggle("AutoSplitToggle", {
+        Title = "Auto Split Loop", 
+        Default = false 
+    })
+
+    AutoSplitToggle:OnChanged(function()
+        isAutoSplit = Options.AutoSplitToggle.Value
+        if isAutoSplit then
+            task.spawn(function()
+                while isAutoSplit do
+                    if not Options.AutoSplitToggle.Value then break end
+                    SplitLogic()
+                    task.wait(0.5)
+                end
+            end)
         end
     end)
 
@@ -685,5 +924,61 @@ SaveManager:LoadAutoloadConfig()
 -- game:GetService("ReplicatedStorage"):WaitForChild("Bridge"):FireServer(unpack(args))
 
 
+-- Event Location
+-- - Raid : 298.726685, 128.32428, 4400.29883, 0.277972043, 0, 0.960589111, 0, 1, 0, -0.960589111, 0, 0.277972043
+
+-- Auto Delete Shadow
+
+-- local args = {,
+
+--     "Pets",
+
+--     "Delete",
+
+--     {
+
+--         ["18aaea73-322b-4e49-97a5-29b5b3f22846"] = true
+
+--     }
+
+-- }
+
+-- game:GetService("ReplicatedStorage"):WaitForChild("Bridge"):FireServer(unpack(args))
 
 
+-- game:GetService("Players").LocalPlayer.PlayerGui.UI.Frames.Inventory.NewMain.body.lists.Shadows.pets["c4f89831-570f-4812-b765-75ac786bda70"].Button.PetName = Dong 🌟 🌟
+
+
+-- game:GetService("Players").LocalPlayer.PlayerGui.UI.Frames.Inventory.NewMain.body.lists.Shadows.pets["dcea325d-29cf-405e-8fdd-7d9f7353284c"].Button.rarity2.RaritySymb.Text
+
+
+
+-- Shadown_Tier = {
+--     [1] = "E",
+--     [2] = "D",
+--     [3] = "C",
+--     [4] = "B",
+--     [5] = "A",
+--     [6] = "S",
+--     [7] = "SS",
+--     [8] = "SSS",
+-- }
+
+-- Shadown_Star = {
+--     [1] = "🌟",
+--     [2] = "🌟🌟",
+--     [3] = "🌟🌟🌟",
+--     [4] = "🌟🌟🌟🌟",
+-- }
+
+-- Weapon Split
+
+-- local args = {
+-- 	"Wsplit",
+-- 	"Split",
+-- 	{
+-- 		CurrentSword = "Hunter Justice",
+-- 		Amount = 14
+-- 	}
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("Bridge"):FireServer(unpack(args))
