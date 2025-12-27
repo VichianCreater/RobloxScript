@@ -202,12 +202,11 @@ do
 
     task.spawn(function()
         while true do
-            if Options.Skill1.Value then fireSkill(Enum.KeyCode.One) end
-            if Options.Skill2.Value then fireSkill(Enum.KeyCode.Two) end
-            if Options.Skill3.Value then fireSkill(Enum.KeyCode.Three) end
-            if Options.SkillF.Value then fireSkill(Enum.KeyCode.F) end
-            if Options.SkillX.Value then fireSkill(Enum.KeyCode.X) end
-            
+            if Options.Skill1.Value and IsFarm then fireSkill(Enum.KeyCode.One) end
+            if Options.Skill2.Value and IsFarm then fireSkill(Enum.KeyCode.Two) end
+            if Options.Skill3.Value and IsFarm then fireSkill(Enum.KeyCode.Three) end
+            if Options.SkillF.Value and IsFarm then fireSkill(Enum.KeyCode.F) end
+            if Options.SkillX.Value and IsFarm then fireSkill(Enum.KeyCode.X) end
             task.wait(0.1) -- ความเร็วในการกด (ปรับได้ตามความเหมาะสม)
         end
     end)
