@@ -95,7 +95,7 @@ do
 
     -- 3. ฟังก์ชันโจมตี
     local function attack()
-        local args = {{{state = Enum.HumanoidStateType.Running, hitcount = 3}, "\f"}}
+        local args = {{{state = Enum.HumanoidStateType.Running, hitcount = 4}, "\f"}}
         game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
     end
 
