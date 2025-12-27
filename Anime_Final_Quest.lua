@@ -33,9 +33,11 @@ game:GetService('Players').LocalPlayer.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
+-- https://lucide.dev/icons/play
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    AutoStart = Window:AddTab({ Title = "Auto Start", Icon = "eye" }),
+    AttackSetting = Window:AddTab({ Title = "Attack Setting", Icon = "swords" }),
+    AutoStart = Window:AddTab({ Title = "Auto Start", Icon = "play" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -56,7 +58,7 @@ do
     local AnchorRadius = 80
 
     -- 1. เพิ่ม Slider สำหรับปรับความสูง/ต่ำ
-    local DistanceSlider = Tabs.Main:AddSlider("DistanceSlider", {
+    local DistanceSlider = Tabs.AttackSetting:AddSlider("DistanceSlider", {
         Title = "Adjust Height Offset",
         -- Description = "ปรับระยะสูง-ต่ำจากมอนสเตอร์ (ค่าลบคืออยู่ใต้ดิน/ใต้เท้า)",
         Default = 8,
@@ -169,7 +171,7 @@ do
     end
 
     -- 6. Toggle เปิด/ปิด
-    local FarmToggle = Tabs.Main:AddToggle("FarmToggle", {Title = "Auto Attack", Default = false })
+    local FarmToggle = Tabs.AttackSetting:AddToggle("FarmToggle", {Title = "Start Attack", Default = false })
 
     FarmToggle:OnChanged(function()
         IsFarm = Options.FarmToggle.Value
@@ -194,11 +196,11 @@ do
 
     -- --- การสร้าง UI Toggle ทั้ง 5 อัน ---
 
-    Tabs.Main:AddToggle("Skill1", {Title = "Auto Skill [1]", Default = false})
-    Tabs.Main:AddToggle("Skill2", {Title = "Auto Skill [2]", Default = false})
-    Tabs.Main:AddToggle("Skill3", {Title = "Auto Skill [3]", Default = false})
-    Tabs.Main:AddToggle("SkillF", {Title = "Auto Skill [F]", Default = false})
-    Tabs.Main:AddToggle("SkillX", {Title = "Auto Skill [X]", Default = false})
+    Tabs.AttackSetting:AddToggle("Skill1", {Title = "Auto Skill [1]", Default = false})
+    Tabs.AttackSetting:AddToggle("Skill2", {Title = "Auto Skill [2]", Default = false})
+    Tabs.AttackSetting:AddToggle("Skill3", {Title = "Auto Skill [3]", Default = false})
+    Tabs.AttackSetting:AddToggle("SkillF", {Title = "Auto Skill [F]", Default = false})
+    Tabs.AttackSetting:AddToggle("SkillX", {Title = "Auto Skill [X]", Default = false})
 
     task.spawn(function()
         while true do
