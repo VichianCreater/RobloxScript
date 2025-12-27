@@ -95,7 +95,7 @@ do
 
     -- 3. ฟังก์ชันโจมตี
     local function attack()
-        local args = {{{state = Enum.HumanoidStateType.Running, hitcount = 4}, "\f"}}
+        local args = {{{state = Enum.HumanoidStateType.Running, hitcount = 3}, "\f"}}
         game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
     end
 
@@ -154,7 +154,7 @@ do
                     local char = game.Players.LocalPlayer.Character
                     if char and char:FindFirstChild("HumanoidRootPart") then
                         -- วาร์ปไปตำแหน่งใต้เท้า
-                        char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 0) * CFrame.Angles(math.rad(0), 0, 0)
+                        char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5) * CFrame.Angles(math.rad(0), 0, 0)
                         
                         -- สั่งโจมตี
                         task.spawn(attack) 
