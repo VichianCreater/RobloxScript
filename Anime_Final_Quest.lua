@@ -51,7 +51,7 @@ do
 ------------------------------------------------------------------------------------------------------------------------
 
     -- ประกาศตัวแปร Global สำหรับการตั้งค่า
-    local DistanceOffset = 5 -- ค่าเริ่มต้นคือใต้เท้า
+    local DistanceOffset = 8 -- ค่าเริ่มต้นคือใต้เท้า
     local IsFarm = false
     local AnchorRadius = 80
 
@@ -59,8 +59,8 @@ do
     local DistanceSlider = Tabs.Main:AddSlider("DistanceSlider", {
         Title = "Adjust Height Offset",
         -- Description = "ปรับระยะสูง-ต่ำจากมอนสเตอร์ (ค่าลบคืออยู่ใต้ดิน/ใต้เท้า)",
-        Default = 5,
-        Min = 5,
+        Default = 8,
+        Min = 0,
         Max = 20,
         Rounding = 1,
         Callback = function(Value)
