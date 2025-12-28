@@ -218,16 +218,14 @@ Englist.
                     local rootPart = target.HumanoidRootPart
                     local targetHumanoid = target:FindFirstChildOfClass("Humanoid")
                     
-                    if targetHumanoid.Health > 0 then
-                        local isBoss = target:IsDescendantOf(workspace:FindFirstChild("Boss")) or target.Name == "Boss"
+                    if targetHumanoid and targetHumanoid.Health > 0 then
+                        -- แก้ไขบรรทัดเจ้าปัญหา: เช็คการมีอยู่ของโฟลเดอร์ Boss ก่อนใช้ IsDescendantOf
+                        local bossFolder = workspace:FindFirstChild("Boss")
+                        local isBoss = (bossFolder and target:IsDescendantOf(bossFolder)) or (target.Name == "Boss")
                         
-                        -- เช็ครัศมีวงแดงที่ใหญ่ที่สุดขณะนั้น
                         local dangerRadius = getDangerBorder(rootPart)
                         
                         if isBoss and dangerRadius and dangerRadius > 0 then
-                            -- >>> ระบบไหลตามขอบวง <<<
-                            -- วาร์ปไปตำแหน่งบอส แต่ถอยหลังออกมาตามรัศมีวงแดง + ระยะปลอดภัย 3 หน่วย
-                            -- ใช้แกน Z ในการถอย (หรือปรับเป็นแกนที่ต้องการ)
                             local safeDistance = dangerRadius + 3
                             char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, 5, safeDistance)
                             -- ไม่โจมตีตอนกำลังหลบ (เพื่อความปลอดภัย)
