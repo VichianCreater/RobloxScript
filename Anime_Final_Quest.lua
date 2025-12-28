@@ -80,15 +80,47 @@ Englist.
 
 ------------------------------------------------------------------------------------------------------------------------
 
-    -- ประกาศตัวแปร Global สำหรับการตั้งค่า
-    local DistanceOffset = 8 -- ค่าเริ่มต้นคือใต้เท้า
+   -- [[ ฟังก์ชันเช็คสีแดงอันตราย ]]
+    local function IsDangerColor(part)
+        if not part:IsA("BasePart") then return false end
+        local dangerBrickColors = {"Really red", "Bright red", "Scarlet", "Crimson"}
+        for _, colorName in pairs(dangerBrickColors) do
+            if part.BrickColor.Name == colorName then return true end
+        end
+        local color = part.Color
+        if color.R > 0.7 and color.G < 0.4 and color.B < 0.4 then return true end
+        return false
+    end
+
+    -- [[ ฟังก์ชันหาขอบวงแดงที่ใกล้ที่สุด ]]
+    local function getDangerBorder(bossPart)
+        local visuals = workspace:FindFirstChild("Visuals")
+        if not visuals then return nil end
+        
+        local nearestDanger = nil
+        local maxRadius = 0
+        
+        for _, obj in pairs(visuals:GetChildren()) do
+            if IsDangerColor(obj) then
+                -- คำนวณรัศมีของวง (สมมติว่าเป็นวงกลม/ทรงกระบอก ใช้ Size.X หรือ Size.Z)
+                local radius = math.max(obj.Size.X, obj.Size.Z) / 2
+                if radius > maxRadius then
+                    maxRadius = radius
+                    nearestDanger = obj
+                end
+            end
+        end
+        return maxRadius
+    end
+
+    -- ประกาศตัวแปร Global
+    local DistanceOffset = 8
     local IsFarm = false
     local AnchorRadius = 80
 
-    -- 1. เพิ่ม Slider สำหรับปรับความสูง/ต่ำ
+    -- 1. Slider ปรับระยะ
     local DistanceSlider = Tabs.AttackSetting:AddSlider("DistanceSlider", {
         Title = "Adjust Height Offset",
-        -- Description = "ปรับระยะสูง-ต่ำจากมอนสเตอร์ (ค่าลบคืออยู่ใต้ดิน/ใต้เท้า)",
         Default = 8,
         Min = 0,
         Max = 20,
@@ -98,7 +130,7 @@ Englist.
         end
     })
 
-        -- 2. ฟังก์ชันจัดการ Anchor มอนสเตอร์รอบตัว
+    -- 2. ฟังก์ชันจัดการ Anchor
     local function ManageAoEAnchor()
         local playerChar = game.Players.LocalPlayer.Character
         if not playerChar or not playerChar:FindFirstChild("HumanoidRootPart") then return end
@@ -108,16 +140,7 @@ Englist.
             for _, v in pairs(npcs:GetChildren()) do
                 local rootPart = v:FindFirstChild("HumanoidRootPart")
                 if rootPart then
-                    -- คำนวณระยะห่างระหว่างเรากับมอนสเตอร์ตัวนั้นๆ
-                    local mag = (playerChar.HumanoidRootPart.Position - rootPart.Position).Magnitude
-                    
-                    if IsFarm and mag <= AnchorRadius then
-                        -- ถ้าอยู่ในระยะ 30 และเปิดฟาร์ม ให้ Anchor
-                        rootPart.Anchored = false
-                    else
-                        -- ถ้าอยู่นอกระยะ หรือปิดฟาร์ม ให้ปลด Anchor
-                        rootPart.Anchored = false
-                    end
+                    rootPart.Anchored = false
                 end
             end
         end
@@ -126,49 +149,55 @@ Englist.
     -- 3. ฟังก์ชันโจมตี
     local function attack()
         local args = {{{state = Enum.HumanoidStateType.Running, hitcount = 3}, "\f"}}
-        game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent"):FireServer(unpack(args))
+        local remote = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2", 5):WaitForChild("dataRemoteEvent", 5)
+        if remote then
+            remote:FireServer(unpack(args))
+        end
     end
 
-    -- 4. ฟังก์ชันหาเป้าหมาย (ตัวที่ใกล้ที่สุดที่เลือด > 0)
+    -- 4. ฟังก์ชันหาเป้าหมาย (NPC > Boss)
     local function getTarget()
-        local target = nil
-        local shortestDistance = math.huge
         local playerChar = game.Players.LocalPlayer.Character
-        if not playerChar then return nil end
+        if not playerChar or not playerChar:FindFirstChild("HumanoidRootPart") then return nil end
 
-        local npcs = workspace:FindFirstChild("NPCs")
-        if npcs then
-            for _, v in pairs(npcs:GetChildren()) do
+        local npcsFolder = workspace:FindFirstChild("NPCs")
+        local bossFolder = workspace:FindFirstChild("Boss")
+        
+        local closestNPC = nil
+        local shortestNPCDist = math.huge
+        
+        if npcsFolder then
+            for _, v in pairs(npcsFolder:GetChildren()) do
                 local humanoid = v:FindFirstChildOfClass("Humanoid")
                 local rootPart = v:FindFirstChild("HumanoidRootPart")
-                
                 if humanoid and rootPart and humanoid.Health > 0 then
                     local dist = (playerChar.HumanoidRootPart.Position - rootPart.Position).Magnitude
-                    if dist < shortestDistance then
-                        shortestDistance = dist
-                        target = v
+                    if dist < shortestNPCDist then
+                        shortestNPCDist = dist
+                        closestNPC = v
                     end
                 end
             end
         end
-        return target
+
+        if closestNPC then return closestNPC end
+
+        if bossFolder then
+            for _, v in pairs(bossFolder:GetDescendants()) do
+                if v:IsA("Model") and v:FindFirstChild("Humanoid") and v:FindFirstChild("HumanoidRootPart") then
+                    if v.Humanoid.Health > 0 then return v end
+                end
+            end
+        end
+        return nil
     end
 
-    -- 5. ฟังก์ชันหลัก
+    -- 5. ฟังก์ชันหลัก (ระบบ Flow ตามขอบวง)
     local function startFarming()
         task.spawn(function()
             while IsFarm do
                 ManageAoEAnchor()
-                task.wait(0.1)
-            end
-            -- ปลด Anchor เมื่อปิดฟาร์ม
-            local npcs = workspace:FindFirstChild("NPCs")
-            if npcs then
-                for _, v in pairs(npcs:GetChildren()) do
-                    if v:FindFirstChild("HumanoidRootPart") then
-                        v.HumanoidRootPart.Anchored = false
-                    end
-                end
+                task.wait(0.5)
             end
         end)
 
@@ -179,32 +208,38 @@ Englist.
             
             if char and char:FindFirstChild("HumanoidRootPart") then
                 local humanoid = char:FindFirstChildOfClass("Humanoid")
-                local healPart = workspace.Visuals:FindFirstChild("Heal")
+                local visuals = workspace:FindFirstChild("Visuals")
                 
-                -- [เงื่อนไขใหม่: เช็คว่าต้องไปฮีลไหม]
-                -- ถ้าเปิด AutoHeal และ (เลือดไม่เต็ม) และ (มีจุดฮีลอยู่)
-                if Options.AutoHeal.Value and (humanoid.Health < humanoid.MaxHealth) and healPart then
-                    -- วาร์ปไปที่จุด Heal (ปรับตำแหน่งได้ตามต้องการ)
-                    char.HumanoidRootPart.CFrame = healPart.CFrame * CFrame.new(0, 2, 0)
+                -- [ลำดับการทำงาน]
+                if Options.AutoHeal.Value and (humanoid.Health < humanoid.MaxHealth) and visuals and visuals:FindFirstChild("Heal") then
+                    char.HumanoidRootPart.CFrame = visuals.Heal.CFrame * CFrame.new(0, 2, 0)
                 
-                -- [เงื่อนไขปกติ: ถ้าไม่ต้องฮีล ให้ไปหามอนสเตอร์]
                 elseif target and target:FindFirstChild("HumanoidRootPart") then
                     local rootPart = target.HumanoidRootPart
                     local targetHumanoid = target:FindFirstChildOfClass("Humanoid")
                     
                     if targetHumanoid.Health > 0 then
-                        local bossSkillCheck = game.workspace.Visuals:FindFirstChild("indicator")
-                        if not bossSkillCheck then
-                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5)
+                        local isBoss = target:IsDescendantOf(workspace:FindFirstChild("Boss")) or target.Name == "Boss"
+                        
+                        -- เช็ครัศมีวงแดงที่ใหญ่ที่สุดขณะนั้น
+                        local dangerRadius = getDangerBorder(rootPart)
+                        
+                        if isBoss and dangerRadius and dangerRadius > 0 then
+                            -- >>> ระบบไหลตามขอบวง <<<
+                            -- วาร์ปไปตำแหน่งบอส แต่ถอยหลังออกมาตามรัศมีวงแดง + ระยะปลอดภัย 3 หน่วย
+                            -- ใช้แกน Z ในการถอย (หรือปรับเป็นแกนที่ต้องการ)
+                            local safeDistance = dangerRadius + 3
+                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, 5, safeDistance)
+                            -- ไม่โจมตีตอนกำลังหลบ (เพื่อความปลอดภัย)
                         else
-                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 50)
+                            -- เข้าตีปกติ
+                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5)
+                            task.spawn(attack)
                         end
-                        -- โจมตีปกติ
-                        task.spawn(attack)
                     end
                 end
             end
-            task.wait() -- ความเร็วในการวาร์ป/เช็ค
+            task.wait(0.01) -- เร็วที่สุดเพื่อความเนียนในการไหลตามขอบ
         end
     end
 
