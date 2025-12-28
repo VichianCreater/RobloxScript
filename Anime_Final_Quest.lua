@@ -219,7 +219,7 @@ Englist.
     end)
 
 ----------------------------------------------------------------------------------------------------
-    Tabs.AttackSetting:AddToggle("AutoHeal", {Title = "Auto Heal (Priority)", Default = false})
+    Tabs.AttackSetting:AddToggle("AutoHeal", {Title = "Auto Collects Heal", Default = false})
 ----------------------------------------------------------------------------------------------------
     local RemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
