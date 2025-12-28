@@ -36,8 +36,8 @@ end)
 -- https://lucide.dev/icons/play
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
-    AttackSetting = Window:AddTab({ Title = "Attack Setting", Icon = "swords" }),
-    AutoStart = Window:AddTab({ Title = "Auto Start", Icon = "play" }),
+    AttackSetting = Window:AddTab({ Title = "Attack", Icon = "swords" }),
+    AutoStart = Window:AddTab({ Title = "Room", Icon = "play" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -48,6 +48,34 @@ do
     Tabs.Main:AddParagraph({
         Title = "Welcome to vichianHUB",
         Content = "\nThis is a beta test script.\nUse at your own risk!\n\nWhat game the VichianHUB is Support\n- Dragon Adventure\n- Immortal Cultivation\n- Anime Evolution\n- Anime Final Quest"
+    })
+
+    Tabs.Main:AddParagraph({
+        Title = "AFK Tutorial",
+        Content = [[
+
+Englist.
+1. Setting function of script
+2. Go to setting tab
+3. Type config name whatever you want [Ex. AutoFarm]
+4. Click create config
+5. Select config in config list
+6. For sure click overwrite config
+7. Click set as autoload
+8. Take script to autoexec in whatever executor you want
+9. Done
+
+ไทย.
+1. เซ็ทฟังชั่นให้เรียบร้อย
+2. ไปหน้า setting
+3. ตั่งชื่อตรง config name [ตัวอย่าง AutoFarm]
+4. กด create config
+5. เลือก config จาก config list
+6. เพื่อให้ข้อมูลเซฟกด overwrite config
+7. กด set as autoload
+8. นำสคริปไปใส่ใน โฟเดอร์ autoexec ของตัวรันที่ใช้
+9. เสร็จแล้ว
+]]
     })
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -128,13 +156,12 @@ do
 
     -- 5. ฟังก์ชันหลัก
     local function startFarming()
-        -- รันระบบ AoE Anchor แยกออกมาเพื่อให้เช็คตลอดเวลา
         task.spawn(function()
             while IsFarm do
                 ManageAoEAnchor()
-                task.wait(0.1) -- เช็คทุกๆ 0.1 วินาที
+                task.wait(0.1)
             end
-            -- เมื่อปิดฟาร์ม ปลด Anchor มอนสเตอร์ทั้งหมดในโฟลเดอร์
+            -- ปลด Anchor เมื่อปิดฟาร์ม
             local npcs = workspace:FindFirstChild("NPCs")
             if npcs then
                 for _, v in pairs(npcs:GetChildren()) do
@@ -146,27 +173,38 @@ do
         end)
 
         while IsFarm do
+            local lp = game.Players.LocalPlayer
+            local char = lp.Character
             local target = getTarget()
             
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                local rootPart = target.HumanoidRootPart
-                local humanoid = target:FindFirstChildOfClass("Humanoid")
-
-                while IsFarm and target.Parent and humanoid.Health > 0 do
-                    local char = game.Players.LocalPlayer.Character
-                    if char and char:FindFirstChild("HumanoidRootPart") then
-                        -- วาร์ปไปตำแหน่งใต้เท้า
-                        char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5) * CFrame.Angles(math.rad(0), 0, 0)
-                        
-                        -- สั่งโจมตี
-                        task.spawn(attack) 
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local humanoid = char:FindFirstChildOfClass("Humanoid")
+                local healPart = workspace.Visuals:FindFirstChild("Heal")
+                
+                -- [เงื่อนไขใหม่: เช็คว่าต้องไปฮีลไหม]
+                -- ถ้าเปิด AutoHeal และ (เลือดไม่เต็ม) และ (มีจุดฮีลอยู่)
+                if Options.AutoHeal.Value and (humanoid.Health < humanoid.MaxHealth) and healPart then
+                    -- วาร์ปไปที่จุด Heal (ปรับตำแหน่งได้ตามต้องการ)
+                    char.HumanoidRootPart.CFrame = healPart.CFrame * CFrame.new(0, 2, 0)
+                
+                -- [เงื่อนไขปกติ: ถ้าไม่ต้องฮีล ให้ไปหามอนสเตอร์]
+                elseif target and target:FindFirstChild("HumanoidRootPart") then
+                    local rootPart = target.HumanoidRootPart
+                    local targetHumanoid = target:FindFirstChildOfClass("Humanoid")
+                    
+                    if targetHumanoid.Health > 0 then
+                        local bossSkillCheck = game.workspace.Visuals:FindFirstChild("indicator")
+                        if not bossSkillCheck then
+                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5)
+                        else
+                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 50)
+                        end
+                        -- โจมตีปกติ
+                        task.spawn(attack)
                     end
-                    task.wait() 
                 end
-            else
-                task.wait(0.5)
             end
-            task.wait()
+            task.wait() -- ความเร็วในการวาร์ป/เช็ค
         end
     end
 
@@ -180,6 +218,8 @@ do
         end
     end)
 
+----------------------------------------------------------------------------------------------------
+    Tabs.AttackSetting:AddToggle("AutoHeal", {Title = "Auto Heal (Priority)", Default = false})
 ----------------------------------------------------------------------------------------------------
     local RemoteEvent = game:GetService("ReplicatedStorage"):WaitForChild("BridgeNet2"):WaitForChild("dataRemoteEvent")
 
@@ -204,14 +244,29 @@ do
 
     task.spawn(function()
         while true do
-            if Options.Skill1.Value and IsFarm then fireSkill(Enum.KeyCode.One) end
-            if Options.Skill2.Value and IsFarm then fireSkill(Enum.KeyCode.Two) end
-            if Options.Skill3.Value and IsFarm then fireSkill(Enum.KeyCode.Three) end
-            if Options.SkillF.Value and IsFarm then fireSkill(Enum.KeyCode.F) end
-            if Options.SkillX.Value and IsFarm then fireSkill(Enum.KeyCode.X) end
-            task.wait(0.1) -- ความเร็วในการกด (ปรับได้ตามความเหมาะสม)
+            if IsFarm then
+                local target = getTarget()
+                local bossSkillCheck = game.workspace.Visuals:FindFirstChild("indicator")
+
+                if target and target:FindFirstChild("HumanoidRootPart") and not bossSkillCheck then
+                    local playerPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
+                    local targetPos = target.HumanoidRootPart.Position
+                    local distanceY = targetPos.Y - playerPos.Y
+                    local totalDist = (playerPos - targetPos).Magnitude
+
+                    if distanceY >= (DistanceOffset - 2) and totalDist < (DistanceOffset + 10) then
+                        if Options.Skill1.Value then fireSkill(Enum.KeyCode.One) end
+                        if Options.Skill2.Value then fireSkill(Enum.KeyCode.Two) end
+                        if Options.Skill3.Value then fireSkill(Enum.KeyCode.Three) end
+                        if Options.SkillF.Value then fireSkill(Enum.KeyCode.F) end
+                        if Options.SkillX.Value then fireSkill(Enum.KeyCode.X) end
+                    end
+                end
+            end
+            task.wait(0.2)
         end
     end)
+
 ----------------------------------------------------------------------------------------------------
     local VirtualInputManager = game:GetService("VirtualInputManager")
     local GuiService = game:GetService("GuiService")
@@ -425,7 +480,7 @@ do
 
 -- [ Rematch Toggle ] --
     local RefreshToggle = Tabs.AutoStart:AddToggle("AutoRefresh", {
-        Title = "Auto Rematch",
+        Title = "Auto Rejoin",
         Default = false
     })
 
@@ -640,3 +695,9 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 Window:SelectTab(1)
 
 SaveManager:LoadAutoloadConfig()
+
+-- Torrmorw
+
+-- workspace.Visuals.Heal >> Auto Heal
+
+-- workspace.Visuals.indicator >> Auto Dodging
