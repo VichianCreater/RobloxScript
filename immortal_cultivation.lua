@@ -247,7 +247,7 @@ do
 
     -- [UPDATE LOOP] 
     task.spawn(function()
-        while herbESPtoggle.Value do
+        while true do
             local currentItemsInMap = getUniqueHerbNames()
             HerbListDropdown:SetValues(currentItemsInMap)
             HerbListDropdown:SetValue(savedSelectedESP)
