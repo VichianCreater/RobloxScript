@@ -249,9 +249,11 @@ do
     task.spawn(function()
         while true do
             local currentItemsInMap = getUniqueHerbNames()
-            HerbListDropdown:SetValues(currentItemsInMap)
-            HerbListDropdown:SetValue(savedSelectedESP)
             if herbESPtoggle.Value then
+                if #currentItemsInMap ~= #HerbListDropdown.Values then
+                    HerbListDropdown:SetValues(currentItemsInMap)
+                    HerbListDropdown:SetValue(savedSelectedESP)
+                end
                 refreshESP()
             end
             
@@ -899,25 +901,18 @@ do
     task.spawn(function()
         while true do
             local currentMapHerbs = getVisibleHerbNamesFast()
-            
-            -- 1. อัปเดตรายการใน Dropdown (ถ้าหายไปจากแมพจะหายจาก List ที่ให้เลือก)
-            HerbListDropdownWarpFast:SetValues(currentMapHerbs)
-            
-            -- 2. รักษาสถานะ "การติ๊ก" (Checkmark) 
-            -- โดยอิงจาก savedSelection ที่เราเคยเลือกไว้
-            local displayValues = {}
-            for name, _ in pairs(savedSelection) do
-                -- จะติ๊กให้เห็นเฉพาะตัวที่ยังอยู่ในแมพตอนนี้
-                if table.find(currentMapHerbs, name) then
-                    displayValues[name] = true
+            if #currentMapHerbs ~= #HerbListDropdownWarpFast.Values then
+                HerbListDropdownWarpFast:SetValues(currentMapHerbs)
+                local displayValues = {}
+                for name, _ in pairs(savedSelection) do
+                    if table.find(currentMapHerbs, name) then
+                        displayValues[name] = true
+                    end
                 end
+                HerbListDropdownWarpFast:SetValue(displayValues)
             end
             
-            -- ใช้การอัปเดตแบบไม่ให้ Trigger OnChanged (ถ้า Library รองรับ) 
-            -- แต่ใน Fluent ทั่วไปใช้ SetValue ได้เลย
-            HerbListDropdownWarpFast:SetValue(displayValues)
-            
-            task.wait(5)
+            task.wait(10)
         end
     end)
 
