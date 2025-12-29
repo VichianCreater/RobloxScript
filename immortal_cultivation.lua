@@ -111,14 +111,13 @@ do
     local ESPParent = success and targetParent or PlayerGui
 
     local espObjects = {} 
-    local currentSelectedNames = {}
-    local HerbsFolder = workspace:WaitForChild("Herbs") -- ค้นหาใน workspace.Herbs
+    local savedSelectedESP = {} -- จดจำค่าที่เลือกไว้ แม้ของจะหายจากแมพ
+    local HerbsFolder = workspace:WaitForChild("Herbs")
 
     --- ### 1. ฟังก์ชันดึงชื่อสมุนไพรจาก ProximityPrompt
     local function getHerbName(herbObject)
         local prompt = herbObject:FindFirstChildWhichIsA("ProximityPrompt", true)
         if prompt then
-            -- ใช้ ObjectText (เช่น 1-Year Ginseng) หรือถ้าไม่มีให้ใช้ ActionText
             return (prompt.ObjectText ~= "" and prompt.ObjectText) or prompt.ActionText or herbObject.Name
         end
         return herbObject.Name
@@ -138,17 +137,15 @@ do
         end
 
         table.sort(namesInMap)
-        
-        if #namesInMap == 0 then
-            return {"Waiting for herbs..."}
-        end
-        
-        return namesInMap
+        return #namesInMap > 0 and namesInMap or {"Waiting for herbs..."}
     end
 
     --- ### 3. ฟังก์ชันสร้าง ESP
     local function createESP(object, realName)
-        if espObjects[object] then return end
+        if espObjects[object] then 
+            espObjects[object].Container.Enabled = true
+            return 
+        end
 
         local bbg = Instance.new("BillboardGui")
         bbg.Name = "HerbESP_" .. realName
@@ -166,18 +163,15 @@ do
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0.5
         
-        -- ใช้สีขาวเป็นค่าเริ่มต้น
         local displayColor = Color3.fromRGB(255, 255, 255)
-        
-        -- เช็คคำในชื่อ (หาแบบ Case-insensitive และปิด pattern matching ด้วย true ตัวท้าย)
         local n = string.lower(realName)
         
         if string.find(n, "1000-year", 1, true) then
-            displayColor = Color3.fromRGB(255, 0, 0)      -- 1000 ปี = แดง
+            displayColor = Color3.fromRGB(255, 0, 0)
         elseif string.find(n, "100-year", 1, true) then
-            displayColor = Color3.fromRGB(255, 170, 0)    -- 100 ปี = ส้ม/ทอง
+            displayColor = Color3.fromRGB(255, 170, 0)
         elseif string.find(n, "10-year", 1, true) then
-            displayColor = Color3.fromRGB(85, 255, 127)    -- 10 ปี = เขียว
+            displayColor = Color3.fromRGB(85, 255, 127)
         end
 
         nameLabel.TextColor3 = displayColor
@@ -199,6 +193,7 @@ do
 
     --- ### 4. UI Setup & Logic
     local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
+    
     local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
         Title = "Select Herb Types",
         Values = getUniqueHerbNames(),
@@ -214,58 +209,53 @@ do
             return
         end
 
-        -- สแกนสมุนไพรใน workspace.Herbs
         for _, herb in pairs(HerbsFolder:GetChildren()) do
             local realName = getHerbName(herb)
-            -- ตรวจสอบว่าชื่อนี้ถูกเลือกใน Dropdown หรือไม่
-            if table.find(currentSelectedNames, realName) then
+            -- ตรวจสอบจาก savedSelectedESP ว่าชื่อนี้ถูกติ๊กเลือกไว้หรือไม่
+            if savedSelectedESP[realName] == true then
                 createESP(herb, realName)
             end
         end
 
-        -- ลบ ESP ที่ไม่อยู่ในรายการเลือก หรือถูกเก็บไปแล้ว
         for obj, data in pairs(espObjects) do
-            local stillExists = obj and obj.Parent == HerbsFolder
-            local isSelected = table.find(currentSelectedNames, data.RealName)
+            local stillInWorkspace = obj and obj.Parent == HerbsFolder
+            local stillSelected = savedSelectedESP[data.RealName] == true
             
-            if not stillExists or not isSelected then
+            if not stillInWorkspace or not stillSelected then
                 if data.Container then data.Container:Destroy() end
                 espObjects[obj] = nil
             end
         end
     end
 
-    -- Events เมื่อมีการเปลี่ยนค่าใน UI
+    -- [LOGIC] จัดการการกดติ๊กเข้า/ออก
     HerbListDropdown:OnChanged(function(value)
-        currentSelectedNames = {}
-        for herbName, isSelected in pairs(value) do
-            if isSelected then table.insert(currentSelectedNames, herbName) end
-        end
+        -- อัปเดตสถานะล่าสุดจากการกดของผู้ใช้
+        savedSelectedESP = value
         refreshESP()
     end)
 
     herbESPtoggle:OnChanged(function()
         if not herbESPtoggle.Value then
-            removeAllESP()
+            for _, data in pairs(espObjects) do
+                if data.Container then data.Container.Enabled = false end
+            end
         else
             refreshESP()
         end
     end)
 
-    -- Loop สำหรับอัปเดตรายชื่อใน Dropdown และตำแหน่ง ESP
+    -- [UPDATE LOOP] 
     task.spawn(function()
-        while true do
-            -- อัปเดต Dropdown อัตโนมัติเมื่อมีสมุนไพรชนิดใหม่เกิด
-            local currentVisible = getUniqueHerbNames()
-            -- ตรวจสอบความยาวเพื่อประหยัดการอัปเดต UI
-            if #currentVisible ~= #HerbListDropdown.Values then
-                HerbListDropdown:SetValues(currentVisible)
-            end
-
+        while herbESPtoggle.Value do
+            local currentItemsInMap = getUniqueHerbNames()
+            HerbListDropdown:SetValues(currentItemsInMap)
+            HerbListDropdown:SetValue(savedSelectedESP)
             if herbESPtoggle.Value then
                 refreshESP()
             end
-            task.wait(2) -- ตรวจสอบทุก 2 วินาที
+            
+            task.wait(2)
         end
     end)
 
@@ -794,8 +784,6 @@ do
     local Humanoid = Character:WaitForChild("Humanoid")
 
     -- Variables
-    local herbNames = {}
-    local selectedHerbNameFast = {}
     local savedSelection = {}
     local isWarping = false
     local currentWarpThread = nil
@@ -803,96 +791,43 @@ do
     local warpSpeed = 50
     local IsAutoPressE = false
 
-    -- เพิ่มตัวแปรสำหรับระบบ Mesh Mapping
-    local meshToHerbName = {}
+    -- กำหนด Herbs Folder
+    local HerbsFolder = workspace:WaitForChild("Herbs")
 
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [SYSTEM] MESH ID MAPPING (แก้ปัญหาของไม่โชว์ โดยเช็คทั้ง Root และลูกๆ)
+    -- ### [FUNCTION] ดึงชื่อจาก PROXIMITYPROMPT
     -----------------------------------------------------------------------------------------------------------------
 
-    local function buildMeshDictionary()
-        meshToHerbName = {}
-        local herbFolder = ReplicatedStorage:FindFirstChild("Herbs")
-        if not herbFolder then return end
-
-        local function getId(obj)
-            if obj:IsA("MeshPart") or obj:IsA("SpecialMesh") then
-                return obj.MeshId
-            end
-            return nil
+    local function getHerbName(herbObject)
+        local prompt = herbObject:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if prompt then
+            return (prompt.ObjectText ~= "" and prompt.ObjectText) or prompt.ActionText or herbObject.Name
         end
-
-        for _, herbEntry in pairs(herbFolder:GetChildren()) do
-            local herbName = herbEntry.Name
-            
-            -- 1. เช็คที่ตัว Root ของมันเองเลย (กรณี Soothing Soul Root ฯลฯ)
-            local rootId = getId(herbEntry)
-            if rootId and rootId ~= "" then
-                meshToHerbName[rootId] = herbName
-            end
-
-            -- 2. เช็คในลูกๆ ทั้งหมด (กรณีเป็น Model สุ่มรหัส)
-            for _, child in pairs(herbEntry:GetDescendants()) do
-                local childId = getId(child)
-                if childId and childId ~= "" then
-                    meshToHerbName[childId] = herbName
-                end
-            end
-        end
+        return herbObject.Name
     end
 
-    local function getRealNameFromObject(obj)
-        if not obj then return nil end
-        
-        -- เช็คตัวมันเองก่อนเพื่อความเร็ว
-        if obj:IsA("MeshPart") and meshToHerbName[obj.MeshId] then
-            return meshToHerbName[obj.MeshId]
-        end
-
-        -- เช็คลูกๆ เผื่อกรณี Model สุ่มรหัส
-        for _, descendant in pairs(obj:GetDescendants()) do
-            local mId = (descendant:IsA("MeshPart") or descendant:IsA("SpecialMesh")) and descendant.MeshId
-            if mId and meshToHerbName[mId] then
-                return meshToHerbName[mId]
-            end
-        end
-        return nil
-    end
-
-    -- ฟังก์ชันดึงรายชื่อสมุนไพร "จาก ProximityPrompt ในโฟลเดอร์ Herbs"
     local function getVisibleHerbNamesFast()
         local namesInMap = {}
         local hash = {} 
-
-        local herbFolderInWorkspace = workspace:FindFirstChild("Herbs")
-        if not herbFolderInWorkspace then return {"Waiting for Herbs..."} end
-
-        -- สแกนหาจาก ProximityPrompt เพื่อเอาชื่อและปี (เช่น 100-year)
-        for _, obj in pairs(herbFolderInWorkspace:GetDescendants()) do
-            if obj:IsA("ProximityPrompt") then
-                local displayName = obj.ObjectText ~= "" and obj.ObjectText or obj.ActionText
-                if displayName and displayName ~= "" and not hash[displayName] then
-                    table.insert(namesInMap, displayName)
-                    hash[displayName] = true
-                end
+        for _, herb in pairs(HerbsFolder:GetChildren()) do
+            local realName = getHerbName(herb)
+            if not hash[realName] then
+                table.insert(namesInMap, realName)
+                hash[realName] = true
             end
         end
-
         table.sort(namesInMap)
         return #namesInMap > 0 and namesInMap or {"Waiting for Herbs..."}
     end
 
-    buildMeshDictionary()
-
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [FUNCTION] AUTO PRESS E (เหมือนเดิม)
+    -- ### [FUNCTION] AUTO PRESS E
     -----------------------------------------------------------------------------------------------------------------
 
     local function AutoPressE()
         local character = player.Character
-        if not character then return end
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        if not rootPart then return end
+        if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+        local rootPart = character.HumanoidRootPart
 
         local overlapParams = OverlapParams.new()
         overlapParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -902,7 +837,7 @@ do
 
         for _, part in ipairs(nearbyParts) do
             local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
-            if prompt then
+            if prompt and prompt:IsDescendantOf(HerbsFolder) then
                 local distance = (part.Position - rootPart.Position).Magnitude
                 if distance <= prompt.MaxActivationDistance then
                     prompt.HoldDuration = 0
@@ -915,32 +850,12 @@ do
         end
     end
 
-    local AutoPressEBut = Tabs.AutoHerb:AddToggle("AutoPressEToggle", {Title = "Auto Press E", Default = false })
-
-    AutoPressEBut:OnChanged(function()
-        if Options.AutoPressEToggle.Value then
-            IsAutoPressE = true
-            for _,v in ipairs(workspace:GetDescendants())do if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end workspace.DescendantAdded:Connect(function(v)if v:IsA("ProximityPrompt")then v.HoldDuration=0 end end)
-            task.spawn(function()
-                while IsAutoPressE do
-                    AutoPressE()
-                    task.wait(0.2)
-                end
-            end)
-        else
-            IsAutoPressE = false
-        end
-    end)
-
-    Options.AutoPressEToggle:SetValue(false)
-
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [UI & DROPDOWN] (Dynamic List)
+    -- ### [UI & DROPDOWN] ปรับปรุงส่วนการจัดการ List
     -----------------------------------------------------------------------------------------------------------------
 
     local HerbListDropdownWarpFast = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
         Title = "Select Herb to Warp [Faster]",
-        Description = "Select the type of herb for warping.",
         Values = getVisibleHerbNamesFast(),
         Multi = true, 
         Default = {},
@@ -948,63 +863,106 @@ do
 
     local HerbParagraph = nil
     local function updateParagraph()
-        if HerbParagraph then
-            HerbParagraph:Destroy() 
-            HerbParagraph = nil
-        end
-
+        if HerbParagraph then HerbParagraph:Destroy(); HerbParagraph = nil end
         local list = {}
         for name, isSelected in pairs(savedSelection) do
             if isSelected then table.insert(list, "• " .. name) end
         end
+        table.sort(list) -- เรียงชื่อให้สวยงาม
         local content = #list > 0 and table.concat(list, "\n") or "No herbs selected."
-
         HerbParagraph = Tabs.AutoHerb:AddParagraph({
             Title = "Selected Herbs list (" .. #list .. ")",
             Content = content
         })
     end
 
-    updateParagraph()
+    -- แก้ไข Logic การ OnChanged
+    HerbListDropdownWarpFast:OnChanged(function(value)
+        -- 'value' คือ table ของ items ที่ถูกติ๊กอยู่ในปัจจุบัน (UI)
+        -- เราจะอิงตามสิ่งที่ผู้ใช้ "กดติ๊ก" จริงๆ ใน Dropdown เท่านั้น
+        
+        local currentDropdownItems = getVisibleHerbNamesFast()
+        
+        for _, name in ipairs(currentDropdownItems) do
+            if value[name] then
+                -- ถ้ามีการติ๊กใน Dropdown ให้เซฟเข้าลิสต์
+                savedSelection[name] = true
+            else
+                -- ถ้ามีการติ๊กออกใน Dropdown ให้เอาออกจากลิสต์
+                savedSelection[name] = nil
+            end
+        end
+        updateParagraph()
+    end)
 
-    -- ลูปอัปเดต Dropdown อัตโนมัติ
+    -- วนลูปอัปเดต Dropdown เมื่อของหายหรือเกิดใหม่
     task.spawn(function()
         while true do
-            local newUniqueHerbs = getVisibleHerbNamesFast()
-            if #newUniqueHerbs ~= #HerbListDropdownWarpFast.Values then
-                HerbListDropdownWarpFast:SetValues(newUniqueHerbs)
-                HerbListDropdownWarpFast:SetValue(savedSelection)
+            local currentMapHerbs = getVisibleHerbNamesFast()
+            
+            -- 1. อัปเดตรายการใน Dropdown (ถ้าหายไปจากแมพจะหายจาก List ที่ให้เลือก)
+            HerbListDropdownWarpFast:SetValues(currentMapHerbs)
+            
+            -- 2. รักษาสถานะ "การติ๊ก" (Checkmark) 
+            -- โดยอิงจาก savedSelection ที่เราเคยเลือกไว้
+            local displayValues = {}
+            for name, _ in pairs(savedSelection) do
+                -- จะติ๊กให้เห็นเฉพาะตัวที่ยังอยู่ในแมพตอนนี้
+                if table.find(currentMapHerbs, name) then
+                    displayValues[name] = true
+                end
             end
-            task.wait(10)
+            
+            -- ใช้การอัปเดตแบบไม่ให้ Trigger OnChanged (ถ้า Library รองรับ) 
+            -- แต่ใน Fluent ทั่วไปใช้ SetValue ได้เลย
+            HerbListDropdownWarpFast:SetValue(displayValues)
+            
+            task.wait(5)
         end
     end)
 
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [FUNCTION] WARP SYSTEM
+    -- ### [WARP & UTILITY]
     -----------------------------------------------------------------------------------------------------------------
 
-    local function findNearestHerbFast(herbList)
-        local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-        local root = Character:FindFirstChild("HumanoidRootPart")
-        if not root then return nil end
+    local function noclipFast()
+        if _G.NoclipConn then _G.NoclipConn:Disconnect() end
+        _G.NoclipConn = RunService.Stepped:Connect(function()
+            if LocalPlayer.Character then
+                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+                    if v:IsA('BasePart') then v.CanCollide = false end
+                end
+            end
+        end)
+    end
 
+    local function clipFast()
+        if _G.NoclipConn then _G.NoclipConn:Disconnect() ; _G.NoclipConn = nil end
+    end
+
+    local function DeathFirstFunctionFast()
+        if firstTimeUsingDeath then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then char.Humanoid.Health = 0 end
+            player.CharacterAdded:Wait()
+            task.wait(2)
+            firstTimeUsingDeath = false
+        end
+    end
+
+    local function findNearestHerbFast(herbList)
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
         local nearestHerb = nil
         local minDistance = math.huge
-
-        local herbFolderInWorkspace = workspace:FindFirstChild("Herbs")
-        if not herbFolderInWorkspace then return nil end
-
-        -- ค้นหาโดยเทียบชื่อจาก ProximityPrompt
-        for _, obj in pairs(herbFolderInWorkspace:GetDescendants()) do
-            if obj:IsA("ProximityPrompt") then
-                local displayName = obj.ObjectText ~= "" and obj.ObjectText or obj.ActionText
-                if displayName and herbList[displayName] == true then
-                    local herbPos = obj.Parent:GetPivot().Position
-                    local distance = (herbPos - root.Position).Magnitude
-                    if distance < minDistance then
-                        minDistance = distance
-                        nearestHerb = obj.Parent -- ส่งคืน Parent (ตัวสมุนไพร) เพื่อให้ Warp ไปหา
-                    end
+        for _, herb in pairs(HerbsFolder:GetChildren()) do
+            local realName = getHerbName(herb)
+            if realName and herbList[realName] == true then
+                local herbPos = herb:GetPivot().Position
+                local distance = (herbPos - root.Position).Magnitude
+                if distance < minDistance then
+                    minDistance = distance
+                    nearestHerb = herb
                 end
             end
         end
@@ -1013,58 +971,38 @@ do
 
     local function warpFast(targetPosition)
         local Character = LocalPlayer.Character
-        if not Character then return end
-        local root = Character:FindFirstChild("HumanoidRootPart")
-        local hum = Character:FindFirstChild("Humanoid")
+        local root = Character and Character:FindFirstChild("HumanoidRootPart")
+        local hum = Character and Character:FindFirstChild("Humanoid")
         if not root or not hum then return end 
-
-        for _, v in pairs(root:GetChildren()) do
-            if v:IsA("BodyVelocity") or v:IsA("BodyGyro") then v:Destroy() end
-        end
-
-        local distance = (targetPosition - root.Position).Magnitude
-        local speed = tonumber(warpSpeed) or 50
-        local duration = distance / speed
-        if duration <= 0 then duration = 0.1 end
 
         local bv = Instance.new("BodyVelocity")
         bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = root
 
-        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
+        local distance = (targetPosition - root.Position).Magnitude
+        local duration = distance / (tonumber(warpSpeed) or 50)
+        local tween = TweenService:Create(root, TweenInfo.new(math.max(duration, 0.1), Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
 
         hum.PlatformStand = true
         tween:Play()
-        tween.Completed:Connect(function()
-            if bv then bv:Destroy() end
-            hum.PlatformStand = false
-            hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
-            root.Velocity = Vector3.new(0,0,0)
-        end)
         tween.Completed:Wait()
-        task.wait(0.1)
+        if bv then bv:Destroy() end
+        hum.PlatformStand = false
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
     end
 
     local function autoWarpLoopFast()
         while isWarping do
-            if next(savedSelection) ~= nil then
-                local nearest = findNearestHerbFast(savedSelection)
-                if nearest then
-                    warpFast(nearest:GetPivot().Position + Vector3.new(0, 5, 0))
-                    task.wait(0.1)
-                else
-                    task.wait(2)
-                end
+            local nearest = findNearestHerbFast(savedSelection)
+            if nearest then
+                warpFast(nearest:GetPivot().Position + Vector3.new(0, 5, 0))
+                task.wait(0.1)
             else
-                task.wait(1) 
+                task.wait(2)
             end
         end
     end
-
-    -----------------------------------------------------------------------------------------------------------------
-    -- ### [UTILITY]
-    -----------------------------------------------------------------------------------------------------------------
 
     Tabs.AutoHerb:AddButton({
         Title = "Clear Herb List",
@@ -1084,66 +1022,31 @@ do
         end
     })
 
-    HerbListDropdownWarpFast:OnChanged(function(value)
-        savedSelection = value
-        updateParagraph()
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### [TOGGLES]
+    -----------------------------------------------------------------------------------------------------------------
+
+    local AutoPressEBut = Tabs.AutoHerb:AddToggle("AutoPressEToggle", {Title = "Auto Press E", Default = false })
+    AutoPressEBut:OnChanged(function()
+        IsAutoPressE = Options.AutoPressEToggle.Value
+        if IsAutoPressE then
+            task.spawn(function()
+                while IsAutoPressE do AutoPressE() ; task.wait(0.2) end
+            end)
+        end
     end)
 
-    local NoclipConnection = nil
-    local function noclipFast()
-        if NoclipConnection then NoclipConnection:Disconnect() end
-        NoclipConnection = RunService.Stepped:Connect(function()
-            if LocalPlayer.Character then
-                for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-                    if v:IsA('BasePart') then v.CanCollide = false end
-                end
-            end
-        end)
-    end
+    Tabs.AutoHerb:AddSlider("warpspeed", { Title = "Warp Speed", Default = 50, Min = 1, Max = 100, Rounding = 1, Callback = function(v) warpSpeed = v end })
 
-    local function clipFast()
-        if NoclipConnection then NoclipConnection:Disconnect() ; NoclipConnection = nil end
-    end
-
-    local function DeathFirstFunctionFast()
-        if firstTimeUsingDeath then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then char.Humanoid.Health = 0 end
-            player.CharacterAdded:Wait()
-            task.wait(2)
-            firstTimeUsingDeath = false
-        end
-    end
-
-    -----------------------------------------------------------------------------------------------------------------
-    -- ### [TOGGLE & SLIDER]
-    -----------------------------------------------------------------------------------------------------------------
-
-    Tabs.AutoHerb:AddSlider("warpspeed", {
-        Title = "Warp Speed (Studs/s)",
-        Default = 50, Min = 1, Max = 100, Rounding = 1,
-        Callback = function(v) warpSpeed = v end
-    })
-
-    local WarpFastToggle = Tabs.AutoHerb:AddToggle("AutoWarpFastToggle", { 
-        Title = "Start Auto Herb Warp [Faster]", 
-        Default = false 
-    })
-
+    local WarpFastToggle = Tabs.AutoHerb:AddToggle("AutoWarpFastToggle", { Title = "Start Auto Herb Warp [Faster]", Default = false })
     WarpFastToggle:OnChanged(function(enabled)
         isWarping = enabled
         if enabled then
             DeathFirstFunctionFast()
-            task.wait(0.5)
             noclipFast()
-            if next(savedSelection) ~= nil then
-                currentWarpThread = task.spawn(autoWarpLoopFast)
-            else
-                WarpFastToggle:SetValue(false)
-            end
+            currentWarpThread = task.spawn(autoWarpLoopFast)
         else
             clipFast()
-            isWarping = false
             if currentWarpThread then task.cancel(currentWarpThread) ; currentWarpThread = nil end
         end
     end)
