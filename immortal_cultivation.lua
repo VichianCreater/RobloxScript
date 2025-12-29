@@ -103,77 +103,35 @@ do
     local RunService = game:GetService("RunService")
     local Players = game:GetService("Players")
     local CoreGui = game:GetService("CoreGui")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
     local LocalPlayer = Players.LocalPlayer
     local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-    -- ตรวจสอบสิทธิ์การเข้าถึง CoreGui
+    -- ตรวจสอบสิทธิ์การเข้าถึง CoreGui สำหรับ ESP
     local success, targetParent = pcall(function() return CoreGui end)
     local ESPParent = success and targetParent or PlayerGui
 
     local espObjects = {} 
     local currentSelectedNames = {}
-    local meshToHerbName = {} -- Table เก็บ [MeshId] = "ชื่อสมุนไพร"
+    local HerbsFolder = workspace:WaitForChild("Herbs") -- ค้นหาใน workspace.Herbs
 
-    --- ### 1. ฟังก์ชันสแกนหา MeshID (ปรับปรุงให้เช็คตั้งแต่ตัว Root)
-    local function buildMeshDictionary()
-        meshToHerbName = {}
-        local herbFolder = ReplicatedStorage:FindFirstChild("Herbs")
-        if not herbFolder then return end
-
-        -- ฟังก์ชันช่วยดึง MeshId จาก Object
-        local function getMeshFromPart(obj)
-            if obj:IsA("MeshPart") then
-                return obj.MeshId
-            elseif obj:IsA("SpecialMesh") then
-                return obj.MeshId
-            end
-            return nil
+    --- ### 1. ฟังก์ชันดึงชื่อสมุนไพรจาก ProximityPrompt
+    local function getHerbName(herbObject)
+        local prompt = herbObject:FindFirstChildWhichIsA("ProximityPrompt", true)
+        if prompt then
+            -- ใช้ ObjectText (เช่น 1-Year Ginseng) หรือถ้าไม่มีให้ใช้ ActionText
+            return (prompt.ObjectText ~= "" and prompt.ObjectText) or prompt.ActionText or herbObject.Name
         end
-
-        for _, herbEntry in pairs(herbFolder:GetChildren()) do
-            local herbName = herbEntry.Name
-            
-            -- เช็คที่ตัวมันเองก่อน (กรณี MeshId อยู่ที่ตัว Root เลย)
-            local rootMeshId = getMeshFromPart(herbEntry)
-            if rootMeshId and rootMeshId ~= "" then
-                meshToHerbName[rootMeshId] = herbName
-            end
-
-            -- เช็คในลูกๆ ทั้งหมด (เผื่อกรณีเป็น Model ที่มี Mesh ข้างใน)
-            for _, child in pairs(herbEntry:GetDescendants()) do
-                local childMeshId = getMeshFromPart(child)
-                if childMeshId and childMeshId ~= "" then
-                    meshToHerbName[childMeshId] = herbName
-                end
-            end
-        end
+        return herbObject.Name
     end
 
-    --- ### 2. ฟังก์ชันระบุชื่อสมุนไพรจาก Object ใน Workspace
-    local function getHerbNameFromMesh(object)
-        -- เช็คตัวมันเอง
-        if object:IsA("MeshPart") and meshToHerbName[object.MeshId] then
-            return meshToHerbName[object.MeshId]
-        end
-        -- เช็คลูกๆ
-        for _, child in pairs(object:GetDescendants()) do
-            local mId = (child:IsA("MeshPart") or child:IsA("SpecialMesh")) and child.MeshId
-            if mId and meshToHerbName[mId] then
-                return meshToHerbName[mId]
-            end
-        end
-        return nil
-    end
-
-    --- ### [แก้ไข] ฟังก์ชันดึงรายชื่อสมุนไพร "เฉพาะที่มีอยู่ในแมพ"
+    --- ### 2. ฟังก์ชันดึงรายชื่อสมุนไพรที่ไม่ซ้ำกันจาก workspace.Herbs
     local function getUniqueHerbNames()
         local namesInMap = {}
         local hash = {} 
 
-        for _, obj in pairs(workspace:GetChildren()) do
-            local realName = getHerbNameFromMesh(obj)
-            if realName and not hash[realName] then
+        for _, herb in pairs(HerbsFolder:GetChildren()) do
+            local realName = getHerbName(herb)
+            if not hash[realName] then
                 table.insert(namesInMap, realName)
                 hash[realName] = true
             end
@@ -182,7 +140,7 @@ do
         table.sort(namesInMap)
         
         if #namesInMap == 0 then
-            return {"Waiting for herbs to spawn..."}
+            return {"Waiting for herbs..."}
         end
         
         return namesInMap
@@ -204,20 +162,25 @@ do
         nameLabel.Parent = bbg
         nameLabel.Size = UDim2.new(1, 0, 1, 0)
         nameLabel.BackgroundTransparency = 1
-        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLabel.TextSize = 14
+        nameLabel.TextSize = 15
         nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0.5
         
-        -- ตั้งค่าสี
-        if string.find(realName, "Berries") or string.find(realName, "Extreme") then
-            nameLabel.TextColor3 = Color3.fromRGB(170, 85, 255) 
-        elseif string.find(realName, "Immortal") or string.find(realName, "Snowflake") then
-            nameLabel.TextColor3 = Color3.fromRGB(85, 255, 255) 
-        else
-            nameLabel.TextColor3 = Color3.fromRGB(85, 255, 85) 
-        end
+        -- ใช้สีขาวเป็นค่าเริ่มต้น
+        local displayColor = Color3.fromRGB(255, 255, 255)
         
+        -- เช็คคำในชื่อ (หาแบบ Case-insensitive และปิด pattern matching ด้วย true ตัวท้าย)
+        local n = string.lower(realName)
+        
+        if string.find(n, "1000-year", 1, true) then
+            displayColor = Color3.fromRGB(255, 0, 0)      -- 1000 ปี = แดง
+        elseif string.find(n, "100-year", 1, true) then
+            displayColor = Color3.fromRGB(255, 170, 0)    -- 100 ปี = ส้ม/ทอง
+        elseif string.find(n, "10-year", 1, true) then
+            displayColor = Color3.fromRGB(85, 255, 127)    -- 10 ปี = เขียว
+        end
+
+        nameLabel.TextColor3 = displayColor
         nameLabel.Text = "🌿 " .. realName
 
         espObjects[object] = {
@@ -237,7 +200,7 @@ do
     --- ### 4. UI Setup & Logic
     local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
     local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
-        Title = "Select Herb Types (Only in Map)",
+        Title = "Select Herb Types",
         Values = getUniqueHerbNames(),
         Multi = true,
         Default = {},
@@ -251,17 +214,18 @@ do
             return
         end
 
-        for _, obj in pairs(workspace:GetChildren()) do
-            if obj:FindFirstChildOfClass("Humanoid") then continue end
-
-            local realName = getHerbNameFromMesh(obj)
-            if realName and table.find(currentSelectedNames, realName) then
-                createESP(obj, realName)
+        -- สแกนสมุนไพรใน workspace.Herbs
+        for _, herb in pairs(HerbsFolder:GetChildren()) do
+            local realName = getHerbName(herb)
+            -- ตรวจสอบว่าชื่อนี้ถูกเลือกใน Dropdown หรือไม่
+            if table.find(currentSelectedNames, realName) then
+                createESP(herb, realName)
             end
         end
 
+        -- ลบ ESP ที่ไม่อยู่ในรายการเลือก หรือถูกเก็บไปแล้ว
         for obj, data in pairs(espObjects) do
-            local stillExists = obj and obj.Parent == workspace
+            local stillExists = obj and obj.Parent == HerbsFolder
             local isSelected = table.find(currentSelectedNames, data.RealName)
             
             if not stillExists or not isSelected then
@@ -271,7 +235,7 @@ do
         end
     end
 
-    -- Events
+    -- Events เมื่อมีการเปลี่ยนค่าใน UI
     HerbListDropdown:OnChanged(function(value)
         currentSelectedNames = {}
         for herbName, isSelected in pairs(value) do
@@ -284,16 +248,16 @@ do
         if not herbESPtoggle.Value then
             removeAllESP()
         else
-            buildMeshDictionary() 
             refreshESP()
         end
     end)
 
-    -- Loop Refresh
+    -- Loop สำหรับอัปเดตรายชื่อใน Dropdown และตำแหน่ง ESP
     task.spawn(function()
-        buildMeshDictionary() 
         while true do
+            -- อัปเดต Dropdown อัตโนมัติเมื่อมีสมุนไพรชนิดใหม่เกิด
             local currentVisible = getUniqueHerbNames()
+            -- ตรวจสอบความยาวเพื่อประหยัดการอัปเดต UI
             if #currentVisible ~= #HerbListDropdown.Values then
                 HerbListDropdown:SetValues(currentVisible)
             end
@@ -301,7 +265,7 @@ do
             if herbESPtoggle.Value then
                 refreshESP()
             end
-            task.wait(3) 
+            task.wait(2) -- ตรวจสอบทุก 2 วินาที
         end
     end)
 
@@ -895,16 +859,22 @@ do
         return nil
     end
 
-    -- ฟังก์ชันดึงรายชื่อสมุนไพร "เฉพาะที่มีอยู่ในแมพ" (Dynamic Dropdown)
+    -- ฟังก์ชันดึงรายชื่อสมุนไพร "จาก ProximityPrompt ในโฟลเดอร์ Herbs"
     local function getVisibleHerbNamesFast()
         local namesInMap = {}
         local hash = {} 
 
-        for _, obj in pairs(workspace:GetChildren()) do
-            local realName = getRealNameFromObject(obj)
-            if realName and not hash[realName] then
-                table.insert(namesInMap, realName)
-                hash[realName] = true
+        local herbFolderInWorkspace = workspace:FindFirstChild("Herbs")
+        if not herbFolderInWorkspace then return {"Waiting for Herbs..."} end
+
+        -- สแกนหาจาก ProximityPrompt เพื่อเอาชื่อและปี (เช่น 100-year)
+        for _, obj in pairs(herbFolderInWorkspace:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                local displayName = obj.ObjectText ~= "" and obj.ObjectText or obj.ActionText
+                if displayName and displayName ~= "" and not hash[displayName] then
+                    table.insert(namesInMap, displayName)
+                    hash[displayName] = true
+                end
             end
         end
 
@@ -1021,14 +991,20 @@ do
         local nearestHerb = nil
         local minDistance = math.huge
 
-        for _, herb in pairs(workspace:GetChildren()) do
-            local realName = getRealNameFromObject(herb)
-            if realName and herbList[realName] == true then
-                local herbPos = herb:GetPivot().Position
-                local distance = (herbPos - root.Position).Magnitude
-                if distance < minDistance then
-                    minDistance = distance
-                    nearestHerb = herb
+        local herbFolderInWorkspace = workspace:FindFirstChild("Herbs")
+        if not herbFolderInWorkspace then return nil end
+
+        -- ค้นหาโดยเทียบชื่อจาก ProximityPrompt
+        for _, obj in pairs(herbFolderInWorkspace:GetDescendants()) do
+            if obj:IsA("ProximityPrompt") then
+                local displayName = obj.ObjectText ~= "" and obj.ObjectText or obj.ActionText
+                if displayName and herbList[displayName] == true then
+                    local herbPos = obj.Parent:GetPivot().Position
+                    local distance = (herbPos - root.Position).Magnitude
+                    if distance < minDistance then
+                        minDistance = distance
+                        nearestHerb = obj.Parent -- ส่งคืน Parent (ตัวสมุนไพร) เพื่อให้ Warp ไปหา
+                    end
                 end
             end
         end
