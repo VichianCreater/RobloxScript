@@ -842,7 +842,7 @@ do
                 if distance <= prompt.MaxActivationDistance then
                     prompt.HoldDuration = 0
                     prompt:InputHoldBegin()
-                    task.wait()
+                    task.wait(prompt.HoldDuration)
                     prompt:InputHoldEnd()
                     break
                 end
