@@ -35,6 +35,7 @@ end)
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    Event = Window:AddTab({ Title = "Xmas Event", Icon = "tree-pine" }),
     ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
     ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
     ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
@@ -47,6 +48,284 @@ local Tabs = {
 local Options = Fluent.Options
 
 do
+
+    ----------------------- EVENT ESP & WARP ---------------------------------
+
+   local RunService = game:GetService("RunService")
+    local Camera = workspace.CurrentCamera
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
+
+    -- ### VARIABLES ###
+    local firstTimeUsingDeath = true
+    local isEventWarping = false
+    local eventWarpSpeed = 50
+    local specialESPObjects = {} -- { [object] = {Instance = BillboardGui, Label = TextLabel, Tier = string} }
+    local giftlist = { ["Giftmas"] = "T1" }
+
+    -- ตั้งค่า RGB
+    local rainbowSpeed = 0.5 -- ปรับความเร็วสีรุ้ง (น้อย = ช้า, มาก = เร็ว)
+    local currentRainbowColor = Color3.fromRGB(255, 255, 255)
+
+    -- ### ตรวจสอบตำแหน่งเก็บ ESP ###
+    local success, targetParent = pcall(function() return CoreGui end)
+    local ESPParent = success and targetParent or LocalPlayer:WaitForChild("PlayerGui")
+
+    RunService.RenderStepped:Connect(function()
+        local hue = (tick() * rainbowSpeed) % 1
+        currentRainbowColor = Color3.fromHSV(hue, 0.8, 1) -- สีรุ้งแบบสดใส
+    end)
+
+    local function createGiftESP(object, tier)
+        if not object or not object.Parent or specialESPObjects[object] then return end
+
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "EventESP_" .. object.Name
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 200, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object
+        bbg.ResetOnSpawn = false
+        bbg.Parent = ESPParent
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Parent = bbg
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "🎄: " .. object.Name
+        nameLabel.TextColor3 = currentRainbowColor
+        nameLabel.TextSize = 14
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+        -- บันทึกข้อมูลเพื่อใช้อัปเดตสีรุ้ง
+        specialESPObjects[object] = { 
+            Instance = bbg, 
+            Label = nameLabel, 
+            Tier = tier 
+        }
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### [LOOP] อัปเดตสี RGB ให้ ESP ตลอดเวลา ###
+    -----------------------------------------------------------------------------------------------------------------
+    task.spawn(function()
+        while true do
+            for object, data in pairs(specialESPObjects) do
+                if data.Label and data.Label.Parent then
+                    data.Label.TextColor3 = currentRainbowColor
+                end
+            end
+            RunService.RenderStepped:Wait() -- อัปเดตตามเฟรมเรตเพื่อให้สีเนียนที่สุด
+        end
+    end)
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### [LOOP] ตรวจสอบการลบ ESP เมื่อของหาย ###
+    -----------------------------------------------------------------------------------------------------------------
+    task.spawn(function()
+        while true do
+            for object, data in pairs(specialESPObjects) do
+                if not object or not object.Parent then
+                    if data.Instance then data.Instance:Destroy() end
+                    specialESPObjects[object] = nil
+                end
+            end
+            task.wait(1)
+        end
+    end)
+
+    local function DeathFirstFunctionEvent()
+        if firstTimeUsingDeath then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then 
+                char.Humanoid.Health = 0 
+            end
+            -- รอจนกว่าตัวละครใหม่จะโหลดเสร็จสมบูรณ์
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(2) -- รอให้ฟิสิกส์ตัวละครนิ่ง
+            firstTimeUsingDeath = false
+        end
+    end
+
+    local function setNoclip(enabled)
+        if enabled then
+            if _G.EventNoclip then _G.EventNoclip:Disconnect() end
+            _G.EventNoclip = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, v in pairs(char:GetDescendants()) do
+                        if v:IsA('BasePart') then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            if _G.EventNoclip then _G.EventNoclip:Disconnect(); _G.EventNoclip = nil end
+        end
+    end
+
+    local function AutoPressGiftE()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local overlapParams = OverlapParams.new()
+        overlapParams.FilterType = Enum.RaycastFilterType.Exclude
+        overlapParams.FilterDescendantsInstances = {char}
+        
+        local nearbyParts = workspace:GetPartBoundsInRadius(root.Position, 15, overlapParams)
+
+        for _, part in ipairs(nearbyParts) do
+            local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                local item = prompt.Parent
+                if item and giftlist[item.Name] then
+                    prompt.HoldDuration = 0 
+                    prompt:InputHoldBegin()
+                    task.wait()
+                    prompt:InputHoldEnd()
+                    break 
+                end
+            end
+        end
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### [FUNCTION] WARP LOGIC
+    -----------------------------------------------------------------------------------------------------------------
+
+    local function warpToTarget(targetPosition)
+        local char = LocalPlayer.Character
+        -- เช็คตัวละครและส่วนประกอบภายในฟังก์ชันเสมอ
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
+        
+        if not root or not hum or hum.Health <= 0 then return end 
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = root
+
+        local distance = (targetPosition - root.Position).Magnitude
+        local duration = distance / math.max(eventWarpSpeed, 1)
+        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
+
+        hum.PlatformStand = true
+        tween:Play()
+        
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            -- ถ้ากดปิดวาร์ป หรือตายระหว่างวาร์ป ให้ยกเลิก Tween
+            if not isEventWarping or hum.Health <= 0 then
+                tween:Cancel()
+                if connection then connection:Disconnect() end
+            end
+        end)
+
+        tween.Completed:Wait()
+        if connection then connection:Disconnect() end
+        if bv then bv:Destroy() end
+        if hum then 
+            hum.PlatformStand = false
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
+        end
+    end
+
+    local function findNearestEventItem()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
+        
+        local nearest = nil
+        local minDistance = math.huge
+        
+        for _, child in pairs(game.Workspace:GetChildren()) do
+            if giftlist[child.Name] then
+                local dist = (child:GetPivot().Position - root.Position).Magnitude
+                if dist < minDistance then
+                    minDistance = dist
+                    nearest = child
+                end
+            end
+        end
+        return nearest
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### [UI & LOOPS]
+    -----------------------------------------------------------------------------------------------------------------
+
+    -- ESP Toggle
+    local EventESPtoggle = Tabs.Event:AddToggle("EventESP", {Title = "Show Gift ESP", Default = false })
+
+    -- Warp Speed Slider
+    Tabs.Event:AddSlider("EventWarpSpeed", { 
+        Title = "Event Warp Speed", 
+        Default = 50, Min = 1, Max = 100, Rounding = 1, 
+        Callback = function(v) eventWarpSpeed = v end 
+    })
+
+    -- Warp Toggle
+    local EventWarpToggle = Tabs.Event:AddToggle("EventWarp", {Title = "Auto Warp to Gifts", Default = false })
+
+    -- Loop สำหรับระบบวาร์ป (ปรับปรุงให้รองรับการเกิดใหม่)
+    task.spawn(function()
+        while true do
+            if isEventWarping then
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                
+                -- ถ้าตัวละครยังมีชีวิตอยู่ ให้ทำการวาร์ป
+                if hum and hum.Health > 0 then
+                    local target = findNearestEventItem()
+                    if target then
+                        warpToTarget(target:GetPivot().Position + Vector3.new(0, 5, 0))
+                        task.wait(0.2)
+                        AutoPressGiftE()
+                        task.wait(0.3)
+                    end
+                else
+                    -- ถ้าตายอยู่ ให้รอจนกว่าจะเกิดใหม่
+                    task.wait(1)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- ESP Loop
+    task.spawn(function()
+        while true do
+            if EventESPtoggle.Value then
+                for _, child in pairs(game.Workspace:GetChildren()) do
+                    if giftlist[child.Name] then createGiftESP(child, giftlist[child.Name]) end
+                end
+            end
+            for object, data in pairs(specialESPObjects) do
+                if not object or not object.Parent or not EventESPtoggle.Value then
+                    if data.Instance then data.Instance:Destroy() end
+                    specialESPObjects[object] = nil
+                end
+            end
+            task.wait(2)
+        end
+    end)
+
+    EventWarpToggle:OnChanged(function(v)
+        isEventWarping = v
+        if v then
+            DeathFirstFunctionEvent()
+            setNoclip(true)
+        else
+            setNoclip(false)
+        end
+    end)
+
+    ---------------------------------------------------------------
     Tabs.Main:AddParagraph({
         Title = "Welcome to vichianHUB",
         Content = "\nThis is a beta test script.\nUse at your own risk!\n\nWhat game the VichianHUB is Support\n- Dragon Adventure\n- Immortal Cultivation"
