@@ -313,18 +313,52 @@ Englist.
 
     -- [ ตัวแปรเก็บค่าจาก Dropdown ] --
     local Config = {
+        Mode = "Shadow Realm",
         Map = "Summon Gate",
         Count = "1",
         Difficulty = "DIFF: NORMAL"
     }
 
     -- [ ส่วนของ UI Dropdowns ] --
+
+    -- 1. Mode Dropdown
+    local ModeDropdown = Tabs.AutoStart:AddDropdown("ModeSelect", {
+        Title = "Select Mode",
+        Values = {"Shadow Realm", "Raid"},
+        Default = 1,
+    })
+
+    -- 2. Map Dropdown
     local MapDropdown = Tabs.AutoStart:AddDropdown("MapSelect", {
         Title = "Select Map",
         Values = {"Summon Gate", "Summon Station - 1", "Summon Station - 2", "Statue's Cave"},
         Default = 1,
     })
-    MapDropdown:OnChanged(function(Value) Config.Map = Value end)
+
+    -- จัดการค่าเมื่อมีการเปลี่ยนแปลง และสั่งซ่อน Map Selection
+    ModeDropdown:OnChanged(function(Value)
+        Config.Mode = Value
+        
+        -- ค้นหาและซ่อน UI "Select Map" ใน CoreGui
+        local coreGui = game:GetService("CoreGui")
+        for _, gui in pairs(coreGui:GetChildren()) do
+            if gui:IsA("ScreenGui") then
+                for _, descendant in pairs(gui:GetDescendants()) do
+                    if descendant:IsA("TextLabel") and descendant.Text == "Select Map" then
+                        -- เข้าถึง Parent เพื่อปิดการมองเห็น
+                        local dropdownFrame = descendant.Parent 
+                        if dropdownFrame and dropdownFrame.Parent then
+                            if Value == "Raid" then
+                                dropdownFrame.Parent.Visible = false
+                            else
+                                dropdownFrame.Parent.Visible = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
 
     local CountDropdown = Tabs.AutoStart:AddDropdown("CountSelect", {
         Title = "Select Player Count",
@@ -340,7 +374,7 @@ Englist.
     })
     DiffDropdown:OnChanged(function(Value) Config.Difficulty = Value end)
 
-    --- [ LOGIC การกดแบบ Fishing ] ---
+    --- [ LOGIC การกด ] ---
 
     local function virtualClick(button)
         if button and button:IsA("GuiButton") then
@@ -371,7 +405,7 @@ Englist.
         if IsProcessing or not AutoStartEnabled then return end
         IsProcessing = true
 
-        -- 1. ค้นหาประตู
+        -- 1. วาร์ปไปประตู
         local teleportsFolder = workspace:FindFirstChild("Teleports")
         local targetPortal = nil
         if teleportsFolder then
@@ -387,103 +421,141 @@ Englist.
         if targetPortal and LocalPlayer.Character then
             LocalPlayer.Character:PivotTo(targetPortal:GetPivot())
             
-            -- 3. เริ่มขั้นตอนเช็ค UI
             local HUD = PlayerGui:FindFirstChild("HUD")
             local Frames = HUD and HUD:FindFirstChild("Frames")
-            
-            if Frames then
-                -- STEP 1: กดเลือกหมวดหมู่ Default
-                local TeleportFrame = Frames:FindFirstChild("Teleport")
-                if TeleportFrame then
-                    local t = 0
-                    while AutoStartEnabled and not TeleportFrame.Visible and t < 50 do task.wait(0.1); t = t + 1 end
+            if not Frames then IsProcessing = false return end
 
-                    if TeleportFrame.Visible then
-                        task.wait(0.5)
+            ---------------------------------------------------------
+            -- STEP 1: Teleport Frame
+            ---------------------------------------------------------
+            local TeleportFrame = Frames:FindFirstChild("Teleport")
+            if TeleportFrame then
+                local t = 0
+                while AutoStartEnabled and not TeleportFrame.Visible and t < 50 do task.wait(0.1); t = t + 1 end
+
+                if TeleportFrame.Visible then
+                    task.wait(0.5)
+                    if Config.Mode == "Raid" then
+                        local RaidBtnFrame = TeleportFrame:FindFirstChild("Frame") 
+                        local RaidBtnFrame2 = RaidBtnFrame:FindFirstChild("Frame") 
+                        local RaidBtnFrame3 = RaidBtnFrame2:FindFirstChild("TextButton")
+                        if RaidBtnFrame3 then virtualClick(RaidBtnFrame3) end
+                    else
                         local Worlds = TeleportFrame:FindFirstChild("WORLDS")
                         local ScrollingFrame = Worlds and Worlds:FindFirstChild("ScrollingFrame")
-                        
-                        if ScrollingFrame then
-                            local DefaultObj = ScrollingFrame:FindFirstChild("Default")
-                            local DefaultBtn = DefaultObj and DefaultObj:FindFirstChild("TextButton")
-                            if DefaultBtn then
-                                virtualClick(DefaultBtn)
-                                task.wait(0.1)
-                            end
+                        local DefaultBtn = ScrollingFrame and ScrollingFrame:FindFirstChild("Default") and ScrollingFrame.Default:FindFirstChild("TextButton")
+                        if DefaultBtn then virtualClick(DefaultBtn) end
+                    end
+                    task.wait(0.5)
+                end
+            end
 
-                            -- STEP 2: ค้นหาด่านตาม Config
-                            local MapSelect = Frames:FindFirstChild("MapSelect")
-                            local ScrollMaps = MapSelect and MapSelect:FindFirstChild("Scroll") and MapSelect.Scroll:FindFirstChild("Maps")
-                            
-                            if ScrollMaps then
-                                local foundMapBtn = nil
-                                for _, folder in pairs(ScrollMaps:GetChildren()) do
-                                    local imgLabel = folder:FindFirstChild("ImageLabel")
-                                    local textLabel2 = imgLabel and imgLabel:FindFirstChild("TextLabel2")
-                                    if textLabel2 and textLabel2.Text == Config.Map then
-                                        foundMapBtn = folder:FindFirstChild("TextButton")
-                                        break
-                                    end
-                                end
+            ---------------------------------------------------------
+            -- STEP 2: MapSelect Frame
+            ---------------------------------------------------------
+            local MapSelectFrame = Frames:FindFirstChild("MapSelect")
+            if MapSelectFrame then
+                local t = 0
+                while AutoStartEnabled and not MapSelectFrame.Visible and t < 50 do task.wait(0.1); t = t + 1 end
 
-                                if foundMapBtn then
-                                    virtualClick(foundMapBtn)
-                                    task.wait(0.1)
+                if MapSelectFrame.Visible then
+                    if Config.Mode == "Raid" then
+                        -- โหมด Raid กดด่านเลข 1 เพื่อไปต่อ
+                        local RaidMapBtn = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps") and MapSelectFrame.Scroll.Maps:FindFirstChild("1") and MapSelectFrame.Scroll.Maps["1"]:FindFirstChild("TextButton")
+                        if RaidMapBtn then virtualClick(RaidMapBtn) end
+                    else
+                        -- โหมดปกติ เลือกตามชื่อด่าน
+                        local ScrollMaps = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps")
+                        if ScrollMaps then
+                            for _, folder in pairs(ScrollMaps:GetChildren()) do
+                                local imgLabel = folder:FindFirstChild("ImageLabel")
+                                local textLabel2 = imgLabel and imgLabel:FindFirstChild("TextLabel2")
+                                if textLabel2 and textLabel2.Text == Config.Map then
+                                    local btn = folder:FindFirstChild("TextButton")
+                                    if btn then virtualClick(btn) break end
                                 end
                             end
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end
+
+            ---------------------------------------------------------
+            -- STEP 3: หน้าตั้งค่าห้อง (แยกตามโหมด)
+            ---------------------------------------------------------
+            if Config.Mode == "Raid" then
+                local RaidSelect = Frames:FindFirstChild("RaidSelect")
+                if RaidSelect then
+                    local t = 0
+                    while AutoStartEnabled and not RaidSelect.Visible and t < 50 do task.wait(0.1); t = t + 1 end
+                    
+                    if RaidSelect.Visible then
+                        -- กดเลือก Raid อันแรก
+                        local RaidItemBtn = RaidSelect:FindFirstChild("Scroll") and RaidSelect.Scroll:FindFirstChild("Maps") and RaidSelect.Scroll.Maps:FindFirstChild("1") and RaidSelect.Scroll.Maps["1"]:FindFirstChild("TextButton")
+                        if RaidItemBtn then virtualClick(RaidItemBtn) task.wait(0.3) end
+
+                        local Info = RaidSelect:FindFirstChild("Info")
+                        if Info then
+                            -- เช็ค Count
+                            local CountLabel = Info:FindFirstChild("Count") and Info.Count:FindFirstChild("TextLabel")
+                            local CountBtn = Info:FindFirstChild("No") and Info.No:FindFirstChild("TextButton")
+                            if CountLabel and CountBtn then
+                                local r = 0
+                                while AutoStartEnabled and CountLabel.Text ~= Config.Count and r < 10 do
+                                    virtualClick(CountBtn)
+                                    task.wait(0.2)
+                                    r = r + 1
+                                end
+                            end
+                            -- เช็ค Difficulty
+                            local DiffLabel = Info:FindFirstChild("Difficulty") and Info.Difficulty:FindFirstChild("TextLabel")
+                            local DiffBtn = Info:FindFirstChild("Difficulty") and Info.Difficulty:FindFirstChild("TextButton")
+                            if DiffLabel and DiffBtn then
+                                local r = 0
+                                while AutoStartEnabled and DiffLabel.Text ~= Config.Difficulty and r < 15 do
+                                    virtualClick(DiffBtn)
+                                    task.wait(0.2)
+                                    r = r + 1
+                                end
+                            end
+                            -- กด Play
+                            local PlayBtn = Info:FindFirstChild("Play") and Info.Play:FindFirstChild("TextButton")
+                            if PlayBtn then virtualClick(PlayBtn) end
                         end
                     end
                 end
-
-                -- STEP 3: ตั้งค่าห้อง (จำนวนคน & ความยาก)
-                local MapSelectFrame = Frames:FindFirstChild("MapSelect")
-                if MapSelectFrame then
-                    local t = 0
-                    while AutoStartEnabled and not MapSelectFrame.Visible and t < 50 do task.wait(0.1); t = t + 1 end
-
-                    local Info = MapSelectFrame:FindFirstChild("Info")
-                    if Info and MapSelectFrame.Visible then
-                        -- เช็คจำนวนคน
-                        local CountLabel = Info.Count and Info.Count:FindFirstChild("TextLabel")
-                        local NoBtn = Info:FindFirstChild("No")
-                        local RealNoBtn = NoBtn and NoBtn:FindFirstChild("TextButton")
-                        
-                        if CountLabel and RealNoBtn then
-                            local retryC = 0
-                            while AutoStartEnabled and CountLabel.Text ~= Config.Count and retryC < 10 do
-                                virtualClick(RealNoBtn)
-                                task.wait(0.1)
-                                retryC = retryC + 1
-                            end
-                        end
-
-                        -- เช็คความยาก
-                        local DiffLabel = Info.Difficulty and Info.Difficulty:FindFirstChild("TextLabel")
-                        local RealDiffButton = Info.Difficulty and Info.Difficulty:FindFirstChild("TextButton")
-                        
-                        if DiffLabel and RealDiffButton then
-                            local retryD = 0
-                            while AutoStartEnabled and DiffLabel.Text ~= Config.Difficulty and retryD < 15 do
-                                virtualClick(RealDiffButton)
-                                task.wait(0.1)
-                                retryD = retryD + 1
-                            end
-                        end
-
-                        -- STEP 4: กด Play
-                        local PlayBtn = Info:FindFirstChild("Play")
-                        local RealPlayBtn = PlayBtn and PlayBtn:FindFirstChild("TextButton")
-                        if RealPlayBtn then
-                            task.wait(0.1)
-                            virtualClick(RealPlayBtn)
-                            Fluent:Notify({ Title = "Success", Content = "Creating Room...", Duration = 3 })
-                            task.wait(10) -- รอเข้าด่าน
+            else
+                -- โหมด Shadow Realm ปกติ
+                local Info = MapSelectFrame:FindFirstChild("Info")
+                if Info and MapSelectFrame.Visible then
+                    local CountLabel = Info:FindFirstChild("Count") and Info.Count:FindFirstChild("TextLabel")
+                    local CountBtn = Info:FindFirstChild("No") and Info.No:FindFirstChild("TextButton")
+                    if CountLabel and CountBtn then
+                        local r = 0
+                        while AutoStartEnabled and CountLabel.Text ~= Config.Count and r < 10 do
+                            virtualClick(CountBtn)
+                            task.wait(0.2)
+                            r = r + 1
                         end
                     end
+                    local DiffLabel = Info:FindFirstChild("Difficulty") and Info.Difficulty:FindFirstChild("TextLabel")
+                    local DiffBtn = Info:FindFirstChild("Difficulty") and Info.Difficulty:FindFirstChild("TextButton")
+                    if DiffLabel and DiffBtn then
+                        local r = 0
+                        while AutoStartEnabled and DiffLabel.Text ~= Config.Difficulty and r < 15 do
+                            virtualClick(DiffBtn)
+                            task.wait(0.2)
+                            r = r + 1
+                        end
+                    end
+                    local PlayBtn = Info:FindFirstChild("Play") and Info.Play:FindFirstChild("TextButton")
+                    if PlayBtn then virtualClick(PlayBtn) end
                 end
             end
         end
         
+        task.wait(2)
         IsProcessing = false
     end
 
@@ -495,18 +567,31 @@ Englist.
 
     StartToggle:OnChanged(function()
         AutoStartEnabled = StartToggle.Value
-        if game:GetService("Lighting").DepthOfField then
+        if game:GetService("Lighting"):FindFirstChild("DepthOfField") then
             game:GetService("Lighting").DepthOfField.Enabled = false
         end
         if AutoStartEnabled then
             task.spawn(function()
                 while AutoStartEnabled do
-                    if not IsProcessing then
-                        startProcess()
-                    end
-                    task.wait(2) -- วนลูปเช็คทุก 2 วินาที
+                    if not IsProcessing then startProcess() end
+                    task.wait(2)
                 end
             end)
+        end
+    end)
+
+    task.spawn(function()
+        while true do
+            local StartGui = LocalPlayer.PlayerGui:FindFirstChild("Start")
+            if StartGui and StartGui.Enabled then 
+                local readyBtn = StartGui:FindFirstChild("Frame") and StartGui.Frame:FindFirstChild("Ready")
+                if readyBtn and readyBtn.Visible then
+                    virtualClick(readyBtn)
+                    task.wait(1) 
+                    break
+                end
+            end
+            task.wait(1)
         end
     end)
 -----------------------------------------------------------------------------------------------------
