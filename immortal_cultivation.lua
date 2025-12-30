@@ -37,10 +37,11 @@ local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     Event = Window:AddTab({ Title = "Xmas Event", Icon = "tree-pine" }),
     ESPM = Window:AddTab({ Title = "ESP & Attack Mob", Icon = "eye" }),
-    ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
-    ESPManual = Window:AddTab({ Title = "ESP Manual", Icon = "book" }),
-    ESPFlame = Window:AddTab({ Title = "ESP Flame", Icon = "flame" }),
-    AutoHerb = Window:AddTab({ Title = "Auto Herb", Icon = "leaf" }),
+    -- ESPH = Window:AddTab({ Title = "ESP Herb", Icon = "eye" }),
+    AutoHerb = Window:AddTab({ Title = "ESP & Auto Herb", Icon = "leaf" }),
+    ESPManual = Window:AddTab({ Title = "Manual", Icon = "book" }),
+    ESPFlame = Window:AddTab({ Title = "Flame", Icon = "flame" }),
+    ESPSM = Window:AddTab({ Title = "Soul Realm", Icon = "ghost" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -51,7 +52,7 @@ do
 
     ----------------------- EVENT ESP & WARP ---------------------------------
 
-   local RunService = game:GetService("RunService")
+    local RunService = game:GetService("RunService")
     local Camera = workspace.CurrentCamera
     local CoreGui = game:GetService("CoreGui")
     local Players = game:GetService("Players")
@@ -471,10 +472,10 @@ do
     end
 
     --- ### 4. UI Setup & Logic
-    local herbESPtoggle = Tabs.ESPH:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
+    local herbESPtoggle = Tabs.AutoHerb:AddToggle("HerbESPToggle", {Title = "Show Herb ESP", Default = false })
     
-    local HerbListDropdown = Tabs.ESPH:AddDropdown("SelectHerb", {
-        Title = "Select Herb Types",
+    local HerbListDropdown = Tabs.AutoHerb:AddDropdown("SelectHerb", {
+        Title = "Select Herb ESP",
         Values = getUniqueHerbNames(),
         Multi = true,
         Default = {},
@@ -542,27 +543,30 @@ do
 
     refreshESP()
 
+    Line1 = Tabs.AutoHerb:AddParagraph({
+        Title = "-----------------------------------------------------------------------------------------",
+    })
+
     -----------------------------------------------------------------------------------------------------------------
     local RunService = game:GetService("RunService")
     local Camera = workspace.CurrentCamera
     local CoreGui = game:GetService("CoreGui")
     local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
 
-    -- ตรวจสอบสิทธิ์การเข้าถึง CoreGui
-    local success, targetParent = pcall(function()
-        return CoreGui
-    end)
-    local ESPParent = success and targetParent or Players.LocalPlayer:WaitForChild("PlayerGui")
-
-    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Manual ESP", Default = false })
-    local specialESPObjects = {} -- เก็บ { [Object] = {BillboardGui, Tier} }
+    -- ### CONFIGURATION & VARIABLES ###
+    local firstTimeUsingDeath = true
+    local isWarping = false
+    local warpSpeed = 50
+    local specialESPObjects = {} -- { [object] = {Instance = BillboardGui, Tier = string} }
 
     local TierColors = {
-        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว
-        T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
-        T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
-        T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
-        T5 = Color3.fromRGB(255, 0, 0)       -- สีแดง
+        T1 = Color3.fromRGB(255, 255, 255),
+        T2 = Color3.fromRGB(85, 255, 127),
+        T3 = Color3.fromRGB(0, 170, 255),
+        T4 = Color3.fromRGB(170, 85, 255),
+        T5 = Color3.fromRGB(255, 0, 0)
     }
 
     local scriptureList = {
@@ -600,7 +604,14 @@ do
         ["Journey To The West"] = "T5"
     }
 
-    -- ฟังก์ชันสร้าง BillboardGui
+    -- ### CORE SETUP ###
+    local success, targetParent = pcall(function() return CoreGui end)
+    local ESPParent = success and targetParent or LocalPlayer:WaitForChild("PlayerGui")
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### FUNCTIONS ###
+    -----------------------------------------------------------------------------------------------------------------
+
     local function createScriptureESP(object, tier)
         if specialESPObjects[object] then return end
 
@@ -619,7 +630,7 @@ do
         nameLabel.Text = "📕 " .. string.format("[%s] %s", tier, object.Name)
         nameLabel.TextColor3 = TierColors[tier] or Color3.fromRGB(255, 255, 255)
         nameLabel.TextSize = 14
-        nameLabel.Font = Enum.Font.GothamBold -- ใช้ฟอนต์ที่ดูทันสมัยขึ้น
+        nameLabel.Font = Enum.Font.GothamBold
         nameLabel.TextStrokeTransparency = 0
         nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
 
@@ -636,38 +647,182 @@ do
         specialESPObjects = {}
     end
 
-    -- อัปเดตสถานะการแสดงผล
-    RunService.RenderStepped:Connect(function()
-        local isEnabled = specialESPtoggle.Value
+    local function setNoclip(enabled)
+        if enabled then
+            if _G.WarpNoclip then _G.WarpNoclip:Disconnect() end
+            _G.WarpNoclip = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, v in pairs(char:GetDescendants()) do
+                        if v:IsA('BasePart') then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            if _G.WarpNoclip then _G.WarpNoclip:Disconnect(); _G.WarpNoclip = nil end
+        end
+    end
+
+    local function DeathFirstFunction()
+        if firstTimeUsingDeath then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then 
+                char.Humanoid.Health = 0 
+            end
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(2)
+            firstTimeUsingDeath = false
+        end
+    end
+
+    local function AutoPressE()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local nearbyParts = workspace:GetPartBoundsInRadius(root.Position, 15)
+        for _, part in ipairs(nearbyParts) do
+            local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                local item = prompt.Parent
+                if item and scriptureList[item.Name] then
+                    prompt.HoldDuration = 0 
+                    prompt:InputHoldBegin()
+                    task.wait()
+                    prompt:InputHoldEnd()
+                    break 
+                end
+            end
+        end
+    end
+
+    local function warpToTarget(targetPosition)
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
         
-        for object, data in pairs(specialESPObjects) do
-            if object and object.Parent and isEnabled then
-                data.Instance.Enabled = true
-            else
-                if not isEnabled then
-                    data.Instance.Enabled = false
-                else
-                    -- ถ้าไอเทมหายไปให้ลบออกจากหน่วยความจำ
+        if not root or not hum or hum.Health <= 0 then return end 
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = root
+
+        local distance = (targetPosition - root.Position).Magnitude
+        local duration = distance / math.max(warpSpeed, 1)
+        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
+
+        hum.PlatformStand = true
+        tween:Play()
+        
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if not isWarping or hum.Health <= 0 then
+                tween:Cancel()
+                if connection then connection:Disconnect() end
+            end
+        end)
+
+        tween.Completed:Wait()
+        if connection then connection:Disconnect() end
+        if bv then bv:Destroy() end
+        if hum then 
+            hum.PlatformStand = false
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
+        end
+    end
+
+    local function findNearestScripture()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
+        
+        local nearest = nil
+        local minDistance = math.huge
+        
+        for _, child in pairs(game.Workspace:GetChildren()) do
+            if scriptureList[child.Name] then
+                local dist = (child:GetPivot().Position - root.Position).Magnitude
+                if dist < minDistance then
+                    minDistance = dist
+                    nearest = child
+                end
+            end
+        end
+        return nearest
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### UI & TOGGLES ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    local specialESPtoggle = Tabs.ESPManual:AddToggle("ScriptureESP", {Title = "Show Scripture ESP", Default = false })
+
+    local WarpSpeedSlider = Tabs.ESPManual:AddSlider("WarpSpeed", { 
+        Title = "Warp Speed", 
+        Default = 50, Min = 1, Max = 100, Rounding = 1, 
+        Callback = function(v) warpSpeed = v end 
+    })
+
+    local WarpToggle = Tabs.ESPManual:AddToggle("AutoWarpScripture", {Title = "Auto Warp to Scripture", Default = false })
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### LOOPS ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    -- ESP Loop
+    task.spawn(function()
+        while true do
+            if specialESPtoggle.Value then
+                for _, child in pairs(game.Workspace:GetChildren()) do
+                    if scriptureList[child.Name] then
+                        createScriptureESP(child, scriptureList[child.Name])
+                    end
+                end
+            end
+            
+            -- Cleanup
+            for object, data in pairs(specialESPObjects) do
+                if not object or not object.Parent or not specialESPtoggle.Value then
                     if data.Instance then data.Instance:Destroy() end
                     specialESPObjects[object] = nil
                 end
             end
+            task.wait(2)
         end
     end)
 
-    -- Loop ตรวจสอบไอเทมใน Workspace ทุกๆ 5 วินาที
+    -- Warp Loop
     task.spawn(function()
         while true do
-            if specialESPtoggle.Value then
-                local currentItems = game.Workspace:GetChildren()
-                for _, child in pairs(currentItems) do
-                    local tier = scriptureList[child.Name]
-                    if tier then
-                        createScriptureESP(child, tier)
+            if isWarping then
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                
+                if hum and hum.Health > 0 then
+                    local target = findNearestScripture()
+                    if target then
+                        warpToTarget(target:GetPivot().Position + Vector3.new(0, 3, 0))
+                        task.wait(0.2)
+                        AutoPressE()
+                        task.wait(0.3)
                     end
+                else
+                    task.wait(1)
                 end
             end
-            task.wait(2)
+            task.wait(0.5)
+        end
+    end)
+
+    -- Event Listeners
+    WarpToggle:OnChanged(function(v)
+        isWarping = v
+        if v then
+            DeathFirstFunction()
+            setNoclip(true)
+        else
+            setNoclip(false)
         end
     end)
 
@@ -683,21 +838,21 @@ do
     local Camera = workspace.CurrentCamera
     local CoreGui = game:GetService("CoreGui")
     local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
 
-    local success, targetParent = pcall(function()
-        return CoreGui
-    end)
-    local ESPParent = success and targetParent or Players.LocalPlayer:WaitForChild("PlayerGui")
-
-    local MysteriusFlameESPToggle = Tabs.ESPFlame:AddToggle("MysteriusFlameESP", {Title = "Show Flame ESP", Default = false })
+    -- ### VARIABLES ###
+    local firstTimeUsingDeath = true
+    local isFlameWarping = false
+    local flameWarpSpeed = 50
     local FlameESPObject = {}
 
     local TierColors = {
-        T1 = Color3.fromRGB(255, 255, 255), -- สีขาว
-        T2 = Color3.fromRGB(85, 255, 127),   -- สีเขียว
-        T3 = Color3.fromRGB(0, 170, 255),   -- สีฟ้า
-        T4 = Color3.fromRGB(170, 85, 255),  -- สีม่วง
-        T5 = Color3.fromRGB(255, 0, 0)       -- สีแดง
+        T1 = Color3.fromRGB(255, 255, 255),
+        T2 = Color3.fromRGB(85, 255, 127),
+        T3 = Color3.fromRGB(0, 170, 255),
+        T4 = Color3.fromRGB(170, 85, 255),
+        T5 = Color3.fromRGB(255, 0, 0)
     }
 
     local MysteriusFlameList = {
@@ -709,6 +864,14 @@ do
         ["Karmic Dao"] = "T5",
         ["Ruinous"] = "T5",
     }
+
+    -- ### CORE SETUP ###
+    local success, targetParent = pcall(function() return CoreGui end)
+    local ESPParent = success and targetParent or LocalPlayer:WaitForChild("PlayerGui")
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### FUNCTIONS ###
+    -----------------------------------------------------------------------------------------------------------------
 
     local function createMysteriusFlameESP(object, tier)
         if FlameESPObject[object] then return end
@@ -745,9 +908,132 @@ do
         FlameESPObject = {}
     end
 
+    local function setNoclip(enabled)
+        if enabled then
+            if _G.FlameNoclip then _G.FlameNoclip:Disconnect() end
+            _G.FlameNoclip = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, v in pairs(char:GetDescendants()) do
+                        if v:IsA('BasePart') then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            if _G.FlameNoclip then _G.FlameNoclip:Disconnect(); _G.FlameNoclip = nil end
+        end
+    end
+
+    local function DeathFirstFunctionFlame()
+        if firstTimeUsingDeath then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then 
+                char.Humanoid.Health = 0 
+            end
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(2)
+            firstTimeUsingDeath = false
+        end
+    end
+
+    local function AutoPressFlameE()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return end
+
+        local nearbyParts = workspace:GetPartBoundsInRadius(root.Position, 15)
+        for _, part in ipairs(nearbyParts) do
+            local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                local item = prompt.Parent
+                if item and MysteriusFlameList[item.Name] then
+                    prompt.HoldDuration = 0 
+                    prompt:InputHoldBegin()
+                    task.wait()
+                    prompt:InputHoldEnd()
+                    break 
+                end
+            end
+        end
+    end
+
+    local function warpToFlame(targetPosition)
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
+        
+        if not root or not hum or hum.Health <= 0 then return end 
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = root
+
+        local distance = (targetPosition - root.Position).Magnitude
+        local duration = distance / math.max(flameWarpSpeed, 1)
+        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
+
+        hum.PlatformStand = true
+        tween:Play()
+        
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if not isFlameWarping or hum.Health <= 0 then
+                tween:Cancel()
+                if connection then connection:Disconnect() end
+            end
+        end)
+
+        tween.Completed:Wait()
+        if connection then connection:Disconnect() end
+        if bv then bv:Destroy() end
+        if hum then 
+            hum.PlatformStand = false
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
+        end
+    end
+
+    local function findNearestFlame()
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
+        
+        local nearest = nil
+        local minDistance = math.huge
+        
+        for _, child in pairs(game.Workspace:GetChildren()) do
+            if MysteriusFlameList[child.Name] then
+                local dist = (child:GetPivot().Position - root.Position).Magnitude
+                if dist < minDistance then
+                    minDistance = dist
+                    nearest = child
+                end
+            end
+        end
+        return nearest
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### UI & TOGGLES ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    local MysteriusFlameESPToggle = Tabs.ESPFlame:AddToggle("MysteriusFlameESP", {Title = "Show Flame ESP", Default = false })
+
+    Tabs.ESPFlame:AddSlider("FlameWarpSpeed", { 
+        Title = "Flame Warp Speed", 
+        Default = 50, Min = 1, Max = 100, Rounding = 1, 
+        Callback = function(v) flameWarpSpeed = v end 
+    })
+
+    local FlameWarpToggle = Tabs.ESPFlame:AddToggle("AutoWarpFlame", {Title = "Auto Warp to Flames", Default = false })
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### LOOPS ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    -- ESP Rendering Loop
     RunService.RenderStepped:Connect(function()
         local isEnabled = MysteriusFlameESPToggle.Value
-        
         for object, data in pairs(FlameESPObject) do
             if object and object.Parent and isEnabled then
                 data.Instance.Enabled = true
@@ -762,18 +1048,52 @@ do
         end
     end)
 
+    -- Find Items Loop
     task.spawn(function()
         while true do
             if MysteriusFlameESPToggle.Value then
-                local currentItems = game.Workspace:GetChildren()
-                for _, child in pairs(currentItems) do
-                    local tier = MysteriusFlameList[child.Name]
-                    if tier then
-                        createMysteriusFlameESP(child, tier)
+                for _, child in pairs(game.Workspace:GetChildren()) do
+                    if MysteriusFlameList[child.Name] then
+                        createMysteriusFlameESP(child, MysteriusFlameList[child.Name])
                     end
                 end
             end
             task.wait(2)
+        end
+    end)
+
+    -- Warp Management Loop
+    task.spawn(function()
+        while true do
+            if isFlameWarping then
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                
+                if hum and hum.Health > 0 then
+                    local target = findNearestFlame()
+                    if target then
+                        -- วาร์ปไปเหนือ Flame เล็กน้อย (3 studs) เพื่อกันติดพื้น
+                        warpToFlame(target:GetPivot().Position + Vector3.new(0, 3, 0))
+                        task.wait(0.2)
+                        AutoPressFlameE()
+                        task.wait(0.3)
+                    end
+                else
+                    task.wait(1)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- Toggle Callbacks
+    FlameWarpToggle:OnChanged(function(v)
+        isFlameWarping = v
+        if v then
+            DeathFirstFunctionFlame()
+            setNoclip(true)
+        else
+            setNoclip(false)
         end
     end)
 
@@ -783,6 +1103,226 @@ do
         end
     end)
 
+    -----------------------------------------------------------------------------------------------------------------
+    local RunService = game:GetService("RunService")
+    local CoreGui = game:GetService("CoreGui")
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
+
+    -- ### VARIABLES ###
+    local firstTimeUsingDeath = true
+    local isSoulWarping = false
+    local soulWarpSpeed = 50
+    local soulESPObjects = {}
+
+    -- ### CORE SETUP ###
+    local success, targetParent = pcall(function() return CoreGui end)
+    local ESPParent = success and targetParent or LocalPlayer:WaitForChild("PlayerGui")
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### FUNCTIONS ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    local function createSoulESP(object)
+        if soulESPObjects[object] then return end
+
+        local bbg = Instance.new("BillboardGui")
+        bbg.Name = "SoulESP_" .. tostring(object.Name)
+        bbg.AlwaysOnTop = true
+        bbg.Size = UDim2.new(0, 200, 0, 50)
+        bbg.ExtentsOffset = Vector3.new(0, 3, 0)
+        bbg.Adornee = object
+        bbg.Parent = ESPParent
+
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Parent = bbg
+        nameLabel.Size = UDim2.new(1, 0, 1, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.Text = "✨ [Soul Realm] ✨"
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 0) -- สีเหลืองทอง
+        nameLabel.TextSize = 16
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+
+        soulESPObjects[object] = { Instance = bbg }
+    end
+
+    local function clearSoulESP()
+        for obj, data in pairs(soulESPObjects) do
+            if data.Instance then data.Instance:Destroy() end
+        end
+        soulESPObjects = {}
+    end
+
+    local function setSoulNoclip(enabled)
+        if enabled then
+            if _G.SoulNoclip then _G.SoulNoclip:Disconnect() end
+            _G.SoulNoclip = RunService.Stepped:Connect(function()
+                local char = LocalPlayer.Character
+                if char then
+                    for _, v in pairs(char:GetDescendants()) do
+                        if v:IsA('BasePart') then v.CanCollide = false end
+                    end
+                end
+            end)
+        else
+            if _G.SoulNoclip then _G.SoulNoclip:Disconnect(); _G.SoulNoclip = nil end
+        end
+    end
+
+    local function DeathFirstFunctionSoul()
+        if firstTimeUsingDeath then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then 
+                char.Humanoid.Health = 0 
+            end
+            LocalPlayer.CharacterAdded:Wait()
+            task.wait(2)
+            firstTimeUsingDeath = false
+        end
+    end
+
+    local function AutoPressSoulE(target)
+        -- เจาะจงไปที่ SoulPrompt ตามที่คุณระบุ
+        local prompt = target:FindFirstChild("SoulPrompt")
+        if prompt and prompt:IsA("ProximityPrompt") then
+            prompt.HoldDuration = 0 
+            prompt:InputHoldBegin()
+            task.wait()
+            prompt:InputHoldEnd()
+        end
+    end
+
+    local function warpToSoul(targetPosition)
+        local char = LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
+        
+        if not root or not hum or hum.Health <= 0 then return end 
+
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        bv.Parent = root
+
+        local distance = (targetPosition - root.Position).Magnitude
+        local duration = distance / math.max(soulWarpSpeed, 1)
+        local tween = TweenService:Create(root, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
+
+        hum.PlatformStand = true
+        tween:Play()
+        
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if not isSoulWarping or hum.Health <= 0 then
+                tween:Cancel()
+                if connection then connection:Disconnect() end
+            end
+        end)
+
+        tween.Completed:Wait()
+        if connection then connection:Disconnect() end
+        if bv then bv:Destroy() end
+        if hum then 
+            hum.PlatformStand = false
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
+        end
+    end
+
+    local function findSoulRealm()
+        local soulFolder = workspace.Terrain:FindFirstChild("SoulRealm")
+        if not soulFolder then return nil end
+        
+        local items = soulFolder:GetChildren()
+        if #items > 0 then
+            -- คืนค่าไอเทมแรกที่เจอ (หรือคุณจะวนลูปหาตัวที่ใกล้ที่สุดก็ได้)
+            return items[1] 
+        end
+        return nil
+    end
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### UI & TOGGLES (Tab: ESPSM) ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    local SoulESPToggle = Tabs.ESPSM:AddToggle("SoulRealmESP", {Title = "Show Soul Realm ESP", Default = false })
+
+    Tabs.ESPSM:AddSlider("SoulWarpSpeed", { 
+        Title = "Warp Speed", 
+        Default = 50, Min = 1, Max = 100, Rounding = 1, 
+        Callback = function(v) soulWarpSpeed = v end 
+    })
+
+    local SoulWarpToggle = Tabs.ESPSM:AddToggle("AutoWarpSoul", {Title = "Auto Warp to Soul Realm", Default = false })
+
+    -----------------------------------------------------------------------------------------------------------------
+    -- ### LOOPS ###
+    -----------------------------------------------------------------------------------------------------------------
+
+    -- ESP Check Loop
+    task.spawn(function()
+        while true do
+            if SoulESPToggle.Value then
+                local soulFolder = workspace.Terrain:FindFirstChild("SoulRealm")
+                if soulFolder then
+                    for _, child in pairs(soulFolder:GetChildren()) do
+                        createSoulESP(child)
+                    end
+                end
+            end
+            
+            -- Cleanup
+            for object, data in pairs(soulESPObjects) do
+                if not object or not object.Parent or not SoulESPToggle.Value then
+                    if data.Instance then data.Instance:Destroy() end
+                    soulESPObjects[object] = nil
+                end
+            end
+            task.wait(2)
+        end
+    end)
+
+    -- Warp Management Loop
+    task.spawn(function()
+        while true do
+            if isSoulWarping then
+                local char = LocalPlayer.Character
+                local hum = char and char:FindFirstChild("Humanoid")
+                
+                if hum and hum.Health > 0 then
+                    local target = findSoulRealm()
+                    if target and target:IsA("BasePart") or target:IsA("Model") then
+                        warpToSoul(target:GetPivot().Position)
+                        task.wait(0.2)
+                        AutoPressSoulE(target)
+                        task.wait(0.5)
+                    end
+                else
+                    task.wait(1)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- Toggle Callbacks
+    SoulWarpToggle:OnChanged(function(v)
+        isSoulWarping = v
+        if v then
+            DeathFirstFunctionSoul()
+            setSoulNoclip(true)
+        else
+            setSoulNoclip(false)
+        end
+    end)
+
+    SoulESPToggle:OnChanged(function()
+        if not SoulESPToggle.Value then 
+            clearSoulESP() 
+        end
+    end)
     -----------------------------------------------------------------------------------------------------------------
     
     local mobsFolder = game.Workspace:WaitForChild("Enemies")
@@ -1249,6 +1789,7 @@ do
         local hum = Character and Character:FindFirstChild("Humanoid")
         if not root or not hum then return end 
 
+        -- ใช้ BodyVelocity เพื่อกันแรงโน้มถ่วงระหว่างวาร์ป
         local bv = Instance.new("BodyVelocity")
         bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
         bv.Velocity = Vector3.new(0, 0, 0)
@@ -1258,12 +1799,18 @@ do
         local duration = distance / (tonumber(warpSpeed) or 50)
         local tween = TweenService:Create(root, TweenInfo.new(math.max(duration, 0.1), Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
 
-        hum.PlatformStand = true
+        -- เริ่มวาร์ป
+        hum.PlatformStand = true 
         tween:Play()
+        
+        tween.Completed:Connect(function()
+            if bv then bv:Destroy() end
+            hum.PlatformStand = false
+            -- บังคับให้ Humanoid กลับมายืนและเคลื่อนที่ได้
+            hum:ChangeState(Enum.HumanoidStateType.Running) 
+        end)
+        
         tween.Completed:Wait()
-        if bv then bv:Destroy() end
-        hum.PlatformStand = false
-        hum:ChangeState(Enum.HumanoidStateType.GettingUp) 
     end
 
     local function autoWarpLoopFast()
