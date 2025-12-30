@@ -601,6 +601,9 @@ do
         ["Evergreen Manual"] = "T5",
         ["Beast Soul Manual"] = "T5",
         ["Beast Soul Possession"] = "T5",
+		["Way of Harmony"] = "T5",
+		["North Star's Guidance"] = "T5",
+		["Evergreen body formula"] = "T5",
         ["Journey To The West"] = "T5"
     }
 
@@ -1654,18 +1657,28 @@ do
         overlapParams.FilterType = Enum.RaycastFilterType.Exclude
         overlapParams.FilterDescendantsInstances = {character}
         
+        -- ค้นหาชิ้นส่วนในระยะ 15 หน่วย
         local nearbyParts = workspace:GetPartBoundsInRadius(rootPart.Position, 15, overlapParams)
 
         for _, part in ipairs(nearbyParts) do
+            -- ค้นหา Prompt ทั้งที่ตัว Part เอง หรือที่ Parent (ในกรณีที่เป็น Model)
             local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
-            if prompt and prompt:IsDescendantOf(HerbsFolder) then
+            
+            -- ตรวจสอบว่าเป็นสมุนไพรใน HerbsFolder และยังไม่ได้ถูกกด
+            if prompt and prompt:IsDescendantOf(HerbsFolder) and prompt.Enabled then
                 local distance = (part.Position - rootPart.Position).Magnitude
                 if distance <= prompt.MaxActivationDistance then
+                    -- ตั้งค่าให้กดทันที
                     prompt.HoldDuration = 0
-                    prompt:InputHoldBegin()
-                    task.wait(prompt.HoldDuration)
-                    prompt:InputHoldEnd()
-                    break
+                    
+                    -- จำลองการกด (ใช้ task.spawn เพื่อให้กดพร้อมกันหลายอันได้ในกรณีที่ซ้อนกันมาก)
+                    task.spawn(function()
+                        prompt:InputHoldBegin()
+                        task.wait(0.05) -- หน่วงเวลานิดเดียวเพื่อให้ระบบรับรู้
+                        prompt:InputHoldEnd()
+                    end)
+                    
+                    -- หมายเหตุ: เอา break ออกเพื่อให้ลูปทำงานต่อจนครบทุกชิ้นในรัศมี
                 end
             end
         end
