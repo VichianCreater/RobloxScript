@@ -656,18 +656,13 @@ Englist.
                     {
                         Title = "Confirm",
                         Callback = function()
-                            -- 1. จัดการ workspace.ActualMap["213123321"]
-                            -- CanCollide = true, Anchored = false
-                            local actualMap = workspace:FindFirstChild("ActualMap") 
-                                            and workspace.ActualMap:FindFirstChild("213123321")
+                            local actualMap = workspace:FindFirstChild("ActualMap") and workspace.ActualMap:FindFirstChild("213123321")
                             if actualMap then
                                 SetMapProperties(actualMap, true, false)
                             else
                                 warn("ActualMap ['213123321'] not found!")
                             end
 
-                            -- 2. จัดการ workspace.Map
-                            -- CanCollide = false, Anchored = false
                             local mainMap = workspace:FindFirstChild("Map")
                             if mainMap then
                                 SetMapProperties(mainMap, false, false)
@@ -688,6 +683,33 @@ Englist.
             })
         end
     })
+
+    task.spawn(function()
+        while true do 
+            local bosscheck = LocalPlayer.PlayerGui:FindFirstChild("BossHealth")
+            local BossName = bosscheck:FindFirstChild("MobHealth")
+            local BossNameText = BossName:FindFirstChild("Tt")
+            if BossNameText.Text == "CRACKER" then
+                local actualMap = workspace:FindFirstChild("ActualMap") and workspace.ActualMap:FindFirstChild("213123321")
+                if actualMap then
+                    SetMapProperties(actualMap, true, false)
+                else
+                    warn("ActualMap ['213123321'] not found!")
+                end
+
+                local mainMap = workspace:FindFirstChild("Map")
+                if mainMap then
+                    SetMapProperties(mainMap, false, false)
+                else
+                    warn("workspace.Map not found!")
+                end
+
+                print("Map properties updated successfully!")
+                break
+            end
+            task.wait(5)
+        end
+    end)
 ----------------------------------------------------------------------------------------------------
     local Success, Info = pcall(function()
         return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
