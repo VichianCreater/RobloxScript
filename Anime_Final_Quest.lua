@@ -629,6 +629,65 @@ Englist.
             end)
         end
     end)
+
+----------------------------------------------------------------------------------------------------
+
+    -- ฟังก์ชันสำหรับจัดการ Property ของ Object ทั้งหมดใน Container
+    local function SetMapProperties(container, canCollideValue, anchoredValue)
+        if container then
+            for _, obj in ipairs(container:GetDescendants()) do
+                if obj:IsA("BasePart") then -- ตรวจสอบว่าเป็น Part, MeshPart หรืออื่นๆ ที่มี property นี้
+                    obj.CanCollide = canCollideValue
+                    obj.Anchored = anchoredValue
+                end
+            end
+        end
+    end
+
+    -- เพิ่มปุ่มใน UI ของคุณ
+    Tabs.Main:AddButton({
+        Title = "Modify Map Physicals",
+        Description = "It Make The Map Visible For Xmas Boss.",
+        Callback = function()
+            Window:Dialog({
+                Title = "Confirm Action",
+                Content = "This will change physical properties of the map. Do you want to proceed?",
+                Buttons = {
+                    {
+                        Title = "Confirm",
+                        Callback = function()
+                            -- 1. จัดการ workspace.ActualMap["213123321"]
+                            -- CanCollide = true, Anchored = false
+                            local actualMap = workspace:FindFirstChild("ActualMap") 
+                                            and workspace.ActualMap:FindFirstChild("213123321")
+                            if actualMap then
+                                SetMapProperties(actualMap, true, false)
+                            else
+                                warn("ActualMap ['213123321'] not found!")
+                            end
+
+                            -- 2. จัดการ workspace.Map
+                            -- CanCollide = false, Anchored = false
+                            local mainMap = workspace:FindFirstChild("Map")
+                            if mainMap then
+                                SetMapProperties(mainMap, false, false)
+                            else
+                                warn("workspace.Map not found!")
+                            end
+
+                            print("Map properties updated successfully!")
+                        end
+                    },
+                    {
+                        Title = "Cancel",
+                        Callback = function()
+                            print("Cancelled")
+                        end
+                    }
+                }
+            })
+        end
+    })
 ----------------------------------------------------------------------------------------------------
     local Success, Info = pcall(function()
         return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
