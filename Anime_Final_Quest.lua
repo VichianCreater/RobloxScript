@@ -684,32 +684,32 @@ Englist.
         end
     })
 
-    task.spawn(function()
-        while true do 
-            task.wait(20)
-            local bosscheck = LocalPlayer.PlayerGui:FindFirstChild("BossHealth")
-            local BossName = bosscheck:FindFirstChild("MobHealth")
-            local BossNameText = BossName:FindFirstChild("Tt")
-            if BossNameText.Text == "CRACKER" then
-                local actualMap = workspace:FindFirstChild("ActualMap") and workspace.ActualMap:FindFirstChild("213123321")
-                if actualMap then
-                    SetMapProperties(actualMap, true, false)
-                else
-                    warn("ActualMap ['213123321'] not found!")
-                end
+    -- task.spawn(function()
+    --     while true do 
+    --         task.wait(20)
+    --         local bosscheck = LocalPlayer.PlayerGui:FindFirstChild("BossHealth")
+    --         local BossName = bosscheck:FindFirstChild("MobHealth")
+    --         local BossNameText = BossName:FindFirstChild("Tt")
+    --         if BossNameText.Text == "CRACKER" then
+    --             local actualMap = workspace:FindFirstChild("ActualMap") and workspace.ActualMap:FindFirstChild("213123321")
+    --             if actualMap then
+    --                 SetMapProperties(actualMap, true, false)
+    --             else
+    --                 warn("ActualMap ['213123321'] not found!")
+    --             end
 
-                local mainMap = workspace:FindFirstChild("Map")
-                if mainMap then
-                    SetMapProperties(mainMap, false, false)
-                else
-                    warn("workspace.Map not found!")
-                end
+    --             local mainMap = workspace:FindFirstChild("Map")
+    --             if mainMap then
+    --                 SetMapProperties(mainMap, false, false)
+    --             else
+    --                 warn("workspace.Map not found!")
+    --             end
 
-                print("Map properties updated successfully!")
-                break
-            end
-        end
-    end)
+    --             print("Map properties updated successfully!")
+    --             break
+    --         end
+    --     end
+    -- end)
 ----------------------------------------------------------------------------------------------------
     local Success, Info = pcall(function()
         return game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
