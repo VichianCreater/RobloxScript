@@ -686,6 +686,7 @@ Englist.
 
     task.spawn(function()
         while true do 
+            task.wait(20)
             local bosscheck = LocalPlayer.PlayerGui:FindFirstChild("BossHealth")
             local BossName = bosscheck:FindFirstChild("MobHealth")
             local BossNameText = BossName:FindFirstChild("Tt")
@@ -707,7 +708,6 @@ Englist.
                 print("Map properties updated successfully!")
                 break
             end
-            task.wait(5)
         end
     end)
 ----------------------------------------------------------------------------------------------------
