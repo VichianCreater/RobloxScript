@@ -35,6 +35,7 @@ end)
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
+    Event = Window:AddTab({ Title = "X-Mas Event", Icon = "tree-pine" }),
     AutoFarm = Window:AddTab({ Title = "Auto - Monster", Icon = "swords" }),
     AutoUp = Window:AddTab({ Title = "Auto Upgrade", Icon = "plus" }),
     EGGS = Window:AddTab({ Title = "Eggs", Icon = "egg" }),
@@ -47,6 +48,91 @@ local Tabs = {
 local Options = Fluent.Options
 
 do
+    ---------------------- Event -----------------------------------------------------
+    local VirtualInputManager = game:GetService("VirtualInputManager")
+    local GuiService = game:GetService("GuiService")
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+
+    -- ฟังก์ชันจำลองการคลิกที่คุณให้มา
+    local function virtualClick(button)
+        if button and button:IsA("GuiButton") then
+            button.Selectable = true
+            button.Active = true
+            task.wait(0.01)
+            
+            GuiService.SelectedCoreObject = button
+            
+            if GuiService.SelectedCoreObject == button then
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                task.wait(0.05)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+            else
+                GuiService:AddSelectionParent("TempSelection", button.Parent)
+                GuiService.SelectedCoreObject = button
+                VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                task.wait(0.05)
+                VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+            end
+            
+            task.wait(0.1)
+            GuiService.SelectedCoreObject = nil
+        end
+    end
+
+    -- สร้าง Toggle ใน Tab.Event
+    local RaidToggle = Tabs.Event:AddToggle("AutoRaidChristmas", {Title = "Auto Raid Christmas", Default = false })
+
+    local function startAutoRaid()
+        while RaidToggle.Value do
+            local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local rootPart = character:WaitForChild("HumanoidRootPart")
+            
+            -- 1. วาร์ปไปที่จุด Raid
+            local target = workspace.Server.Interact.Raid_Christmas
+            if target then
+                -- ใช้ตำแหน่งจาก CFrame ของ Object นั้นๆ
+                local targetCFrame = target:IsA("Model") and target:GetModelCFrame() or target.CFrame
+                rootPart.CFrame = targetCFrame
+                task.wait(1) -- รอให้ UI หน้า Raid เด้งขึ้นมาหลังจากวาร์ป
+            end
+
+            -- 2. เช็คหน้า Raid UI และกดปุ่ม Start
+            local raidFrame = LocalPlayer.PlayerGui.UI.Frames.Raid
+            if raidFrame.Visible then
+                local startBtn = raidFrame.Main.Buttons.Start.button
+                virtualClick(startBtn)
+                task.wait(2) -- รอให้ระบบพาเข้าด่าน
+            end
+
+            -- 3. ลูปค้างไว้เพื่อรอจนกว่า RaidRewards จะปรากฏ (ช่วงที่กำลังเล่น Raid)
+            local rewardFrame = LocalPlayer.PlayerGui.UI.Frames.RaidRewards
+            while RaidToggle.Value and not rewardFrame.Visible do
+                task.wait(1) -- เช็คทุก 1 วินาทีว่าจบด่านหรือยัง
+            end
+
+            -- 4. เมื่อ Reward ปรากฏ ให้กดปุ่ม Claim
+            if RaidToggle.Value and rewardFrame.Visible then
+                task.wait(1) -- รอให้ UI โหลดเสร็จสมบูรณ์
+                local claimBtn = rewardFrame.ClaimButton
+                virtualClick(claimBtn)
+                
+                task.wait(3) -- รอให้กลับมาหน้าหลัก หรือ UI หายไปก่อนเริ่มรอบใหม่
+            end
+            
+            task.wait(0.5)
+        end
+    end
+
+    -- เชื่อมต่อการทำงานกับ Toggle
+    RaidToggle:OnChanged(function()
+        if RaidToggle.Value then
+            task.spawn(startAutoRaid)
+        end
+    end)
+
+    Options.AutoRaidChristmas:SetValue(false)
+    ----------------------------------------------------------------------------------
     Tabs.Main:AddParagraph({
         Title = "Welcome to vichianHUB",
         Content = "\nThis is a beta test script.\nUse at your own risk!\n\nWhat game the VichianHUB is Support\n- Dragon Adventure\n- Immortal Cultivation\n- Anime Evolution"
@@ -224,8 +310,8 @@ do
             task.spawn(startFarming)
         end
     end)
+---------------------------------------------------------------------------------------------------
 
-    ------------------------------------------------------------------------------------------------
 
     local Debris = workspace:WaitForChild("Debris")
 
@@ -979,6 +1065,20 @@ SaveManager:LoadAutoloadConfig()
 -- 	{
 -- 		CurrentSword = "Hunter Justice",
 -- 		Amount = 14
+-- 	}
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("Bridge"):FireServer(unpack(args))
+
+
+-- local args = {
+-- 	"Attack",
+-- 	"UnitAttack",
+-- 	{
+-- 		{
+-- 			Type = "World",
+-- 			Enemy = workspace:WaitForChild("Server"):WaitForChild("Enemies"):WaitForChild("World"):WaitForChild("Lost Temple"):WaitForChild("Statue Bard")
+-- 		},
+-- 		"67acd6ea-53ea-4603-b8d2-12127c066f2e"
 -- 	}
 -- }
 -- game:GetService("ReplicatedStorage"):WaitForChild("Bridge"):FireServer(unpack(args))
