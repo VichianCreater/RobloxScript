@@ -38,6 +38,7 @@ local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "crown" }),
     AttackSetting = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     AutoStart = Window:AddTab({ Title = "Room", Icon = "play" }),
+    WeaponSpin = Window:AddTab({ Title = "Weapon Spin", Icon = "rotate-ccw" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -324,7 +325,7 @@ Englist.
     -- 1. Mode Dropdown
     local ModeDropdown = Tabs.AutoStart:AddDropdown("ModeSelect", {
         Title = "Select Mode",
-        Values = {"Shadow Realm", "Raid"},
+        Values = {"Shadow Realm", "Raid", "Infinit"},
         Default = 1,
     })
 
@@ -350,8 +351,12 @@ Englist.
                         if dropdownFrame and dropdownFrame.Parent then
                             if Value == "Raid" then
                                 dropdownFrame.Parent.Visible = false
+                            elseif Value == "Infinit" then
+                                dropdownFrame.Parent.Visible = true
+                                MapDropdown:SetValues({"Summon Gate", "Summon Station - 1"})
                             else
                                 dropdownFrame.Parent.Visible = true
+                                MapDropdown:SetValues({"Summon Gate", "Summon Station - 1", "Summon Station - 2", "Statue's Cave"})
                             end
                         end
                     end
@@ -435,7 +440,7 @@ Englist.
 
                 if TeleportFrame.Visible then
                     task.wait(0.5)
-                    if Config.Mode == "Raid" then
+                    if Config.Mode == "Raid" or Config.Mode == "Infinit" then
                         local RaidBtnFrame = TeleportFrame:FindFirstChild("Frame") 
                         local RaidBtnFrame2 = RaidBtnFrame:FindFirstChild("Frame") 
                         local RaidBtnFrame3 = RaidBtnFrame2:FindFirstChild("TextButton")
@@ -463,6 +468,23 @@ Englist.
                         -- โหมด Raid กดด่านเลข 1 เพื่อไปต่อ
                         local RaidMapBtn = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps") and MapSelectFrame.Scroll.Maps:FindFirstChild("1") and MapSelectFrame.Scroll.Maps["1"]:FindFirstChild("TextButton")
                         if RaidMapBtn then virtualClick(RaidMapBtn) end
+                    elseif Config.Mode == "Infinit" then
+                        local RaidMapBtn = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps") and MapSelectFrame.Scroll.Maps:FindFirstChild("2") and MapSelectFrame.Scroll.Maps["2"]:FindFirstChild("TextButton")
+                        if RaidMapBtn then 
+                            virtualClick(RaidMapBtn) 
+                            wait(0.5)
+                            local ScrollMaps = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps")
+                            if ScrollMaps then
+                                for _, folder in pairs(ScrollMaps:GetChildren()) do
+                                    local imgLabel = folder:FindFirstChild("ImageLabel")
+                                    local textLabel2 = imgLabel and imgLabel:FindFirstChild("TextLabel2")
+                                    if textLabel2 and textLabel2.Text == Config.Map then
+                                        local btn = folder:FindFirstChild("TextButton")
+                                        if btn then virtualClick(btn) break end
+                                    end
+                                end
+                            end
+                        end
                     else
                         -- โหมดปกติ เลือกตามชื่อด่าน
                         local ScrollMaps = MapSelectFrame:FindFirstChild("Scroll") and MapSelectFrame.Scroll:FindFirstChild("Maps")
@@ -555,7 +577,7 @@ Englist.
             end
         end
         
-        task.wait(2)
+        task.wait(5)
         IsProcessing = false
     end
 
@@ -625,6 +647,156 @@ Englist.
                         end
                     end
                     task.wait(1)
+                end
+            end)
+        end
+    end)
+
+------------------------------ Auto Reroll ---------------------------------------------------------
+    -- ==========================================
+    -- 1. ข้อมูลอาวุธและระดับ (Config)
+    -- ==========================================
+    local TierList = {
+        [1] = 'Rare',
+        [2] = 'Epic',
+        [3] = 'Legendary',
+        [4] = 'Mythic',
+    }
+
+    local WeaponData = {
+        ["Rare"] = {"King Ripper"},
+        ["Epic"] = {"Hawk Eye"},
+        ["Legendary"] = {"One-Eyed Reaper", "Umbrella"},
+        ["Mythic"] = {"Chainsaw", "Child Of Sun", "King Of Curses"}
+    }
+
+    -- ==========================================
+    -- 2. สร้าง UI Components
+    -- ==========================================
+
+    -- ดรอปดาวน์เลือก Tier แบบ Multi (เลือกได้หลายระดับพร้อมกัน)
+    local TierSelect = Tabs.WeaponSpin:AddDropdown("TierSelect", {
+        Title = "1. Select Desired Tiers",
+        Values = {"Rare", "Epic", "Legendary", "Mythic"},
+        Default = {}, 
+        Multi = true,
+    })
+
+    -- ดรอปดาวน์เลือกอาวุธ (จะรวมอาวุธจากทุก Tier ที่เลือกด้านบน)
+    local WeaponFocus = Tabs.WeaponSpin:AddDropdown("WeaponFocus", {
+        Title = "2. Select Specific Weapons",
+        Values = {}, 
+        Default = {},
+        Multi = true,
+    })
+
+    -- === ระบบเชื่อมโยง Multi-Tier กับ Multi-Weapon ===
+    TierSelect:OnChanged(function(SelectedTiers)
+        local combinedWeapons = {}
+        
+        -- วนลูปเช็คว่า Tier ไหนถูกเลือกบ้าง (SelectedTiers เป็น Table)
+        for tierName, isSelected in pairs(SelectedTiers) do
+            if isSelected and WeaponData[tierName] then
+                -- ดึงอาวุธใน Tier นั้นมาใส่ในรายการรวม
+                for _, weapon in ipairs(WeaponData[tierName]) do
+                    table.insert(combinedWeapons, weapon)
+                end
+            end
+        end
+        
+        -- อัปเดตรายการอาวุธในหน้าเลือก
+        WeaponFocus:SetValues(combinedWeapons)
+        WeaponFocus:SetValue({}) -- รีเซ็ตค่าที่เลือกไว้เพื่อความปลอดภัย
+    end)
+
+    -- ตั้งค่า Slot และ Mode
+    local WeaponSlot = Tabs.WeaponSpin:AddDropdown("WeaponSlot", {
+        Title = "Select Weapon Slot",
+        Values = {"Slot1", "Slot2"},
+        Default = 1,
+    })
+
+    local WeaponSpinMode = Tabs.WeaponSpin:AddDropdown("WeaponSpinMode", {
+        Title = "Select Spin Mode",
+        Values = {"Normal Spin", "Lucky Spin"},
+        Default = 1,
+    })
+
+    local WeaponSpinToggle = Tabs.WeaponSpin:AddToggle("WeaponSpinToggle", {
+        Title = "Auto Spin Weapon",
+        Default = false
+    })
+
+    -- ==========================================
+    -- 3. ระบบการทำงาน (Main Logic)
+    -- ==========================================
+    local AutoSpinWeaponEnabled = false
+
+    WeaponSpinToggle:OnChanged(function()
+        AutoSpinWeaponEnabled = WeaponSpinToggle.Value
+        
+        if AutoSpinWeaponEnabled then
+            task.spawn(function()
+                while AutoSpinWeaponEnabled do
+                    local Player = game:GetService("Players").LocalPlayer
+                    local PlayerGui = Player:FindFirstChild("PlayerGui")
+                    local SpinGui = PlayerGui and PlayerGui:FindFirstChild("Spin")
+
+                    if SpinGui and SpinGui.Enabled then
+                        
+                        -- [1] ตรวจสอบอาวุธ (Auto Stop)
+                        local infoLabel = SpinGui.Info:FindFirstChild("TextLabel")
+                        if infoLabel then
+                            local currentInGame = infoLabel.Text:lower()
+                            local selectedTargets = WeaponFocus.Value
+                            
+                            for name, isSelected in pairs(selectedTargets) do
+                                if isSelected and currentInGame == tostring(name):lower() then
+                                    WeaponSpinToggle:SetValue(false)
+                                    AutoSpinWeaponEnabled = false
+                                    print("Found Target: " .. name)
+                                    return 
+                                end
+                            end
+                        end
+
+                        -- [2] กด Warning YES
+                        local Warning = SpinGui:FindFirstChild("Warning")
+                        if Warning and Warning.Visible then
+                            local Yes = Warning:FindFirstChild("YES") and Warning.YES:FindFirstChild("TextButton")
+                            if Yes then virtualClick(Yes) task.wait(0.5) end
+                        end
+
+                        -- [3] เลือก Slot
+                        local selectedSlot = WeaponSlot.Value
+                        local slotObj = SpinGui.Slots:FindFirstChild(selectedSlot)
+                        if slotObj and slotObj.SelectedFrame.Visible == false then
+                            virtualClick(slotObj.TextButton)
+                            task.wait(0.5)
+                        end
+
+                        -- [4] กด Spin
+                        local mode = WeaponSpinMode.Value
+                        local spinBtnContainer = (mode == "Lucky Spin") and SpinGui.SpinButtons.LuckySpin or SpinGui.SpinButtons.NormalSpin
+                        
+                        if spinBtnContainer then
+                            local btn = spinBtnContainer:FindFirstChild("TextButton")
+                            local txt = spinBtnContainer:FindFirstChild("SpinText")
+                            -- เช็คให้แน่ใจว่าไม่ได้กำลังหมุนอยู่ (Text ต้องมีคำว่า SPIN)
+                            if btn and txt and (txt.Text:upper():find("SPIN")) then
+                                virtualClick(btn)
+                            end
+                        end
+                    else
+                        -- เปิดหน้าต่าง Spin
+                        local HUD = PlayerGui and PlayerGui:FindFirstChild("HUD")
+                        if HUD then
+                            local btn = HUD.Left.Buttons1.Weapon:FindFirstChild("TextButton")
+                            if btn then virtualClick(btn) end
+                        end
+                    end
+                    
+                    task.wait(1.2)
                 end
             end)
         end
