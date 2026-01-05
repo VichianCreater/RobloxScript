@@ -337,6 +337,12 @@ Englist.
         Default = 1,
     })
 
+    MapDropdown:OnChanged(function(Value)
+        Config.Map = Value
+        Config.Infinit_Map = Value
+        print("Selected Map:", Value) -- ไว้เช็คใน F9 ว่าค่าเปลี่ยนจริงไหม
+    end)
+
     -- จัดการค่าเมื่อมีการเปลี่ยนแปลง และสั่งซ่อน Map Selection
     ModeDropdown:OnChanged(function(Value)
         Config.Mode = Value
