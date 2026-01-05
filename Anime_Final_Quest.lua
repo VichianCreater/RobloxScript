@@ -316,6 +316,7 @@ Englist.
     local Config = {
         Mode = "Shadow Realm",
         Map = "Summon Gate",
+        Infinit_Map = "Summon Gate",
         Count = "1",
         Difficulty = "DIFF: NORMAL"
     }
@@ -478,7 +479,7 @@ Englist.
                                 for _, folder in pairs(ScrollMaps:GetChildren()) do
                                     local imgLabel = folder:FindFirstChild("ImageLabel")
                                     local textLabel2 = imgLabel and imgLabel:FindFirstChild("TextLabel2")
-                                    if textLabel2 and textLabel2.Text == Config.Map then
+                                    if textLabel2 and textLabel2.Text == Config.Infinit_Map then
                                         local btn = folder:FindFirstChild("TextButton")
                                         if btn then virtualClick(btn) break end
                                     end
