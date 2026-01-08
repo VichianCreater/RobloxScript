@@ -39,6 +39,7 @@ local Tabs = {
     AttackSetting = Window:AddTab({ Title = "Attack", Icon = "swords" }),
     AutoStart = Window:AddTab({ Title = "Room", Icon = "play" }),
     WeaponSpin = Window:AddTab({ Title = "Weapon Spin", Icon = "rotate-ccw" }),
+    GearSpin = Window:AddTab({ Title = "Gear Spin", Icon = "rotate-ccw" }),
     HSV = Window:AddTab({ Title = "Hop Server", Icon = "wifi" }),
     Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
 }
@@ -81,7 +82,7 @@ Englist.
 
 ------------------------------------------------------------------------------------------------------------------------
 
-   -- [[ ฟังก์ชันเช็คสีแดงอันตราย ]]
+    -- [[ ฟังก์ชันเช็คสีแดงอันตราย ]]
     local function IsDangerColor(part)
         if not part:IsA("BasePart") then return false end
         local dangerBrickColors = {"Really red", "Bright red", "Scarlet", "Crimson"}
@@ -124,7 +125,7 @@ Englist.
         Title = "Adjust Height Offset",
         Default = 8,
         Min = 0,
-        Max = 20,
+        Max = 50,
         Rounding = 1,
         Callback = function(Value)
             DistanceOffset = Value
@@ -193,7 +194,7 @@ Englist.
         return nil
     end
 
-    -- 5. ฟังก์ชันหลัก (ระบบ Flow ตามขอบวง)
+    -- 5. ฟังก์ชันหลัก (ปรับปรุง: บอสลอยสูงขึ้น 20 และก้มหน้า)
     local function startFarming()
         task.spawn(function()
             while IsFarm do
@@ -211,7 +212,7 @@ Englist.
                 local humanoid = char:FindFirstChildOfClass("Humanoid")
                 local visuals = workspace:FindFirstChild("Visuals")
                 
-                -- [ลำดับการทำงาน]
+                -- [ ระบบ Auto Heal ]
                 if Options.AutoHeal.Value and (humanoid.Health < humanoid.MaxHealth) and visuals and visuals:FindFirstChild("Heal") then
                     char.HumanoidRootPart.CFrame = visuals.Heal.CFrame * CFrame.new(0, 2, 0)
                 
@@ -220,25 +221,36 @@ Englist.
                     local targetHumanoid = target:FindFirstChildOfClass("Humanoid")
                     
                     if targetHumanoid and targetHumanoid.Health > 0 then
-                        -- แก้ไขบรรทัดเจ้าปัญหา: เช็คการมีอยู่ของโฟลเดอร์ Boss ก่อนใช้ IsDescendantOf
                         local bossFolder = workspace:FindFirstChild("Boss")
                         local isBoss = (bossFolder and target:IsDescendantOf(bossFolder)) or (target.Name == "Boss")
-                        
                         local dangerRadius = getDangerBorder(rootPart)
                         
-                        if isBoss and dangerRadius and dangerRadius > 0 then
-                            local safeDistance = dangerRadius + 3
-                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, 5, safeDistance)
-                            -- ไม่โจมตีตอนกำลังหลบ (เพื่อความปลอดภัย)
+                        -- ตั้งค่ามุม: ก้มหน้าลงพื้น 90 องศา
+                        local lookDownAngles = CFrame.Angles(math.rad(-90), 0, 0)
+                        
+                        if isBoss then
+                            -- [[ กรณีเป็นบอส ]]
+                            -- ลอยสูงกว่าปกติ (DistanceOffset + 20)
+                            local bossHeight = DistanceOffset + 20
+                            local safeDistance = (dangerRadius and dangerRadius > 0) and (dangerRadius + 3) or 0
+                            
+                            char.HumanoidRootPart.CFrame = (rootPart.CFrame * CFrame.new(0, bossHeight, safeDistance)) * lookDownAngles
+                            task.spawn(attack)
                         else
-                            -- เข้าตีปกติ
-                            char.HumanoidRootPart.CFrame = rootPart.CFrame * CFrame.new(0, -DistanceOffset, 5)
+                            -- [[ กรณีเป็นมอนสเตอร์ปกติ ]]
+                            if dangerRadius and dangerRadius > 0 then
+                                local safeDistance = dangerRadius + 3
+                                char.HumanoidRootPart.CFrame = (rootPart.CFrame * CFrame.new(0, DistanceOffset, safeDistance)) * lookDownAngles
+                            else
+                                -- อยู่บนหัวมอนตรงๆ (X=0, Z=0)
+                                char.HumanoidRootPart.CFrame = (rootPart.CFrame * CFrame.new(0, DistanceOffset, 0)) * lookDownAngles
+                            end
                             task.spawn(attack)
                         end
                     end
                 end
             end
-            task.wait(0) -- เร็วที่สุดเพื่อความเนียนในการไหลตามขอบ
+            task.wait(0) -- ทำงานลื่นไหลที่สุด
         end
     end
 
@@ -280,15 +292,24 @@ Englist.
         while true do
             if IsFarm then
                 local target = getTarget()
+                -- เช็คว่ามีวงแดงแจ้งเตือนบอสไหม (ถ้ามีอาจจะหยุดสกิลเพื่อความปลอดภัย หรือจะใส่ต่อก็ได้)
                 local bossSkillCheck = game.workspace.Visuals:FindFirstChild("indicator")
 
                 if target and target:FindFirstChild("HumanoidRootPart") and not bossSkillCheck then
                     local playerPos = game.Players.LocalPlayer.Character.HumanoidRootPart.Position
                     local targetPos = target.HumanoidRootPart.Position
-                    local distanceY = targetPos.Y - playerPos.Y
+                    
+                    -- ใช้ math.abs เพื่อดู "ระยะห่าง" โดยไม่สนว่าอยู่บนหรือล่าง
+                    local diffY = math.abs(playerPos.Y - targetPos.Y)
                     local totalDist = (playerPos - targetPos).Magnitude
 
-                    if distanceY >= (DistanceOffset - 2) and totalDist < (DistanceOffset + 10) then
+                    -- ตรวจสอบว่าเป็นบอสไหม เพื่อขยายระยะเช็คสกิล
+                    local bossFolder = workspace:FindFirstChild("Boss")
+                    local isBoss = (bossFolder and target:IsDescendantOf(bossFolder)) or (target.Name == "Boss")
+                    local maxCheckDist = isBoss and (DistanceOffset + 30) or (DistanceOffset + 10)
+
+                    -- เงื่อนไข: ระยะห่างแนวดิ่งต้องใกล้เคียงกับที่เราตั้งไว้ และระยะรวมต้องไม่ไกลเกินไป
+                    if diffY <= (maxCheckDist) and totalDist <= (maxCheckDist + 5) then
                         if Options.Skill1.Value then fireSkill(Enum.KeyCode.One) end
                         if Options.Skill2.Value then fireSkill(Enum.KeyCode.Two) end
                         if Options.Skill3.Value then fireSkill(Enum.KeyCode.Three) end
@@ -297,7 +318,7 @@ Englist.
                     end
                 end
             end
-            task.wait(0.2)
+            task.wait(0.2) -- ปรับความเร็วการเช็คสกิลที่นี่
         end
     end)
 
@@ -799,6 +820,156 @@ Englist.
                         local HUD = PlayerGui and PlayerGui:FindFirstChild("HUD")
                         if HUD then
                             local btn = HUD.Left.Buttons1.Weapon:FindFirstChild("TextButton")
+                            if btn then virtualClick(btn) end
+                        end
+                    end
+                    
+                    task.wait(1.2)
+                end
+            end)
+        end
+    end)
+
+------------------------------ Auto Reroll Gear ---------------------------------------------------------
+    -- ==========================================
+    -- 1. ข้อมูลอาวุธและระดับ (Config)
+    -- ==========================================
+    local GearTierList = {
+        [1] = 'Rare',
+        [2] = 'Epic',
+        [3] = 'Legendary',
+        [4] = 'Mythic',
+    }
+
+    local GearData = {
+        ["Rare"] = {"Heal"},
+        ["Epic"] = {"Blood Hammer"},
+        ["Legendary"] = {"Coyote Pistol"},
+        ["Mythic"] = {"Time Stop", "Hakai"}
+    }
+
+    -- ==========================================
+    -- 2. สร้าง UI Components
+    -- ==========================================
+
+    -- ดรอปดาวน์เลือก Tier แบบ Multi (เลือกได้หลายระดับพร้อมกัน)
+    local TierSelect = Tabs.GearSpin:AddDropdown("TierSelect", {
+        Title = "1. Select Desired Tiers",
+        Values = {"Rare", "Epic", "Legendary", "Mythic"},
+        Default = {}, 
+        Multi = true,
+    })
+
+    -- ดรอปดาวน์เลือกอาวุธ (จะรวมอาวุธจากทุก Tier ที่เลือกด้านบน)
+    local WeaponFocus = Tabs.GearSpin:AddDropdown("WeaponFocus", {
+        Title = "2. Select Specific Weapons",
+        Values = {}, 
+        Default = {},
+        Multi = true,
+    })
+
+    -- === ระบบเชื่อมโยง Multi-Tier กับ Multi-Weapon ===
+    TierSelect:OnChanged(function(SelectedTiers)
+        local combinedWeapons = {}
+        
+        -- วนลูปเช็คว่า Tier ไหนถูกเลือกบ้าง (SelectedTiers เป็น Table)
+        for tierName, isSelected in pairs(SelectedTiers) do
+            if isSelected and GearData[tierName] then
+                -- ดึงอาวุธใน Tier นั้นมาใส่ในรายการรวม
+                for _, weapon in ipairs(GearData[tierName]) do
+                    table.insert(combinedWeapons, weapon)
+                end
+            end
+        end
+        
+        -- อัปเดตรายการอาวุธในหน้าเลือก
+        WeaponFocus:SetValues(combinedWeapons)
+        WeaponFocus:SetValue({}) -- รีเซ็ตค่าที่เลือกไว้เพื่อความปลอดภัย
+    end)
+
+    -- ตั้งค่า Slot และ Mode
+    local WeaponSlot = Tabs.GearSpin:AddDropdown("WeaponSlot", {
+        Title = "Select Weapon Slot",
+        Values = {"Slot1", "Slot2"},
+        Default = 1,
+    })
+
+    local WeaponSpinMode = Tabs.GearSpin:AddDropdown("WeaponSpinMode", {
+        Title = "Select Spin Mode",
+        Values = {"Normal Spin", "Lucky Spin"},
+        Default = 1,
+    })
+
+    local WeaponSpinToggle = Tabs.GearSpin:AddToggle("WeaponSpinToggle", {
+        Title = "Auto Spin Weapon",
+        Default = false
+    })
+
+    -- ==========================================
+    -- 3. ระบบการทำงาน (Main Logic)
+    -- ==========================================
+    local AutoSpinWeaponEnabled = false
+
+    WeaponSpinToggle:OnChanged(function()
+        AutoSpinWeaponEnabled = WeaponSpinToggle.Value
+        
+        if AutoSpinWeaponEnabled then
+            task.spawn(function()
+                while AutoSpinWeaponEnabled do
+                    local Player = game:GetService("Players").LocalPlayer
+                    local PlayerGui = Player:FindFirstChild("PlayerGui")
+                    local SpinGui = PlayerGui and PlayerGui:FindFirstChild("Gear")
+
+                    if SpinGui and SpinGui.Enabled then
+                        
+                        -- [1] ตรวจสอบอาวุธ (Auto Stop)
+                        local infoLabel = SpinGui.Info:FindFirstChild("TextLabel")
+                        if infoLabel then
+                            local currentInGame = infoLabel.Text:lower()
+                            local selectedTargets = WeaponFocus.Value
+                            
+                            for name, isSelected in pairs(selectedTargets) do
+                                if isSelected and currentInGame == tostring(name):lower() then
+                                    WeaponSpinToggle:SetValue(false)
+                                    AutoSpinWeaponEnabled = false
+                                    print("Found Target: " .. name)
+                                    return 
+                                end
+                            end
+                        end
+
+                        -- [2] กด Warning YES
+                        local Warning = SpinGui:FindFirstChild("Warning")
+                        if Warning and Warning.Visible then
+                            local Yes = Warning:FindFirstChild("YES") and Warning.YES:FindFirstChild("TextButton")
+                            if Yes then virtualClick(Yes) task.wait(0.5) end
+                        end
+
+                        -- [3] เลือก Slot
+                        local selectedSlot = WeaponSlot.Value
+                        local slotObj = SpinGui.Slots:FindFirstChild(selectedSlot)
+                        if slotObj and slotObj.SelectedFrame.Visible == false then
+                            virtualClick(slotObj.TextButton)
+                            task.wait(0.5)
+                        end
+
+                        -- [4] กด Spin
+                        local mode = WeaponSpinMode.Value
+                        local spinBtnContainer = (mode == "Lucky Spin") and SpinGui.SpinButtons.LuckySpin or SpinGui.SpinButtons.NormalSpin
+                        
+                        if spinBtnContainer then
+                            local btn = spinBtnContainer:FindFirstChild("TextButton")
+                            local txt = spinBtnContainer:FindFirstChild("SpinText")
+                            -- เช็คให้แน่ใจว่าไม่ได้กำลังหมุนอยู่ (Text ต้องมีคำว่า SPIN)
+                            if btn and txt and (txt.Text:upper():find("SPIN")) then
+                                virtualClick(btn)
+                            end
+                        end
+                    else
+                        -- เปิดหน้าต่าง Spin
+                        local HUD = PlayerGui and PlayerGui:FindFirstChild("HUD")
+                        if HUD then
+                            local btn = HUD.Left.Buttons1.Gears:FindFirstChild("TextButton")
                             if btn then virtualClick(btn) end
                         end
                     end
