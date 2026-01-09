@@ -1609,18 +1609,14 @@ do
 
     -- Variables
     local savedSelection = {}
+    local priorityList = {} 
     local isWarping = false
     local currentWarpThread = nil
     local firstTimeUsingDeath = true
     local warpSpeed = 50
     local IsAutoPressE = false
 
-    -- กำหนด Herbs Folder
     local HerbsFolder = workspace:WaitForChild("Herbs")
-
-    -----------------------------------------------------------------------------------------------------------------
-    -- ### [FUNCTION] ดึงชื่อจาก PROXIMITYPROMPT
-    -----------------------------------------------------------------------------------------------------------------
 
     local function getHerbName(herbObject)
         local prompt = herbObject:FindFirstChildWhichIsA("ProximityPrompt", true)
@@ -1644,113 +1640,166 @@ do
         return #namesInMap > 0 and namesInMap or {"Waiting for Herbs..."}
     end
 
-    -----------------------------------------------------------------------------------------------------------------
-    -- ### [FUNCTION] AUTO PRESS E
-    -----------------------------------------------------------------------------------------------------------------
-
     local function AutoPressE()
         local character = player.Character
         if not character or not character:FindFirstChild("HumanoidRootPart") then return end
         local rootPart = character.HumanoidRootPart
-
         local overlapParams = OverlapParams.new()
         overlapParams.FilterType = Enum.RaycastFilterType.Exclude
         overlapParams.FilterDescendantsInstances = {character}
-        
-        -- ค้นหาชิ้นส่วนในระยะ 15 หน่วย
         local nearbyParts = workspace:GetPartBoundsInRadius(rootPart.Position, 15, overlapParams)
-
         for _, part in ipairs(nearbyParts) do
-            -- ค้นหา Prompt ทั้งที่ตัว Part เอง หรือที่ Parent (ในกรณีที่เป็น Model)
             local prompt = part:FindFirstChildOfClass("ProximityPrompt") or part.Parent:FindFirstChildOfClass("ProximityPrompt")
-            
-            -- ตรวจสอบว่าเป็นสมุนไพรใน HerbsFolder และยังไม่ได้ถูกกด
             if prompt and prompt:IsDescendantOf(HerbsFolder) and prompt.Enabled then
                 local distance = (part.Position - rootPart.Position).Magnitude
                 if distance <= prompt.MaxActivationDistance then
-                    -- ตั้งค่าให้กดทันที
                     prompt.HoldDuration = 0
-                    
-                    -- จำลองการกด (ใช้ task.spawn เพื่อให้กดพร้อมกันหลายอันได้ในกรณีที่ซ้อนกันมาก)
                     task.spawn(function()
                         prompt:InputHoldBegin()
-                        task.wait(0.05) -- หน่วงเวลานิดเดียวเพื่อให้ระบบรับรู้
+                        task.wait(0.05)
                         prompt:InputHoldEnd()
                     end)
-                    
-                    -- หมายเหตุ: เอา break ออกเพื่อให้ลูปทำงานต่อจนครบทุกชิ้นในรัศมี
                 end
             end
         end
     end
 
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [UI & DROPDOWN] ปรับปรุงส่วนการจัดการ List
+    -- UI Section
     -----------------------------------------------------------------------------------------------------------------
 
     local HerbListDropdownWarpFast = Tabs.AutoHerb:AddDropdown("SelectHerbWarp", {
-        Title = "Select Herb to Warp [Faster]",
+        Title = "1. Select Herbs to Save",
         Values = getVisibleHerbNamesFast(),
         Multi = true, 
+        Default = {},
+    })
+
+    local PriorityDropdown = Tabs.AutoHerb:AddDropdown("PrioritySelection", {
+        Title = "2. Set Priority Order (Optional)",
+        Values = {}, 
+        Multi = true,
         Default = {},
     })
 
     local HerbParagraph = nil
     local function updateParagraph()
         if HerbParagraph then HerbParagraph:Destroy(); HerbParagraph = nil end
+        local content = ""
+        
+        if #priorityList > 0 then
+            content = content .. "🏆 Priority Order:\n"
+            for i, name in ipairs(priorityList) do
+                content = content .. i .. ". " .. name .. "\n"
+            end
+            content = content .. "------------------------\n"
+        else
+            content = content .. "⚠️ No Priority: Hunting Nearest Saved\n------------------------\n"
+        end
+
         local list = {}
         for name, isSelected in pairs(savedSelection) do
             if isSelected then table.insert(list, "• " .. name) end
         end
-        table.sort(list) -- เรียงชื่อให้สวยงาม
-        local content = #list > 0 and table.concat(list, "\n") or "No herbs selected."
+        table.sort(list)
+        content = content .. "Saved List: " .. (#list > 0 and table.concat(list, ", ") or "Empty")
+
         HerbParagraph = Tabs.AutoHerb:AddParagraph({
-            Title = "Selected Herbs list (" .. #list .. ")",
+            Title = "Status & Priority",
             Content = content
         })
     end
 
-    -- แก้ไข Logic การ OnChanged
     HerbListDropdownWarpFast:OnChanged(function(value)
-        -- 'value' คือ table ของ items ที่ถูกติ๊กอยู่ในปัจจุบัน (UI)
-        -- เราจะอิงตามสิ่งที่ผู้ใช้ "กดติ๊ก" จริงๆ ใน Dropdown เท่านั้น
-        
         local currentDropdownItems = getVisibleHerbNamesFast()
-        
+        local newPriorityOptions = {}
         for _, name in ipairs(currentDropdownItems) do
             if value[name] then
-                -- ถ้ามีการติ๊กใน Dropdown ให้เซฟเข้าลิสต์
                 savedSelection[name] = true
             else
-                -- ถ้ามีการติ๊กออกใน Dropdown ให้เอาออกจากลิสต์
                 savedSelection[name] = nil
+                local idx = table.find(priorityList, name)
+                if idx then table.remove(priorityList, idx) end
             end
         end
+        for name, _ in pairs(savedSelection) do
+            table.insert(newPriorityOptions, name)
+        end
+        table.sort(newPriorityOptions)
+        PriorityDropdown:SetValues(newPriorityOptions)
         updateParagraph()
     end)
 
-    -- วนลูปอัปเดต Dropdown เมื่อของหายหรือเกิดใหม่
+    -- [FIXED LOGIC]
+    PriorityDropdown:OnChanged(function(value)
+        local updatedList = {}
+        -- ตรวจสอบจากลิสต์เดิมก่อนเพื่อรักษาลำดับ
+        for _, name in ipairs(priorityList) do
+            if value[name] then
+                table.insert(updatedList, name)
+            end
+        end
+        -- เพิ่มตัวใหม่ที่เพิ่งถูกเลือก
+        for name, isSelected in pairs(value) do
+            if isSelected and not table.find(updatedList, name) then
+                table.insert(updatedList, name)
+            end
+        end
+        priorityList = updatedList
+        updateParagraph()
+    end)
+
     task.spawn(function()
         while true do
             local currentMapHerbs = getVisibleHerbNamesFast()
             if #currentMapHerbs ~= #HerbListDropdownWarpFast.Values then
                 HerbListDropdownWarpFast:SetValues(currentMapHerbs)
-                local displayValues = {}
-                for name, _ in pairs(savedSelection) do
-                    if table.find(currentMapHerbs, name) then
-                        displayValues[name] = true
-                    end
-                end
-                HerbListDropdownWarpFast:SetValue(displayValues)
             end
-            
             task.wait(10)
         end
     end)
 
     -----------------------------------------------------------------------------------------------------------------
-    -- ### [WARP & UTILITY]
+    -- Search & Warp
     -----------------------------------------------------------------------------------------------------------------
+
+    local function findTargetHerbFast()
+        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not root then return nil end
+
+        -- 1. ลอจิก Priority
+        if #priorityList > 0 then
+            for _, targetName in ipairs(priorityList) do
+                local bestHerb = nil
+                local minDistance = math.huge
+                for _, herb in pairs(HerbsFolder:GetChildren()) do
+                    if getHerbName(herb) == targetName then
+                        local distance = (herb:GetPivot().Position - root.Position).Magnitude
+                        if distance < minDistance then
+                            minDistance = distance
+                            bestHerb = herb
+                        end
+                    end
+                end
+                if bestHerb then return bestHerb end
+            end
+        end
+
+        -- 2. ลอจิกปกติ (ถ้า Priority ว่าง)
+        local nearestHerb = nil
+        local minDistance = math.huge
+        for _, herb in pairs(HerbsFolder:GetChildren()) do
+            local realName = getHerbName(herb)
+            if savedSelection[realName] then
+                local distance = (herb:GetPivot().Position - root.Position).Magnitude
+                if distance < minDistance then
+                    minDistance = distance
+                    nearestHerb = herb
+                end
+            end
+        end
+        return nearestHerb
+    end
 
     local function noclipFast()
         if _G.NoclipConn then _G.NoclipConn:Disconnect() end
@@ -1777,60 +1826,33 @@ do
         end
     end
 
-    local function findNearestHerbFast(herbList)
-        local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not root then return nil end
-        local nearestHerb = nil
-        local minDistance = math.huge
-        for _, herb in pairs(HerbsFolder:GetChildren()) do
-            local realName = getHerbName(herb)
-            if realName and herbList[realName] == true then
-                local herbPos = herb:GetPivot().Position
-                local distance = (herbPos - root.Position).Magnitude
-                if distance < minDistance then
-                    minDistance = distance
-                    nearestHerb = herb
-                end
-            end
-        end
-        return nearestHerb
-    end
-
     local function warpFast(targetPosition)
         local Character = LocalPlayer.Character
         local root = Character and Character:FindFirstChild("HumanoidRootPart")
         local hum = Character and Character:FindFirstChild("Humanoid")
         if not root or not hum then return end 
-
-        -- ใช้ BodyVelocity เพื่อกันแรงโน้มถ่วงระหว่างวาร์ป
         local bv = Instance.new("BodyVelocity")
         bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = root
-
         local distance = (targetPosition - root.Position).Magnitude
         local duration = distance / (tonumber(warpSpeed) or 50)
         local tween = TweenService:Create(root, TweenInfo.new(math.max(duration, 0.1), Enum.EasingStyle.Linear), {CFrame = CFrame.new(targetPosition)})
-
-        -- เริ่มวาร์ป
         hum.PlatformStand = true 
         tween:Play()
-        
         tween.Completed:Connect(function()
             if bv then bv:Destroy() end
             hum.PlatformStand = false
-            -- บังคับให้ Humanoid กลับมายืนและเคลื่อนที่ได้
             hum:ChangeState(Enum.HumanoidStateType.Running) 
         end)
-        
         tween.Completed:Wait()
     end
 
     local function autoWarpLoopFast()
         while isWarping do
-            local nearest = findNearestHerbFast(savedSelection)
-            if nearest then
-                warpFast(nearest:GetPivot().Position + Vector3.new(0, 5, 0))
+            local target = findTargetHerbFast()
+            if target then
+                warpFast(target:GetPivot().Position + Vector3.new(0, 5, 0))
                 task.wait(0.1)
             else
                 task.wait(2)
@@ -1838,8 +1860,12 @@ do
         end
     end
 
+    -----------------------------------------------------------------------------------------------------------------
+    -- Controls
+    -----------------------------------------------------------------------------------------------------------------
+
     Tabs.AutoHerb:AddButton({
-        Title = "Clear Herb List",
+        Title = "Clear All Selections",
         Callback = function()
             Window:Dialog({
                 Title = "Clear All",
@@ -1847,7 +1873,9 @@ do
                 Buttons = {
                     { Title = "Confirm", Callback = function()
                         savedSelection = {} 
+                        priorityList = {}
                         HerbListDropdownWarpFast:SetValue({}) 
+                        PriorityDropdown:SetValue({})
                         updateParagraph()
                     end },
                     { Title = "Cancel" }
@@ -1855,10 +1883,6 @@ do
             })
         end
     })
-
-    -----------------------------------------------------------------------------------------------------------------
-    -- ### [TOGGLES]
-    -----------------------------------------------------------------------------------------------------------------
 
     local AutoPressEBut = Tabs.AutoHerb:AddToggle("AutoPressEToggle", {Title = "Auto Press E", Default = false })
     AutoPressEBut:OnChanged(function()
@@ -1872,7 +1896,7 @@ do
 
     Tabs.AutoHerb:AddSlider("warpspeed", { Title = "Warp Speed", Default = 50, Min = 1, Max = 100, Rounding = 1, Callback = function(v) warpSpeed = v end })
 
-    local WarpFastToggle = Tabs.AutoHerb:AddToggle("AutoWarpFastToggle", { Title = "Start Auto Herb Warp [Faster]", Default = false })
+    local WarpFastToggle = Tabs.AutoHerb:AddToggle("AutoWarpFastToggle", { Title = "Start Auto Herb Warp", Default = false })
     WarpFastToggle:OnChanged(function(enabled)
         isWarping = enabled
         if enabled then
