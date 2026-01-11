@@ -1185,38 +1185,27 @@ local isPause = false
 local StartHavest = false 
 
 local predefinedPositions = {
-    -- Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
-    -- Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
-    -- Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
-    -- Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
-    -- Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
-    -- Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
-    -- Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
-    -- Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
-    -- Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
-    -- Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375),
-
-    Vector3.new(26.3707275, 86.2353973, -736.170044),
-    Vector3.new(-423.318726, 487.90799, 361.035248),
-    Vector3.new(-984.083252, 378.659302, -857.646606),
-    Vector3.new(-1550.43774, 501.497833, 730.824036),
-    Vector3.new(-2000.75635, 474.769012, -67.0544281),
-    Vector3.new(-1430.73657, 246.748306, -1600.83325),
-    Vector3.new(-853.757751, 481.095123, -2040.08521),
-    Vector3.new(1474.97913, 68.9663849, 98.4963837),
-    Vector3.new(1116.71594, 203.576874, 881.111328),
-    Vector3.new(1508.16089, 372.667938, -1789.71985),
-    Vector3.new(-1053.78931, 277.859497, -2514.93433),
-    Vector3.new(2185.4895, 172.755798, -331.249725),
-    Vector3.new(-1808.46545, 210.787933, -2346.9939),
-    Vector3.new(364.394501, 161.599808, -2970.93213),
-    Vector3.new(2439.17529, 556.029053, -1367.13086),
-    Vector3.new(1805.83655, 74.7540054, -2677.03882),
-    Vector3.new(2244.14844, 539.420471, -2370.38062),
-    Vector3.new(2123.69336, 552.998413, -3770.9314),
-    Vector3.new(-1077.52563, 721.864502, -4249.08447),
-    Vector3.new(1234.38977, 769.469543, -4356.78516),
-    Vector3.new(-2377.84985, 407.692108, -4492.34082),
+    Vector3.new(-418.3001403808594, 501.336669921875, 366.0550537109375),
+    Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
+    Vector3.new(26.3707275390625, 86.23539733886719, -736.1700439453125),
+    Vector3.new(-1554.2586669921875, 515.0339965820312, 731.18408203125),
+    Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
+    Vector3.new(-2001.6409912109375, 488.39520263671875, -55.411529541015625),
+    Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
+    Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
+    Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
+    Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
+    Vector3.new(1116.7159423828125, 203.57687377929688, 881.111328125),
+    Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
+    Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
+    Vector3.new(364.0863952636719, 184.8585968017578, -2967.772216796875),
+    Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
+    Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375),
+    Vector3.new(2244.1484375, 539.4204711914062, -2370.380615234375),
+    Vector3.new(-1077.322998046875, 745.3989868164062, -4255.89794921875),
+    Vector3.new(-2377.81005859375, 430.3107604980469, -4499.79150390625),
+    Vector3.new(2120.034423828125, 576.5693359375, -3771.15966796875),
+    Vector3.new(1242.775634765625, 792.3180541992188, -4355.7353515625),
     Vector3.new(-732.7455444335938, 864.955322265625, -5321.73046875),
 }
 
@@ -1370,12 +1359,12 @@ local function mainProgress()
                 game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("WorldTeleportRemote"):InvokeServer(3475397644)
             else
                 StartHavest = true
-                task.wait(0.01)
+                task.wait(0.5)
                 while StartHavest do
                     teleportDropItemsToPlayer()
                     for _, position in ipairs(predefinedPositions) do
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position + Vector3.new(0, 10, 0))
-                        task.wait(0.01)
+                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                        task.wait(0.5)
                         local regionSize = Vector3.new(10, 10, 10)
                         local region = Region3.new(position - regionSize/2, position + regionSize/2)
 
@@ -1399,7 +1388,7 @@ local function mainProgress()
                                 local part = tree:FindFirstChildWhichIsA("BasePart")
                                 if part then
                                     local treePosition = part.Position
-                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 10, 0))
+                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
                                     task.wait(0)
                                     local billboardPart = tree:FindFirstChild("BillboardPart")
                                     if billboardPart then
