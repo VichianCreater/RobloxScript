@@ -1061,11 +1061,16 @@ UIGradient.Rotation = 75
 UIGradient.Parent = ShowUiButton
 
 local VirtualUser = game:GetService('VirtualUser')
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
  
 game:GetService('Players').LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
+
 
 local function getDragonNumber()
     local dragonsFolder = game.Players.LocalPlayer.Character:WaitForChild("Dragons")
@@ -1079,9 +1084,34 @@ local function getDragonNumber()
     return dragonNumbers[1]
 end
 
+local function tweenDragonToTarget(targetPosition)
+    local dragonNumber = getDragonNumber()
+    if not dragonNumber then return end
+
+    local characterInWorkspace = workspace.Characters:FindFirstChild(player.Name)
+    if not characterInWorkspace then return end
+    
+    local dragon = characterInWorkspace.Dragons:FindFirstChild(dragonNumber)
+    if not dragon or not dragon:FindFirstChild("HumanoidRootPart") then return end
+    
+    local dragonRoot = dragon.HumanoidRootPart
+
+    local distance = (dragonRoot.Position - targetPosition).Magnitude
+    local speed = 1000 
+    local duration = distance / speed
+
+    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
+    local tween = TweenService:Create(dragonRoot, tweenInfo, {CFrame = CFrame.new(targetPosition)})
+    
+    tween:Play()
+    tween.Completed:Wait()
+end
+
 local function attackTree(billboardPart)
     local dragonNumber = getDragonNumber()
-    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
+    -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
+    local targetPos = billboardPart.Position + Vector3.new(0, 0.5, 0)
+    tweenDragonToTarget(targetPos)
     local args = {
         "Breath",
         "Destructibles",
@@ -1363,7 +1393,8 @@ local function mainProgress()
                 while StartHavest do
                     teleportDropItemsToPlayer()
                     for _, position in ipairs(predefinedPositions) do
-                        game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
+                        tweenDragonToTarget(position)
+                        -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
                         task.wait(0.5)
                         local regionSize = Vector3.new(10, 10, 10)
                         local region = Region3.new(position - regionSize/2, position + regionSize/2)
@@ -1388,7 +1419,8 @@ local function mainProgress()
                                 local part = tree:FindFirstChildWhichIsA("BasePart")
                                 if part then
                                     local treePosition = part.Position
-                                    game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
+                                    tweenDragonToTarget(treePosition + Vector3.new(0, 0.5, 0))
+                                    -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
                                     task.wait(0)
                                     local billboardPart = tree:FindFirstChild("BillboardPart")
                                     if billboardPart then
