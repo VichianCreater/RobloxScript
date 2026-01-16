@@ -1065,6 +1065,7 @@ local TweenService = game:GetService("TweenService")
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:WaitForChild("HumanoidRootPart")
+workspace.FallenPartsDestroyHeight = -50000
  
 game:GetService('Players').LocalPlayer.Idled:Connect(function()
     VirtualUser:CaptureController()
@@ -1084,33 +1085,78 @@ local function getDragonNumber()
     return dragonNumbers[1]
 end
 
+local currentTween = nil
+local MIN_TWEEN_TIME = 0.15
+local MIN_DISTANCE_TELEPORT = 3
+local SAFE_Y_OFFSET = 5
+local MOVE_SPEED = 800
+
 local function tweenDragonToTarget(targetPosition)
     local dragonNumber = getDragonNumber()
     if not dragonNumber then return end
 
     local characterInWorkspace = workspace.Characters:FindFirstChild(player.Name)
     if not characterInWorkspace then return end
-    
+
     local dragon = characterInWorkspace.Dragons:FindFirstChild(dragonNumber)
-    if not dragon or not dragon:FindFirstChild("HumanoidRootPart") then return end
-    
-    local dragonRoot = dragon.HumanoidRootPart
+    if not dragon then return end
+
+    local dragonRoot = dragon:FindFirstChild("HumanoidRootPart")
+    if not dragonRoot then return end
+
+    -- ยกตำแหน่งเป้าหมายขึ้นเสมอ กันมุดพื้น
+    targetPosition = targetPosition + Vector3.new(0, SAFE_Y_OFFSET, 0)
 
     local distance = (dragonRoot.Position - targetPosition).Magnitude
-    local speed = 1000 
-    local duration = distance / speed
 
-    local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(dragonRoot, tweenInfo, {CFrame = CFrame.new(targetPosition)})
-    
-    tween:Play()
-    tween.Completed:Wait()
+    -- ใกล้เกิน = teleport ตรง (ไม่ tween)
+    if distance <= MIN_DISTANCE_TELEPORT then
+        dragonRoot.CFrame = CFrame.new(targetPosition)
+        return
+    end
+
+    -- ยกเลิก tween เก่าก่อน
+    if currentTween then
+        currentTween:Cancel()
+        currentTween = nil
+    end
+
+    local duration = math.max(distance / MOVE_SPEED, MIN_TWEEN_TIME)
+
+    local tweenInfo = TweenInfo.new(
+        duration,
+        Enum.EasingStyle.Linear,
+        Enum.EasingDirection.Out
+    )
+
+    currentTween = TweenService:Create(
+        dragonRoot,
+        tweenInfo,
+        { CFrame = CFrame.new(targetPosition) }
+    )
+
+    currentTween:Play()
+
+    -- ป้องกันค้าง
+    local finished = false
+    currentTween.Completed:Connect(function()
+        finished = true
+    end)
+
+    -- รอแบบปลอดภัย
+    local start = tick()
+    while not finished and tick() - start < duration + 0.3 do
+        task.wait()
+    end
+
+    currentTween = nil
 end
+
 
 local function attackTree(billboardPart)
     local dragonNumber = getDragonNumber()
     -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(billboardPart.Position + Vector3.new(0, 0.5, 0))
-    local targetPos = billboardPart.Position + Vector3.new(0, 0.5, 0)
+    local targetPos = billboardPart.Position + Vector3.new(0, 5, 0)
     tweenDragonToTarget(targetPos)
     local args = {
         "Breath",
@@ -1219,25 +1265,26 @@ local predefinedPositions = {
     Vector3.new(-981.064453125, 392.6428527832031, -868.3142700195312),
     Vector3.new(26.3707275390625, 86.23539733886719, -736.1700439453125),
     Vector3.new(-1554.2586669921875, 515.0339965820312, 731.18408203125),
-    Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
     Vector3.new(-2001.6409912109375, 488.39520263671875, -55.411529541015625),
+    Vector3.new(-1430.736572265625, 246.74830627441406, -1600.833251953125),
     Vector3.new(-864.0951538085938, 504.478759765625, -2033.88330078125),
-    Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
-    Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
     Vector3.new(-1813.89111328125, 233.04527282714844, -2354.91455078125),
-    Vector3.new(1116.7159423828125, 203.57687377929688, 881.111328125),
-    Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
+    Vector3.new(-1048.2591552734375, 300.7080383300781, -2508.5439453125),
     Vector3.new(1508.160888671875, 372.6679382324219, -1789.7198486328125),
-    Vector3.new(364.0863952636719, 184.8585968017578, -2967.772216796875),
-    Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
     Vector3.new(1798.6187744140625, 97.26102447509766, -2671.435302734375),
+    Vector3.new(364.0863952636719, 184.8585968017578, -2967.772216796875),
+    Vector3.new(2185.489501953125, 172.75579833984375, -331.2497253417969),
+    Vector3.new(1475.412109375, 92.3567886352539, 100.74723052978516),
+    Vector3.new(1116.7159423828125, 203.57687377929688, 881.111328125),
+    Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
     Vector3.new(2244.1484375, 539.4204711914062, -2370.380615234375),
-    Vector3.new(-1077.322998046875, 745.3989868164062, -4255.89794921875),
-    Vector3.new(-2377.81005859375, 430.3107604980469, -4499.79150390625),
     Vector3.new(2120.034423828125, 576.5693359375, -3771.15966796875),
     Vector3.new(1242.775634765625, 792.3180541992188, -4355.7353515625),
+    Vector3.new(-1077.322998046875, 745.3989868164062, -4255.89794921875),
+    Vector3.new(-2377.81005859375, 430.3107604980469, -4499.79150390625),
     Vector3.new(-732.7455444335938, 864.955322265625, -5321.73046875),
 }
+
 
 local TARGET_ITEM_NAMES = {
     "EdamameFoodModel",
@@ -1393,7 +1440,7 @@ local function mainProgress()
                 while StartHavest do
                     teleportDropItemsToPlayer()
                     for _, position in ipairs(predefinedPositions) do
-                        tweenDragonToTarget(position)
+                        tweenDragonToTarget(position + Vector3.new(0, 5, 0))
                         -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
                         task.wait(0.5)
                         local regionSize = Vector3.new(10, 10, 10)
@@ -1419,7 +1466,7 @@ local function mainProgress()
                                 local part = tree:FindFirstChildWhichIsA("BasePart")
                                 if part then
                                     local treePosition = part.Position
-                                    tweenDragonToTarget(treePosition + Vector3.new(0, 0.5, 0))
+                                    tweenDragonToTarget(treePosition + Vector3.new(0, 5, 0))
                                     -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(treePosition + Vector3.new(0, 0.5, 0))
                                     task.wait(0)
                                     local billboardPart = tree:FindFirstChild("BillboardPart")
