@@ -1089,7 +1089,7 @@ local currentTween = nil
 local MIN_TWEEN_TIME = 0.15
 local MIN_DISTANCE_TELEPORT = 3
 local SAFE_Y_OFFSET = 5
-local MOVE_SPEED = 800
+local MOVE_SPEED = 500
 
 local function tweenDragonToTarget(targetPosition)
     local dragonNumber = getDragonNumber()
