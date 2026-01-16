@@ -1279,10 +1279,10 @@ local predefinedPositions = {
     Vector3.new(2439.17529296875, 556.029052734375, -1367.130859375),
     Vector3.new(2244.1484375, 539.4204711914062, -2370.380615234375),
     Vector3.new(2120.034423828125, 576.5693359375, -3771.15966796875),
-    Vector3.new(1242.775634765625, 792.3180541992188, -4355.7353515625),
-    Vector3.new(-1077.322998046875, 745.3989868164062, -4255.89794921875),
-    Vector3.new(-2377.81005859375, 430.3107604980469, -4499.79150390625),
-    Vector3.new(-732.7455444335938, 864.955322265625, -5321.73046875),
+    -- Vector3.new(1242.775634765625, 792.3180541992188, -4355.7353515625),
+    -- Vector3.new(-1077.322998046875, 745.3989868164062, -4255.89794921875),
+    -- Vector3.new(-2377.81005859375, 430.3107604980469, -4499.79150390625),
+    -- Vector3.new(-732.7455444335938, 864.955322265625, -5321.73046875),
 }
 
 
@@ -1440,6 +1440,7 @@ local function mainProgress()
                 while StartHavest do
                     teleportDropItemsToPlayer()
                     for _, position in ipairs(predefinedPositions) do
+                        print('Now going to: '..tostring(position))
                         tweenDragonToTarget(position + Vector3.new(0, 5, 0))
                         -- game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(position)
                         task.wait(0.5)
