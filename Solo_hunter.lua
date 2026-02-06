@@ -43,7 +43,7 @@ do
 
     Tabs.Main:AddParagraph({
         Title = "Welcome to vichianHUB",
-        Content = "\nThis is a beta test script.\nFull auto its work at the cave and jungle map\nIn other map u can walk manually to next stage"
+        Content = "\nThis is a beta test script.\nFull auto its work at all gate\n\n warning: if not work at first time you can exit gate with left top screen and try again"
     })
 
     local VirtualInputManager = game:GetService("VirtualInputManager")
