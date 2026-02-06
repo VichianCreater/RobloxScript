@@ -296,15 +296,22 @@ do
         local function getAllMyChests()
             local myChests = {}
             for _, v in pairs(workspace:GetChildren()) do
-                if v.Name:find("Chest") then
+                if v.Name:lower():find("chest") then
                     local root = v:FindFirstChild("Root")
-                    local attachment = root and root:FindFirstChild("Attachment")
-                    local billboard = attachment and attachment:FindFirstChild("BillboardGui")
-                    local ownerLabel = billboard and billboard:FindFirstChild("OwnersName")
-
-                    if billboard and billboard.Enabled and ownerLabel then
-                        if ownerLabel.Text:find(LocalPlayer.Name) or ownerLabel.Text:find(LocalPlayer.DisplayName) then
-                            table.insert(myChests, v)
+                    if root then
+                        -- วนลูปหาในบรรดาลูกๆ ทั้งหมดของ Root (เผื่อมี Attachment หลายอัน)
+                        for _, child in pairs(root:GetChildren()) do
+                            local billboard = child:FindFirstChild("BillboardGui")
+                            if billboard and billboard.Enabled then
+                                local ownerLabel = billboard:FindFirstChild("OwnersName")
+                                if ownerLabel then
+                                    -- เช็คชื่อเราบนป้าย
+                                    if ownerLabel.Text:find(LocalPlayer.Name) or ownerLabel.Text:find(LocalPlayer.DisplayName) then
+                                        table.insert(myChests, v)
+                                        break -- เจอป้ายเราในกล่องนี้แล้ว ไปกล่องถัดไปได้เลย
+                                    end
+                                end
+                            end
                         end
                     end
                 end
@@ -312,9 +319,7 @@ do
             return myChests
         end
 
-        local chestsToOpen = getAllMyChests()
-        print("Found " .. #chestsToOpen .. " chest(s) belonging to you.")
-
+        -- เริ่มการตรวจสอบ 3 รอบตามโค้ดต้นฉบับ
         for i = 1, 3 do
             local chestsToOpen = getAllMyChests()
             
@@ -323,22 +328,29 @@ do
                 
                 for _, currentChest in ipairs(chestsToOpen) do
                     local prompt = currentChest:FindFirstChildOfClass("ProximityPrompt") or currentChest:FindFirstChildWhichIsA("ProximityPrompt", true)
-                    local root = currentChest:FindFirstChild("Root")
-                    local attachment = root and root:FindFirstChild("Attachment")
-                    local billboard = attachment and attachment:FindFirstChild("BillboardGui")
+                    
+                    -- สแกนหา Billboard อีกครั้งเพื่อใช้เป็นเงื่อนไขในการลูปเปิด
+                    local billboard = nil
+                    for _, descendant in pairs(currentChest:GetDescendants()) do
+                        if descendant:IsA("BillboardGui") and descendant.Enabled then
+                            billboard = descendant
+                            break
+                        end
+                    end
 
                     if prompt and billboard then
                         local targetCFrame = currentChest:GetPivot() * CFrame.new(0, 3, 0)
                         prompt.HoldDuration = 0
                         
                         local chestTimeout = tick()
-                        -- ลูปจนกว่า Billboard จะหายไป (กล่องถูกเปิด)
-                        while billboard.Enabled and (tick() - chestTimeout < 5) do
+                        -- ลูปจนกว่า Billboard จะหายไป (กล่องถูกเปิดสำเร็จ)
+                        while billboard.Parent and billboard.Enabled and (tick() - chestTimeout < 5) do
                             if not humanoid or humanoid.Health <= 0 then break end
                             
                             hrp.Velocity = Vector3.zero
                             hrp.CFrame = targetCFrame
-
+                            
+                            -- เลือกใช้วิธีเปิดที่รองรับกับ Exploit ส่วนใหญ่
                             if fireproximityprompt then
                                 fireproximityprompt(prompt)
                             else
@@ -350,18 +362,20 @@ do
                         end
                     end
                 end
-                task.wait(1) -- รอสักพักหลังเปิดจบเซ็ตนั้นๆ
+                task.wait(1) 
             else
                 print(string.format("Attempt %d: No chests found yet.", i))
-                task.wait(1.5) -- ถ้าไม่เจอกล่อง ให้รอเผื่อกล่องกำลังดรอป
+                task.wait(1.5)
             end
         end
 
         print("All your chests have been opened.")
 
-        if Options.AutoExitToggle.Value then
+        -- ตรวจสอบจำนวนกล่องล่าสุดก่อนเข้า Portal
+        local finalCheck = getAllMyChests()
+        if Options.AutoExitToggle.Value and #finalCheck == 0 then
             local portal = nil
-            local shortestDist = maxPortalDist
+            local shortestDist = maxPortalDist or 5000
 
             for _, v in pairs(workspace:GetChildren()) do
                 if v.Name == "OverworldPortal" then
@@ -379,8 +393,11 @@ do
                 local prompt = portal:FindFirstChildOfClass("ProximityPrompt") or portal:FindFirstChildWhichIsA("ProximityPrompt", true)
                 if prompt then
                     local targetCFrame = portal:GetPivot() * CFrame.new(0, 10, 3)
-                    TweenService:Create(hrp, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCFrame}):Play()
+                    -- ใช้การ Tween เพื่อความสมูทในการไปที่ประตู
+                    local tween = TweenService:Create(hrp, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+                    tween:Play()
                     task.wait(0.35)
+                    
                     prompt.HoldDuration = 0 
                     prompt:InputHoldBegin()
                     task.wait(0.2)
