@@ -320,7 +320,7 @@ do
         end
 
         -- เริ่มการตรวจสอบ 3 รอบตามโค้ดต้นฉบับ
-        for i = 1, 3 do
+        for i = 1, 1 do
             local chestsToOpen = getAllMyChests()
             
             if #chestsToOpen > 0 then
@@ -362,7 +362,7 @@ do
                         end
                     end
                 end
-                task.wait(1) 
+                task.wait(0) 
             else
                 print(string.format("Attempt %d: No chests found yet.", i))
                 task.wait(1.5)
@@ -392,12 +392,11 @@ do
                 print("All chests cleared. Proceeding to Exit Portal.")
                 local prompt = portal:FindFirstChildOfClass("ProximityPrompt") or portal:FindFirstChildWhichIsA("ProximityPrompt", true)
                 if prompt then
+                    task.wait(5)
                     local targetCFrame = portal:GetPivot() * CFrame.new(0, 10, 3)
-                    -- ใช้การ Tween เพื่อความสมูทในการไปที่ประตู
                     local tween = TweenService:Create(hrp, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
                     tween:Play()
                     task.wait(0.35)
-                    
                     prompt.HoldDuration = 0 
                     prompt:InputHoldBegin()
                     task.wait(0.2)
