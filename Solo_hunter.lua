@@ -101,6 +101,7 @@ do
     local gateMapping = {}
 
     local function refreshGateList()
+        print("Refreshing gate list...")
         local rawGates = {}
         gateMapping = {}
         for _, v in pairs(workspace:GetChildren()) do
@@ -139,8 +140,6 @@ do
         end
         return gateOptions
     end
-
-    refreshGateList()
 
     task.spawn(function()
         while true do
@@ -290,117 +289,81 @@ do
         local char = LocalPlayer.Character
         local humanoid = char and char:FindFirstChild("Humanoid")
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        
+        local isOpenChest = false
         if not hrp or not humanoid or humanoid.Health <= 0 then return false end
 
-        local function getAllMyChests()
+        local function getMyUnopenedChests()
             local myChests = {}
             for _, v in pairs(workspace:GetChildren()) do
-                if v.Name:lower():find("chest") then
-                    local root = v:FindFirstChild("Root")
-                    if root then
-                        -- วนลูปหาในบรรดาลูกๆ ทั้งหมดของ Root (เผื่อมี Attachment หลายอัน)
-                        for _, child in pairs(root:GetChildren()) do
-                            local billboard = child:FindFirstChild("BillboardGui")
-                            if billboard and billboard.Enabled then
-                                local ownerLabel = billboard:FindFirstChild("OwnersName")
-                                if ownerLabel then
-                                    -- เช็คชื่อเราบนป้าย
-                                    if ownerLabel.Text:find(LocalPlayer.Name) or ownerLabel.Text:find(LocalPlayer.DisplayName) then
-                                        table.insert(myChests, v)
-                                        break -- เจอป้ายเราในกล่องนี้แล้ว ไปกล่องถัดไปได้เลย
-                                    end
-                                end
-                            end
-                        end
+                if (v.Name:lower():find("chest") or v.Name:lower():find("desert")) and Options.AutoChestToggle.Value then
+                    humanoid:Move(Vector3.new(0, 0, -1), true)
+                    local owner = v:GetAttribute("Owner") or v:GetAttribute("OwnersName")
+                    local isOpened = v:GetAttribute("Opened")
+                    local uuid = v:GetAttribute("ChestUUID")
+
+                    if (owner == LocalPlayer.Name or owner == LocalPlayer.DisplayName) and (isOpened ~= true) and uuid then
+                        table.insert(myChests, v)
                     end
                 end
             end
             return myChests
         end
 
-        -- เริ่มการตรวจสอบ 3 รอบตามโค้ดต้นฉบับ
-        for i = 1, 1 do
-            local chestsToOpen = getAllMyChests()
-            
-            if #chestsToOpen > 0 then
-                print(string.format("Attempt %d: Found %d chest(s). Opening...", i, #chestsToOpen))
-                
-                for _, currentChest in ipairs(chestsToOpen) do
-                    local prompt = currentChest:FindFirstChildOfClass("ProximityPrompt") or currentChest:FindFirstChildWhichIsA("ProximityPrompt", true)
-                    
-                    -- สแกนหา Billboard อีกครั้งเพื่อใช้เป็นเงื่อนไขในการลูปเปิด
-                    local billboard = nil
-                    for _, descendant in pairs(currentChest:GetDescendants()) do
-                        if descendant:IsA("BillboardGui") and descendant.Enabled then
-                            billboard = descendant
-                            break
-                        end
-                    end
-
-                    if prompt and billboard then
-                        local targetCFrame = currentChest:GetPivot() * CFrame.new(0, 3, 0)
-                        prompt.HoldDuration = 0
+        local chestsToOpen = getMyUnopenedChests()
+        
+        if #chestsToOpen > 0 then
+            isOpenChest = true
+            for _, currentChest in ipairs(chestsToOpen) do
+                local uuid = currentChest:GetAttribute("ChestUUID")
+                task.spawn(function()
+                    local chestTimeout = tick()
+                    while currentChest:GetAttribute("Opened") ~= true and (tick() - chestTimeout < 5) do
+                        if not uuid or not Options.AutoChestToggle.Value then break end
                         
-                        local chestTimeout = tick()
-                        -- ลูปจนกว่า Billboard จะหายไป (กล่องถูกเปิดสำเร็จ)
-                        while billboard.Parent and billboard.Enabled and (tick() - chestTimeout < 5) do
-                            if not humanoid or humanoid.Health <= 0 then break end
-                            
-                            hrp.Velocity = Vector3.zero
-                            hrp.CFrame = targetCFrame
-                            
-                            -- เลือกใช้วิธีเปิดที่รองรับกับ Exploit ส่วนใหญ่
-                            if fireproximityprompt then
-                                fireproximityprompt(prompt)
-                            else
-                                prompt:InputHoldBegin()
-                                task.wait()
-                                prompt:InputHoldEnd()
-                            end
-                            task.wait(0.1)
-                        end
+                        game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices")
+                            :WaitForChild("BossDropsService"):WaitForChild("RF")
+                            :WaitForChild("OpenChest"):InvokeServer(uuid)
+                        
+                        task.wait(0.3)
                     end
-                end
-                task.wait(0) 
-            else
-                print(string.format("Attempt %d: No chests found yet.", i))
-                task.wait(1.5)
+                end)
+            end
+            
+            local waitTimeout = tick()
+            while #getMyUnopenedChests() > 0 and (tick() - waitTimeout < 6) do
+                task.wait(0.5)
             end
         end
 
-        print("All your chests have been opened.")
-
-        -- ตรวจสอบจำนวนกล่องล่าสุดก่อนเข้า Portal
-        local finalCheck = getAllMyChests()
-        if Options.AutoExitToggle.Value and #finalCheck == 0 then
-            local portal = nil
-            local shortestDist = maxPortalDist or 5000
-
-            for _, v in pairs(workspace:GetChildren()) do
-                if v.Name == "OverworldPortal" then
-                    local pos = v:GetPivot().Position
-                    local dist = (hrp.Position - pos).Magnitude
-                    if dist < shortestDist then
-                        shortestDist = dist
-                        portal = v
-                    end
-                end
+        -- [[ เงื่อนไขการกดออก: ต้องเปิด AutoChest อยู่ และ หีบต้องเปิดหมดแล้วเท่านั้น ]]
+        if Options.AutoChestToggle.Value and #getMyUnopenedChests() == 0 and isOpenChest and Options.AutoExitToggle.Value then
+            task.wait(1.5)
+            
+            local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+            
+            -- 1. กดปุ่ม Leave Match โดยใช้ virtualClick
+            local leaveBtn = playerGui.TopbarStandard.Holders.Left.LeaveMatchButton.IconButton.Menu.IconSpot.ClickRegion
+            if leaveBtn then
+                virtualClick(leaveBtn)
             end
 
-            if portal then
-                print("All chests cleared. Proceeding to Exit Portal.")
-                local prompt = portal:FindFirstChildOfClass("ProximityPrompt") or portal:FindFirstChildWhichIsA("ProximityPrompt", true)
-                if prompt then
-                    task.wait(5)
-                    local targetCFrame = portal:GetPivot() * CFrame.new(0, 10, 3)
-                    local tween = TweenService:Create(hrp, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-                    tween:Play()
-                    task.wait(0.35)
-                    prompt.HoldDuration = 0 
-                    prompt:InputHoldBegin()
-                    task.wait(0.2)
-                    prompt:InputHoldEnd()
+            -- 2. รอหน้าต่างยืนยัน และกด Proceed
+            task.wait(0.5)
+            local prompts = playerGui:FindFirstChild("Prompts")
+            if prompts then
+                local promptFrame = prompts:FindFirstChild("PromptFrame")
+                if promptFrame then
+                    local uiTimeout = tick()
+                    while not promptFrame.Visible and (tick() - uiTimeout < 2) do
+                        task.wait(0.1)
+                    end
+
+                    if promptFrame.Visible then
+                        local proceedBtn = promptFrame:FindFirstChild("Proceed")
+                        if proceedBtn then
+                            virtualClick(proceedBtn)
+                        end
+                    end
                 end
             end
         end
@@ -409,48 +372,47 @@ do
     end
 
     -- [[ UI Toggles ]]
-    local AutoAttackToggle = Tabs.Setup:AddToggle("AutoAttackToggle", { Title = "Auto Attack (Spamming Click)", Default = false })
-    local AutoFarmToggle = Tabs.Setup:AddToggle("AutoFarmToggle", { Title = "Auto Farm (Teleport)", Default = false })
+    local AutoFarmToggle = Tabs.Setup:AddToggle("AutoFarmToggle", { Title = "Auto Farm (TP + Attack)", Default = false })
     local AutoChestToggle = Tabs.Setup:AddToggle("AutoChestToggle", { Title = "Auto Open Chest", Default = false })
     local AutoExitToggle = Tabs.Setup:AddToggle("AutoExitToggle", { Title = "Auto Exit Portal", Default = false }) 
+    local AutoScipEndScreen = Tabs.Setup:AddToggle("AutoScipEndScreen", { Title = "Auto Click End Screen", Default = false })
 
     -- [ ฟังก์ชันจัดการการเก็บของ ]
-    local function HandleDrops()
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        local camera = workspace:FindFirstChild("Camera")
-        local dropsFolder = camera and camera:FindFirstChild("Drops")
+    -- local function HandleDrops()
+    --     local char = LocalPlayer.Character
+    --     local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    --     local camera = workspace:FindFirstChild("Camera")
+    --     local dropsFolder = camera and camera:FindFirstChild("Drops")
         
-        if hrp and dropsFolder and #dropsFolder:GetChildren() > 0 then
-            for _, item in ipairs(dropsFolder:GetChildren()) do
-                local itemPos = item:GetPivot().Position
-                local dist = (hrp.Position - itemPos).Magnitude
+    --     if hrp and dropsFolder and #dropsFolder:GetChildren() > 0 then
+    --         for _, item in ipairs(dropsFolder:GetChildren()) do
+    --             local itemPos = item:GetPivot().Position
+    --             local dist = (hrp.Position - itemPos).Magnitude
 
-                if dist <= maxLootDist then
-                    local prompt = item:FindFirstChildOfClass("ProximityPrompt") or item:FindFirstChildWhichIsA("ProximityPrompt", true)
-                    if prompt then
-                        local targetCFrame = item:GetPivot()
-                        local tween = TweenService:Create(hrp, TweenInfo.new(0.15, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-                        tween:Play()
-                        tween.Completed:Wait()
+    --             if dist <= maxLootDist then
+    --                 local prompt = item:FindFirstChildOfClass("ProximityPrompt") or item:FindFirstChildWhichIsA("ProximityPrompt", true)
+    --                 if prompt then
+    --                     local targetCFrame = item:GetPivot()
+    --                     TweenService:Create(hrp, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = targetCFrame}):Play()
+    --                     hrp.Velocity = Vector3.zero
                         
-                        prompt.HoldDuration = 0 
-                        prompt:InputHoldBegin()
-                        task.wait(0.05)
-                        prompt:InputHoldEnd()
-                        task.wait(0.1)
-                        return true 
-                    end
-                end
-            end
-        end
-        return false
-    end
+    --                     prompt.HoldDuration = 0 
+    --                     prompt:InputHoldBegin()
+    --                     task.wait(0.05)
+    --                     prompt:InputHoldEnd()
+    --                     task.wait(0.1)
+    --                     return true 
+    --                 end
+    --             end
+    --         end
+    --     end
+    --     return false
+    -- end
 
-    AutoAttackToggle:OnChanged(function()
+    AutoScipEndScreen:OnChanged(function()
         task.spawn(function()
-            while Options.AutoAttackToggle.Value do
-                if isInDungeon() then
+            while Options.AutoScipEndScreen.Value do
+                if isInDungeon() and game:GetService("Players").LocalPlayer.PlayerGui.DungeonCleared.Main.Visible == true then
                     pcall(function()
                         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") and LocalPlayer.Character.Humanoid.Health > 0 then
                             VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
@@ -529,6 +491,20 @@ do
             local currentRoomIndex = 0
             local FirstTimeBreakWall = false
             local lastGateCheck = tick()
+            
+            -- สร้างฟังก์ชันสำหรับการโจมตีด้วย Remote เพื่อให้โค้ดสะอาดขึ้น
+            local function attackTarget(targetInstance)
+                if targetInstance then
+                    local args = {
+                        0,
+                        { targetInstance },
+                        0.8666666746139526
+                    }
+                    -- เรียกใช้งาน Remote แทนการกดหน้าจอ
+                    game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices"):WaitForChild("CombatService"):WaitForChild("RF"):WaitForChild("UseWeapon"):InvokeServer(unpack(args))
+                end
+            end
+
             while Options.AutoFarmToggle.Value do
                 local char = LocalPlayer.Character
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -548,6 +524,11 @@ do
                                 end
 
                                 while Options.AutoFarmToggle.Value and targetHum and targetHum.Health > 0 and target.Parent and humanoid.Health > 0 do
+                                    -- โจมตีเป้าหมายรัวๆ (Remote Attack)
+                                    task.spawn(function()
+                                        attackTarget(target)
+                                    end)
+
                                     if isTargetBoss then
                                         local interruptCheck = getTarget()
                                         if interruptCheck and not isBoss(interruptCheck.Name) then
@@ -571,15 +552,14 @@ do
                                         end
                                     end
 
+                                    -- ส่วนเช็คประตู/กำแพง
                                     if isTargetBoss and tick() - lastGateCheck > 5.5 then
                                         if FirstTimeBreakWall then
                                             local nearestGate = nil
                                             local minDistance = 5000
-
                                             for _, v in pairs(workspace:GetDescendants()) do
                                                 if v.Name == "Gate" or v.Name == "BossDoor" then
                                                     local targetPart = v:FindFirstChild("Hitbox") or v:FindFirstChild("icewall") or v:FindFirstChild("Breakable") or v:FindFirstChild("LeftDoor") or v:FindFirstChild("GateProximityPart") or (v:IsA("BasePart") and v)
-                                                    
                                                     if targetPart then
                                                         local distance = (hrp.Position - targetPart.Position).Magnitude
                                                         if distance < minDistance then
@@ -591,30 +571,44 @@ do
                                             end
 
                                             if nearestGate then
-                                                print("Found Nearest Gate/Door: " .. nearestGate:GetFullName() .. " | Distance: " .. math.floor(minDistance))
                                                 local gateCFrame = (nearestGate.CFrame * CFrame.new(0, 10, 0)) * CFrame.Angles(math.rad(-90), 0, 0)
-
                                                 TweenService:Create(hrp, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = gateCFrame}):Play()
                                                 hrp.Velocity = Vector3.zero
                                                 task.wait(0.1)
-                                                virtualClick(LocalPlayer.PlayerGui.Hud.NewBottomRight.Frame.DashSlot)
-                                                task.wait(0.1)
+
+                                                local stickTime = tick()
+                                                while tick() - stickTime < 1 do
+                                                    TweenService:Create(hrp, TweenInfo.new(0.1, Enum.EasingStyle.Linear), {CFrame = gateCFrame}):Play()
+                                                    hrp.Velocity = Vector3.zero
+
+                                                    task.spawn(function()
+                                                        attackTarget(nearestGate.Parent)
+                                                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 0)
+                                                        task.wait(0.05)
+                                                        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 0)
+                                                    end)
+
+                                                    virtualClick(LocalPlayer.PlayerGui.Hud.NewBottomRight.Frame.DashSlot)
+                                                    
+                                                    task.wait() 
+                                                end
                                             end
                                         end
                                         lastGateCheck = tick()
                                     end
-                                    task.wait()
+                                    task.wait(0.1)
                                 end
                             else
-                                local isLooting = HandleDrops()
-                                if not isLooting then
-                                    if mapObj then
-                                        if not getTarget() then
-                                            task.wait(5)
-                                            HandleChestAndExit()
-                                        end
-                                    end
-                                end
+                                HandleChestAndExit()
+                                -- local isLooting = HandleDrops()
+                                -- if not isLooting then
+                                --     if mapObj then
+                                --         if not getTarget() then
+                                --             task.wait(5)
+                                --             HandleChestAndExit()
+                                --         end
+                                --     end
+                                -- end
                             end
                         end)
                     else
@@ -813,3 +807,21 @@ SaveManager:BuildConfigSection(Tabs.Settings)
 Window:SelectTab(1)
 
 SaveManager:LoadAutoloadConfig()
+
+
+-- local args = {
+-- 	0,
+-- 	{
+-- 		workspace:WaitForChild("Mobs"):WaitForChild("Serpent")
+-- 	},
+-- 	0.8666666746139526
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices"):WaitForChild("CombatService"):WaitForChild("RF"):WaitForChild("UseWeapon"):InvokeServer(unpack(args))
+
+
+-- local args = {
+-- 	"928b780a-3504-43e6-973c-21340a1dee5e" -- ChestUUID
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices"):WaitForChild("BossDropsService"):WaitForChild("RF"):WaitForChild("OpenChest"):InvokeServer(unpack(args))
+
+-- เช็คเจ้าของจาก Attributes เช็คเจ้าของจาก Owner เช็คว่า Opened เป็น true หรือยัง หากยัง จะเปิด ChestUUID ก็หาจาก Attributes
