@@ -182,6 +182,8 @@ do
         Default = "",
     })
 
+    refreshGateList()
+
     Tabs.Setup:AddButton({
         Title = "Reload Gate List",
         Description = "Click to reload gate list",
@@ -549,7 +551,7 @@ do
                 local char = LocalPlayer.Character
                 local hrp = char and char:FindFirstChild("HumanoidRootPart")
                 local humanoid = char and char:FindFirstChild("Humanoid")
-
+                game:GetService("Players").LocalPlayer.PlayerGui.Hud.NewBottomRight.Frame.DashSlot.Visible = true
                 if isInDungeon() then
                     if hrp and humanoid and humanoid.Health > 0 then
                         pcall(function()
