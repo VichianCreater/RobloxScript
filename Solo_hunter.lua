@@ -99,60 +99,100 @@ do
 
     local gateOptions = {}
     local gateMapping = {}
+    local GateSelect 
 
     local function refreshGateList()
-        print("Refreshing gate list...")
         local rawGates = {}
         gateMapping = {}
-        for _, v in pairs(workspace:GetChildren()) do
-            pcall(function()
-                if v:FindFirstChild("Gate") and v.Gate:FindFirstChild("PortalData") then
-                    local portalData = v.Gate.PortalData
-                    local title = portalData.DungeonTitle.Label.Text
-                    local diff = portalData.Difficulty.Text
-                    local powerText = portalData.LevelReq.Text
-                    local cleanPower = powerText:gsub(",", "")
-                    local powerNum = tonumber(cleanPower:match("%d+")) or 0
-                    local fullName = string.format("%s (%s) [%s]", title, diff, powerText:match("[%d,%.]+"))
-                    table.insert(rawGates, {
-                        FullName = fullName,
-                        Title = title,
-                        Power = powerNum,
-                        Object = v.Gate
-                    })
-                    gateMapping[fullName] = v.Gate
-                end
-            end)
+
+        for _, container in pairs(workspace:GetChildren()) do
+            local isRed = (container.Name == "RedPortalModel")
+            local isNormal = (container.Name == "PortalModel")
+            
+            if isRed or isNormal then
+                pcall(function()
+                    local gate = container:FindFirstChild("Gate")
+                    if gate and gate:FindFirstChild("PortalData") then
+                        local portalData = gate.PortalData
+                        local title = portalData.DungeonTitle.Label.Text
+                        local diff = portalData.Difficulty.Text
+                        local powerText = portalData.LevelReq.Text
+                        local cleanPower = powerText:gsub(",", "")
+                        local powerNum = tonumber(cleanPower:match("%d+")) or 0
+                        
+                        local prefix = isRed and "[Red] " or ""
+                        local fullName = string.format("%s%s (%s) [%s]", prefix, title, diff, powerText:match("[%d,%.]+"))
+                        
+                        table.insert(rawGates, {
+                            FullName = fullName,
+                            Title = title,
+                            Power = powerNum,
+                            IsRed = isRed,
+                            Object = gate
+                        })
+                        gateMapping[fullName] = gate
+                    end
+                end)
+            end
         end
+
         table.sort(rawGates, function(a, b)
-            if a.Title == b.Title then
-                return a.Power < b.Power
-            else
+            if a.IsRed ~= b.IsRed then
+                return a.IsRed 
+            elseif a.Title ~= b.Title then
                 return a.Title < b.Title
+            else
+                return a.Power < b.Power
             end
         end)
+
         gateOptions = {}
         for _, item in ipairs(rawGates) do
             table.insert(gateOptions, item.FullName)
         end
+
         if #gateOptions == 0 then
             table.insert(gateOptions, "No Gates Found")
         end
+        
+        if GateSelect then
+            GateSelect:SetValues(gateOptions)
+            
+            local currentVal = GateSelect.Value
+            local found = false
+            for _, v in ipairs(gateOptions) do
+                if v == currentVal then 
+                    found = true 
+                    break 
+                end
+            end
+            
+            if not found then
+                GateSelect:SetValue("")
+            end
+        end
+
         return gateOptions
     end
 
-    task.spawn(function()
-        while true do
-            refreshGateList()
-            task.wait(10)
-        end
-    end)
-
-    local GateSelect = Tabs.Setup:AddDropdown("GateSelect", {
+    GateSelect = Tabs.Setup:AddDropdown("GateSelect", {
         Title = "Select Gate (Sorted by Power)",
         Values = gateOptions,
         Multi = false,
         Default = "",
+    })
+
+    Tabs.Setup:AddButton({
+        Title = "Reload Gate List",
+        Description = "Click to reload gate list",
+        Callback = function()
+            refreshGateList()
+            Fluent:Notify({
+                Title = "Notify",
+                Content = "Gate list has been reloaded",
+                Duration = 3
+            })
+        end
     })
 
     local AutoGateToggle = Tabs.Setup:AddToggle("AutoGateToggle", {
@@ -191,7 +231,7 @@ do
                                 task.wait(1)
                             end
 
-                            task.wait(15)
+                            task.wait(5)
                         end
 
                         local mainGui = LocalPlayer.PlayerGui:FindFirstChild("Main")
@@ -825,3 +865,23 @@ SaveManager:LoadAutoloadConfig()
 -- game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices"):WaitForChild("BossDropsService"):WaitForChild("RF"):WaitForChild("OpenChest"):InvokeServer(unpack(args))
 
 -- เช็คเจ้าของจาก Attributes เช็คเจ้าของจาก Owner เช็คว่า Opened เป็น true หรือยัง หากยัง จะเปิด ChestUUID ก็หาจาก Attributes
+
+
+-- local args = {
+-- 	{
+-- 		{
+-- 			Type = "Artifact",
+-- 			UUID = "eaca8456-1b4f-453f-be74-7e729265e7b5",
+-- 			Amount = 1
+-- 		}
+-- 	}
+-- }
+-- game:GetService("ReplicatedStorage"):WaitForChild("RemoteServices"):WaitForChild("InventoryService"):WaitForChild("RF"):WaitForChild("Sell"):InvokeServer(unpack(args)) 
+
+-- game:GetService("Players").LocalPlayer.PlayerGui.Inventory.Main.ContainerCanvas.Pages.Page2.AllItemsCanvas.Main.Static.CategoryButtons.Slots
+
+-- game:GetService("Players").LocalPlayer.PlayerGui.Inventory.Main.ContainerCanvas.Pages.Page2.AllItemsCanvas.Main.Static.PageBar.NextFrame
+
+-- game:GetService("Players").LocalPlayer.PlayerGui.Inventory.Main.ContainerCanvas.Pages.Page2.AllItemsCanvas.Main.ScrollingFrame = folder
+
+-- game:GetService("Players").LocalPlayer.PlayerGui.Inventory.Main.ContainerCanvas.Pages.Page2.AllItemsCanvas.Main.ScrollingFrame["36c4bfe8-a61a-49e4-b688-59ce75ba12f3"].Mythic.BottomRight.Lock.Visible
